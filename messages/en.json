@@ -1,0 +1,26 @@
+{
+    "nav": {
+        "schedule": "Schedule",
+        "bookings": "Bookings",
+        "today": "Today",
+        "customers": "Customers"
+    },
+    "booking": {
+        "newBooking": "New Booking",
+        "partySize": "Party Size",
+        "status": {
+            "pending": "Pending",
+            "confirmed": "Confirmed",
+            "deposit_paid": "Deposit Paid",
+            "cancelled": "Cancelled"
+        }
+    },
+    "invoice": {
+        "title": "Invoice",
+        "subtotal": "Subtotal",
+        "tax": "Tax (10%)",
+        "total": "Total",
+        "depositPaid": "Deposit Paid",
+        "balanceDue": "Balance Due"
+    }
+}

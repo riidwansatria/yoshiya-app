@@ -1,0 +1,26 @@
+{
+    "nav": {
+        "schedule": "スケジュール",
+        "bookings": "予約一覧",
+        "today": "本日",
+        "customers": "顧客"
+    },
+    "booking": {
+        "newBooking": "新規予約",
+        "partySize": "人数",
+        "status": {
+            "pending": "未確定",
+            "confirmed": "確定",
+            "deposit_paid": "内金済",
+            "cancelled": "キャンセル"
+        }
+    },
+    "invoice": {
+        "title": "請求書",
+        "subtotal": "小計",
+        "tax": "消費税 (10%)",
+        "total": "合計",
+        "depositPaid": "内金",
+        "balanceDue": "残高"
+    }
+}
