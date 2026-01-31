@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-table"
 import { ChevronDown, MoreHorizontal } from "lucide-react"
 
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,6 +26,8 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BookingDetailModal } from "./booking-detail-modal"
 
 export type Booking = {
     id: string
@@ -36,45 +39,106 @@ export type Booking = {
     hallName: string
 }
 
-export const columns: ColumnDef<Booking>[] = [
-    {
-        accessorKey: "date",
-        header: "Date",
-        cell: ({ row }) => <div className="lowercase">{row.getValue("date")}</div>,
-    },
-    {
-        accessorKey: "startTime",
-        header: "Time",
-    },
-    {
-        accessorKey: "hallName",
-        header: "Hall",
-    },
-    {
-        accessorKey: "customerName",
-        header: "Customer",
-    },
-    {
-        accessorKey: "partySize",
-        header: "Pax",
-    },
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-            const status = row.getValue("status") as string
-            return <Badge variant={status === 'confirmed' ? 'default' : 'secondary'}>{status}</Badge>
-        }
-    },
-]
-
-
-import { BookingDetailModal } from "./booking-detail-modal"
-
-export function BookingsTable({ data, restaurantId }: { data: Booking[], restaurantId: string }) {
+export function BookingsTable({ data: initialData, restaurantId }: { data: Booking[], restaurantId: string }) {
+    const [data, setData] = React.useState(initialData)
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null)
+
+    const updateData = (rowIndex: number, columnId: string, value: any) => {
+        setData(old =>
+            old.map((row, index) => {
+                if (index === rowIndex) {
+                    return {
+                        ...old[rowIndex]!,
+                        [columnId]: value,
+                    }
+                }
+                return row
+            })
+        )
+    }
+
+    const columns: ColumnDef<Booking>[] = [
+        {
+            accessorKey: "date",
+            header: "Date",
+            cell: ({ row }) => <div className="lowercase">{row.getValue("date")}</div>,
+        },
+        {
+            accessorKey: "startTime",
+            header: "Time",
+        },
+        {
+            accessorKey: "hallName",
+            header: "Hall",
+        },
+        {
+            accessorKey: "customerName",
+            header: "Customer",
+        },
+        {
+            accessorKey: "partySize",
+            header: "Pax",
+            cell: ({ row, table }) => {
+                const initialValue = row.getValue("partySize")
+                const [value, setValue] = React.useState(initialValue)
+
+                const onBlur = () => {
+                    // @ts-ignore
+                    updateData(row.index, "partySize", value)
+                }
+
+                return (
+                    <Input
+                        type="number"
+                        value={value as number}
+                        onChange={e => setValue(e.target.value)}
+                        onBlur={onBlur}
+                        className="w-16 h-8"
+                    />
+                )
+            }
+        },
+        {
+            accessorKey: "status",
+            header: "Status",
+            cell: ({ row }) => {
+                const status = row.getValue("status") as string
+
+                return (
+                    <Select
+                        defaultValue={status}
+                        onValueChange={(val) => updateData(row.index, "status", val)}
+                    >
+                        <SelectTrigger className="h-8 w-[130px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="deposit_paid">Deposit Paid</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )
+            }
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                return (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setSelectedBookingId(row.original.id)}
+                    >
+                        Details
+                    </Button>
+                )
+            }
+        }
+    ]
 
     const table = useReactTable({
         data,
@@ -102,7 +166,6 @@ export function BookingsTable({ data, restaurantId }: { data: Booking[], restaur
                     }
                     className="max-w-sm"
                 />
-                {/* Status Filter could be here */}
             </div>
             <div className="rounded-md border bg-white">
                 <Table>
@@ -130,8 +193,7 @@ export function BookingsTable({ data, restaurantId }: { data: Booking[], restaur
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
-                                    className="cursor-pointer hover:bg-muted/50"
-                                    onClick={() => setSelectedBookingId(row.original.id)}
+                                    className="hover:bg-muted/50"
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -184,3 +246,4 @@ export function BookingsTable({ data, restaurantId }: { data: Booking[], restaur
         </div>
     )
 }
+
