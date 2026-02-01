@@ -107,7 +107,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                 </header>
 
                 {/* Main Content */}
-                <div className="p-4 flex-1 space-y-4 overflow-y-auto">
+                <div className="p-4 flex-1 space-y-4 overflow-y-auto no-scrollbar">
 
                     {/* Top Row: Arrival/Room + Client Details */}
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
