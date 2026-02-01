@@ -77,7 +77,12 @@
             "groupName": "Group Name",
             "pic": "PIC",
             "arrangerName": "Arranger Name",
-            "serviceNotes": "Add service notes..."
+            "serviceNotes": "Add service notes...",
+            "tel": "000-0000-0000",
+            "fax": "000-0000-0000",
+            "partySize": "0",
+            "tourConductor": "0",
+            "crew": "0"
         },
         "noMenu": "No menu",
         "standardCourse": "Standard course menu"

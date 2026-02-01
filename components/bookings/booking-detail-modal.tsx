@@ -228,6 +228,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                 type="text"
                                                 defaultValue={booking.agencyTel}
                                                 className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.tel')}
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -236,6 +237,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                 type="text"
                                                 defaultValue={booking.agencyFax}
                                                 className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.fax')}
                                             />
                                         </div>
                                     </div>
@@ -280,24 +282,30 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.guests')}</span>
                                             <Input
                                                 type="number"
+                                                min={0}
                                                 defaultValue={booking.partySize}
                                                 className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.partySize')}
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.tourCond')}</span>
                                             <Input
                                                 type="number"
+                                                min={0}
                                                 defaultValue={booking.tourConductorCount || 0}
                                                 className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.tourConductor')}
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.crew')}</span>
                                             <Input
                                                 type="number"
+                                                min={0}
                                                 defaultValue={booking.crewCount || 0}
                                                 className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.crew')}
                                             />
                                         </div>
                                     </div>

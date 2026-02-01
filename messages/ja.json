@@ -77,7 +77,12 @@
             "groupName": "団体名",
             "pic": "担当者名",
             "arrangerName": "手配者名",
-            "serviceNotes": "業務連絡を入力..."
+            "serviceNotes": "業務連絡を入力...",
+            "tel": "000-0000-0000",
+            "fax": "000-0000-0000",
+            "partySize": "0",
+            "tourConductor": "0",
+            "crew": "0"
         },
         "noMenu": "メニューなし",
         "standardCourse": "標準コースメニュー"
