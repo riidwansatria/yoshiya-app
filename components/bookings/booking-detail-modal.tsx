@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { Printer, Mail, User, FileText, CalendarIcon, ChevronDown, DoorOpen, Users, NotepadText, Utensils, Contact } from "lucide-react"
+import { Printer, Mail, User, FileText, CalendarIcon, ChevronDown, DoorOpen, Users, NotepadText, Utensils, Contact, Clock, FileClock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -363,35 +363,74 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     {/* Bottom Section: Contact */}
 
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full min-h-[200px]">
                         {/* Left Col: Notes */}
-                        <div className="border rounded-lg p-3 bg-white space-y-3">
-                            <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="border rounded-lg p-3 bg-white space-y-3 flex flex-col">
+                            <div className="flex items-center gap-2 text-muted-foreground shrink-0">
                                 <NotepadText className="w-3 h-3" />
                                 <h2 className="text-[10px] font-semibold uppercase tracking-wider">Service Notes</h2>
                             </div>
                             <Textarea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                className="min-h-[100px] bg-muted/30 border-border/50 resize-none text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring"
+                                className="flex-1 bg-muted/30 border-border/50 resize-none text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring"
                                 placeholder="Add service notes..."
                             />
                         </div>
 
-                        <div className="border rounded-lg p-3 bg-white space-y-3">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Contact className="w-3 h-3" />
-                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">On-site Contact</h2>
+                        <div className="border rounded-lg p-3 bg-white space-y-3 flex flex-col">
+                            <div className="flex items-center gap-2 text-muted-foreground shrink-0">
+                                <FileClock className="w-3 h-3" />
+                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">Booking History</h2>
                             </div>
 
-                            <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
-                                <div className="h-12 w-12 rounded-full bg-white border flex items-center justify-center text-muted-foreground shadow-sm shrink-0">
-                                    <User className="w-6 h-6" />
+                            <div className="space-y-4 flex-1 overflow-y-auto">
+                                {/* Created At */}
+                                <div className="flex gap-3 relative pb-4">
+                                    <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
+                                    <div className="h-2.5 w-2.5 rounded-full bg-blue-100 border border-blue-200 shrink-0 relative z-10 mt-0.5"></div>
+                                    <div className="space-y-0.5">
+                                        <div className="text-xs font-medium">Created</div>
+                                        <div className="text-[10px] text-muted-foreground">{booking.createdAt && format(new Date(booking.createdAt), "yyyy/MM/dd HH:mm")}</div>
+                                    </div>
                                 </div>
-                                <div className="flex-grow">
-                                    <div className="font-semibold">{customer?.name || 'N/A'}</div>
-                                    <div className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                                        <span className="font-mono">{customer?.phone || '090-0000-0000'}</span>
+
+                                {/* Confirmed */}
+                                {booking.confirmedAt && (
+                                    <div className="flex gap-3 relative pb-4">
+                                        <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
+                                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-100 border border-emerald-200 shrink-0 relative z-10 mt-0.5"></div>
+                                        <div className="space-y-0.5">
+                                            <div className="text-xs font-medium flex items-center gap-1.5">
+                                                Confirmed <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] text-emerald-700 font-normal border border-emerald-100">by {booking.confirmedBy}</span>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground">{format(new Date(booking.confirmedAt), "yyyy/MM/dd HH:mm")}</div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Cancelled */}
+                                {(booking.status === 'cancelled' || booking.cancelledAt) && (
+                                    <div className="flex gap-3 relative pb-4">
+                                        <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
+                                        <div className="h-2.5 w-2.5 rounded-full bg-red-100 border border-red-200 shrink-0 relative z-10 mt-0.5"></div>
+                                        <div className="space-y-0.5">
+                                            <div className="text-xs font-medium flex items-center gap-1.5 text-red-600">
+                                                Cancelled {booking.cancelledBy && <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-[9px] text-red-700 font-normal border border-red-100">by {booking.cancelledBy}</span>}
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground">
+                                                {booking.cancelledAt ? format(new Date(booking.cancelledAt), "yyyy/MM/dd HH:mm") : format(new Date(), "yyyy/MM/dd HH:mm")}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Last Edited */}
+                                <div className="flex gap-3 relative">
+                                    <div className="h-2.5 w-2.5 rounded-full bg-muted border border-border shrink-0 relative z-10 mt-0.5"></div>
+                                    <div className="space-y-0.5">
+                                        <div className="text-xs font-medium">Last Edited</div>
+                                        <div className="text-[10px] text-muted-foreground">{booking.lastEditedAt && format(new Date(booking.lastEditedAt), "yyyy/MM/dd HH:mm")}</div>
                                     </div>
                                 </div>
                             </div>
