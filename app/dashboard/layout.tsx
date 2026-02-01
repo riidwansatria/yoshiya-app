@@ -19,8 +19,8 @@ export default function DashboardLayout({
 
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="h-svh overflow-hidden flex flex-col">
-                <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
+            <SidebarInset className="h-[calc(100svh-1rem)] overflow-hidden flex flex-col">
+                <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 z-50 relative">
                     <SidebarTrigger className="-ml-1" />
                     <Breadcrumb>
                         <BreadcrumbList>
