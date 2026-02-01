@@ -25,6 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { reservations, customers, halls, menus } from "@/lib/mock-data"
 import { useTranslations } from "next-intl"
 
@@ -86,19 +87,19 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                             <SelectItem value="pending">
                                 <span className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-muted-foreground"></span>
-                                    Pending
+                                    {t('booking.status.pending')}
                                 </span>
                             </SelectItem>
                             <SelectItem value="confirmed">
                                 <span className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                    Confirmed
+                                    {t('booking.status.confirmed')}
                                 </span>
                             </SelectItem>
                             <SelectItem value="cancelled">
                                 <span className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-red-500"></span>
-                                    Cancelled
+                                    {t('booking.status.cancelled')}
                                 </span>
                             </SelectItem>
                         </SelectContent>
@@ -116,7 +117,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <CalendarIcon className="w-3 h-3" />
-                                    <h2 className="text-[10px] font-semibold uppercase tracking-wider">Arrival</h2>
+                                    <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.arrival')}</h2>
                                 </div>
                                 <div className="mt-1 space-y-1">
                                     {/* Date Picker */}
@@ -159,7 +160,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                             <div className="space-y-4 pt-1">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <DoorOpen className="w-3 h-3" />
-                                    <h2 className="text-[10px] font-semibold uppercase tracking-wider">Room</h2>
+                                    <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.room')}</h2>
                                 </div>
                                 <Select defaultValue={hall?.id}>
                                     <SelectTrigger className="w-full h-12 border-input bg-muted/20 text-lg rounded-lg px-3 focus:ring-1 focus:ring-ring font-medium">
@@ -183,7 +184,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                         <div className="md:col-span-8 border rounded-lg p-3 bg-white">
                             <div className="flex items-center gap-2 text-muted-foreground mb-3">
                                 <Users className="w-3 h-3" />
-                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">Client Details</h2>
+                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.clientDetails')}</h2>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -191,50 +192,50 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Agency Name</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.agencyName')}</span>
+                                            <Input
                                                 type="text"
                                                 defaultValue={booking.agencyName}
-                                                className="w-full text-sm font-medium bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                                                placeholder="Select Agency"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.selectAgency')}
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Branch</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.branch')}</span>
+                                            <Input
                                                 type="text"
                                                 defaultValue={booking.branchName}
-                                                className="w-full text-sm font-medium bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                                                placeholder="Branch Name"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.branchName')}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Address</span>
-                                        <input
+                                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.address')}</span>
+                                        <Input
                                             type="text"
                                             defaultValue={booking.agencyAddress}
-                                            className="w-full text-sm bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                                            placeholder="Agency Address"
+                                            className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                            placeholder={t('bookingModal.placeholders.agencyAddress')}
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">TEL</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.tel')}</span>
+                                            <Input
                                                 type="text"
                                                 defaultValue={booking.agencyTel}
-                                                className="w-full text-sm bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">FAX</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.fax')}</span>
+                                            <Input
                                                 type="text"
                                                 defaultValue={booking.agencyFax}
-                                                className="w-full text-sm bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                             />
                                         </div>
                                     </div>
@@ -243,60 +244,60 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                 {/* Right Column: Group Info & Counts */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Group Name</span>
-                                        <input
+                                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.groupName')}</span>
+                                        <Input
                                             type="text"
                                             defaultValue={booking.groupName}
-                                            className="w-full text-sm font-medium bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                                            placeholder="Group Name"
+                                            className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                            placeholder={t('bookingModal.placeholders.groupName')}
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">PIC</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.pic')}</span>
+                                            <Input
                                                 type="text"
                                                 defaultValue={booking.repName}
-                                                className="w-full text-sm font-medium bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                                                placeholder="PIC"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.pic')}
                                             />
                                         </div>
 
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Arranger (手配者)</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.arranger')}</span>
+                                            <Input
                                                 type="text"
                                                 defaultValue={booking.arrangerName}
-                                                className="w-full text-sm bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                                                placeholder="Arranger Name"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
+                                                placeholder={t('bookingModal.placeholders.arrangerName')}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-3 gap-3">
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Guests</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.guests')}</span>
+                                            <Input
                                                 type="number"
                                                 defaultValue={booking.partySize}
-                                                className="w-full text-sm font-semibold bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Tour Cond.</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.tourCond')}</span>
+                                            <Input
                                                 type="number"
                                                 defaultValue={booking.tourConductorCount || 0}
-                                                className="w-full text-sm font-semibold bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Crew</span>
-                                            <input
+                                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.crew')}</span>
+                                            <Input
                                                 type="number"
                                                 defaultValue={booking.crewCount || 0}
-                                                className="w-full text-sm font-semibold bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                                                className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                             />
                                         </div>
                                     </div>
@@ -310,10 +311,10 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                         <div className="p-3 flex justify-between items-center">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Utensils className="w-3 h-3" />
-                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">Menu Selections</h2>
+                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.menuSelections')}</h2>
                             </div>
                             <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 h-auto py-0.5 px-2 text-[10px]">
-                                + Add Item
+                                {t('bookingModal.addItem')}
                             </Button>
                         </div>
 
@@ -321,18 +322,18 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b">
-                                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-1/3">Item</th>
-                                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-1/4">Remarks</th>
-                                        <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Price</th>
-                                        <th className="text-center py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Qty</th>
-                                        <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subtotal</th>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-1/3">{t('bookingModal.item')}</th>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-1/4">{t('bookingModal.remarks')}</th>
+                                        <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('bookingModal.price')}</th>
+                                        <th className="text-center py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('bookingModal.qty')}</th>
+                                        <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('bookingModal.tableSubtotal')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">
                                     <tr className="group hover:bg-muted/30 transition-colors">
                                         <td className="py-4 px-4 align-top">
-                                            <div className="font-medium text-base">{selectedMenu?.name || 'No menu'}</div>
-                                            <div className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-sm">{selectedMenu?.description || 'Standard course menu'}</div>
+                                            <div className="font-medium text-base">{selectedMenu?.name || t('bookingModal.noMenu')}</div>
+                                            <div className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-sm">{selectedMenu?.description || t('bookingModal.standardCourse')}</div>
                                         </td>
                                         <td className="py-4 px-4 align-top">
                                             <div className="text-muted-foreground text-sm lowercase italic">—</div>
@@ -352,7 +353,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                 </tbody>
                                 <tfoot className="bg-muted/20 border-t">
                                     <tr>
-                                        <td colSpan={4} className="py-4 px-4 text-right text-sm font-medium text-muted-foreground">Total Estimate</td>
+                                        <td colSpan={4} className="py-4 px-4 text-right text-sm font-medium text-muted-foreground">{t('bookingModal.totalEstimate')}</td>
                                         <td className="py-4 px-4 text-right text-lg font-bold font-mono">¥{totalAmount.toLocaleString()}</td>
                                     </tr>
                                 </tfoot>
@@ -368,20 +369,20 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                         <div className="border rounded-lg p-3 bg-white space-y-3 flex flex-col">
                             <div className="flex items-center gap-2 text-muted-foreground shrink-0">
                                 <NotepadText className="w-3 h-3" />
-                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">Service Notes</h2>
+                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.serviceNotes')}</h2>
                             </div>
                             <Textarea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                className="flex-1 bg-muted/30 border-border/50 resize-none text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring"
-                                placeholder="Add service notes..."
+                                className="flex-1 bg-muted/30 border-border/50 resize-none text-xs md:text-sm leading-relaxed"
+                                placeholder={t('bookingModal.placeholders.serviceNotes')}
                             />
                         </div>
 
                         <div className="border rounded-lg p-3 bg-white space-y-3 flex flex-col">
                             <div className="flex items-center gap-2 text-muted-foreground shrink-0">
                                 <FileClock className="w-3 h-3" />
-                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">Booking History</h2>
+                                <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.bookingHistory')}</h2>
                             </div>
 
                             <div className="space-y-4 flex-1 overflow-y-auto">
@@ -390,7 +391,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
                                     <div className="h-2.5 w-2.5 rounded-full bg-blue-100 border border-blue-200 shrink-0 relative z-10 mt-0.5"></div>
                                     <div className="space-y-0.5">
-                                        <div className="text-xs font-medium">Created</div>
+                                        <div className="text-xs font-medium">{t('bookingModal.history.created')}</div>
                                         <div className="text-[10px] text-muted-foreground">{booking.createdAt && format(new Date(booking.createdAt), "yyyy/MM/dd HH:mm")}</div>
                                     </div>
                                 </div>
@@ -402,7 +403,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                         <div className="h-2.5 w-2.5 rounded-full bg-emerald-100 border border-emerald-200 shrink-0 relative z-10 mt-0.5"></div>
                                         <div className="space-y-0.5">
                                             <div className="text-xs font-medium flex items-center gap-1.5">
-                                                Confirmed <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] text-emerald-700 font-normal border border-emerald-100">by {booking.confirmedBy}</span>
+                                                {t('bookingModal.history.confirmed')} <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] text-emerald-700 font-normal border border-emerald-100">{t('bookingModal.history.by', { name: booking.confirmedBy })}</span>
                                             </div>
                                             <div className="text-[10px] text-muted-foreground">{format(new Date(booking.confirmedAt), "yyyy/MM/dd HH:mm")}</div>
                                         </div>
@@ -416,7 +417,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                         <div className="h-2.5 w-2.5 rounded-full bg-red-100 border border-red-200 shrink-0 relative z-10 mt-0.5"></div>
                                         <div className="space-y-0.5">
                                             <div className="text-xs font-medium flex items-center gap-1.5 text-red-600">
-                                                Cancelled {booking.cancelledBy && <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-[9px] text-red-700 font-normal border border-red-100">by {booking.cancelledBy}</span>}
+                                                {t('bookingModal.history.cancelled')} {booking.cancelledBy && <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-[9px] text-red-700 font-normal border border-red-100">{t('bookingModal.history.by', { name: booking.cancelledBy })}</span>}
                                             </div>
                                             <div className="text-[10px] text-muted-foreground">
                                                 {booking.cancelledAt ? format(new Date(booking.cancelledAt), "yyyy/MM/dd HH:mm") : format(new Date(), "yyyy/MM/dd HH:mm")}
@@ -429,7 +430,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                 <div className="flex gap-3 relative">
                                     <div className="h-2.5 w-2.5 rounded-full bg-muted border border-border shrink-0 relative z-10 mt-0.5"></div>
                                     <div className="space-y-0.5">
-                                        <div className="text-xs font-medium">Last Edited</div>
+                                        <div className="text-xs font-medium">{t('bookingModal.history.lastEdited')}</div>
                                         <div className="text-[10px] text-muted-foreground">{booking.lastEditedAt && format(new Date(booking.lastEditedAt), "yyyy/MM/dd HH:mm")}</div>
                                     </div>
                                 </div>

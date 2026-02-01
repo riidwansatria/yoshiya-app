@@ -50,6 +50,36 @@
         "kitchenSlip": "Print Kitchen Slip",
         "viewInvoice": "View Invoice",
         "cancel": "Cancel",
-        "save": "Save Changes"
+        "save": "Save Changes",
+        "arrival": "Arrival Date",
+        "clientDetails": "Client Details",
+        "agencyName": "Travel Agency",
+        "pic": "PIC",
+        "tourCond": "Tour Cond.",
+        "menuSelections": "Menu Selections",
+        "addItem": "+ Add Item",
+        "item": "Item",
+        "tableSubtotal": "Subtotal",
+        "totalEstimate": "Total Estimate",
+        "serviceNotes": "Service Notes",
+        "bookingHistory": "Booking History",
+        "history": {
+            "created": "Created",
+            "confirmed": "Confirmed",
+            "cancelled": "Cancelled",
+            "lastEdited": "Last Edited",
+            "by": "by {name}"
+        },
+        "placeholders": {
+            "selectAgency": "Select Agency",
+            "branchName": "Branch Name",
+            "agencyAddress": "Agency Address",
+            "groupName": "Group Name",
+            "pic": "PIC",
+            "arrangerName": "Arranger Name",
+            "serviceNotes": "Add service notes..."
+        },
+        "noMenu": "No menu",
+        "standardCourse": "Standard course menu"
     }
 }

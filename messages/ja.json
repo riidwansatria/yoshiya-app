@@ -50,6 +50,36 @@
         "kitchenSlip": "調理指示書印刷",
         "viewInvoice": "請求書を表示",
         "cancel": "キャンセル",
-        "save": "変更を保存"
+        "save": "変更を保存",
+        "arrival": "到着日時",
+        "clientDetails": "顧客詳細",
+        "agencyName": "旅行会社名",
+        "pic": "担当者名",
+        "tourCond": "添乗員人数",
+        "menuSelections": "メニュー選択",
+        "addItem": "+ 商品を追加",
+        "item": "品目",
+        "tableSubtotal": "小計",
+        "totalEstimate": "概算見積",
+        "serviceNotes": "業務連絡",
+        "bookingHistory": "予約履歴",
+        "history": {
+            "created": "作成",
+            "confirmed": "確定",
+            "cancelled": "キャンセル",
+            "lastEdited": "最終更新",
+            "by": "{name}"
+        },
+        "placeholders": {
+            "selectAgency": "会社を選択",
+            "branchName": "支店名",
+            "agencyAddress": "会社住所",
+            "groupName": "団体名",
+            "pic": "担当者名",
+            "arrangerName": "手配者名",
+            "serviceNotes": "業務連絡を入力..."
+        },
+        "noMenu": "メニューなし",
+        "standardCourse": "標準コースメニュー"
     }
 }
