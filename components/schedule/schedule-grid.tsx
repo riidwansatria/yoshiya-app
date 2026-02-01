@@ -88,6 +88,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                             <PopoverContent className="w-auto p-0" align="center">
                                 <Calendar
                                     mode="single"
+                                    captionLayout="dropdown"
                                     selected={date}
                                     onSelect={(d) => d && setDate(d)}
                                     initialFocus

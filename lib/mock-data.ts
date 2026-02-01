@@ -20,9 +20,9 @@ export const customers = [
 ];
 
 export const menus = [
-  { id: '1', restaurant: 'banquet', name: '会席Aコース', price: 4000 },
-  { id: '2', restaurant: 'banquet', name: '会席Bコース', price: 6000 },
-  { id: '3', restaurant: 'banquet', name: '飲み放題', price: 2000 },
+  { id: '1', restaurant: 'banquet', name: '会席Aコース', description: '前菜・椀物・刺身・焼物・煮物・食事・デザート', price: 4000 },
+  { id: '2', restaurant: 'banquet', name: '会席Bコース', description: '特選会席 - 旬の食材を使った贅沢なコース', price: 6000 },
+  { id: '3', restaurant: 'banquet', name: '飲み放題', description: '2時間飲み放題（ビール・日本酒・焼酎・ソフトドリンク）', price: 2000 },
 ];
 
 export const reservations = [
@@ -38,6 +38,17 @@ export const reservations = [
     partySize: 20,
     status: 'confirmed',
     notes: '甲殻類アレルギー対応1名',
+    // Extended Client Info
+    agencyName: 'JTB',
+    branchName: '新宿支店',
+    agencyTel: '03-1234-5678',
+    agencyFax: '03-1234-5679',
+    agencyAddress: '東京都新宿区...',
+    groupName: '鈴木様御一行',
+    arrangerName: '佐藤 (JTB)',
+    repName: '鈴木 一郎',
+    tourConductorCount: 1,
+    crewCount: 0,
   },
   {
     id: '2',
@@ -52,7 +63,7 @@ export const reservations = [
     status: 'deposit_paid',
     notes: '',
   },
-   {
+  {
     id: '3',
     restaurant: 'banquet',
     customerId: '3',
@@ -64,5 +75,15 @@ export const reservations = [
     partySize: 15,
     status: 'pending',
     notes: 'Birthday',
+    agencyName: 'HIS',
+    branchName: '渋谷支店',
+    agencyTel: '03-9876-5432',
+    agencyFax: '03-9876-5433',
+    agencyAddress: '東京都渋谷区...',
+    groupName: 'Honda Group',
+    arrangerName: '田中 (HIS)',
+    repName: '本田 健',
+    tourConductorCount: 1,
+    crewCount: 1,
   },
 ];
