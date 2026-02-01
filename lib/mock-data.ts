@@ -37,7 +37,7 @@ export const reservations = [
     endTime: '15:00',
     partySize: 20,
     status: 'confirmed',
-    notes: '甲殻類アレルギー対応1名',
+    serviceNotes: '甲殻類アレルギー対応1名',
     // Extended Client Info
     agencyName: 'JTB',
     branchName: '新宿支店',
@@ -61,7 +61,7 @@ export const reservations = [
     endTime: '18:00',
     partySize: 30,
     status: 'deposit_paid',
-    notes: '',
+    serviceNotes: '',
   },
   {
     id: '3',
@@ -74,7 +74,7 @@ export const reservations = [
     endTime: '21:00',
     partySize: 15,
     status: 'pending',
-    notes: 'Birthday',
+    serviceNotes: 'Birthday',
     agencyName: 'HIS',
     branchName: '渋谷支店',
     agencyTel: '03-9876-5432',

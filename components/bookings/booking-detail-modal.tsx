@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { reservations, customers, halls, menus } from "@/lib/mock-data"
 import { useTranslations } from "next-intl"
 
@@ -43,6 +44,14 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const hall = halls.find(h => h.id === booking?.hallId)
     const selectedMenu = menus.find(m => m.id === booking?.menuId)
     const [status, setStatus] = React.useState(booking?.status || 'pending')
+    const [notes, setNotes] = React.useState(booking?.serviceNotes || '')
+
+    React.useEffect(() => {
+        if (booking) {
+            setStatus(booking.status)
+            setNotes(booking.serviceNotes || '')
+        }
+    }, [booking])
 
     if (!booking) return null
 
@@ -56,7 +65,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="sm:max-w-5xl overflow-hidden bg-background p-0 flex flex-col max-h-[85vh]">
+            <DialogContent showCloseButton={false} className="sm:max-w-5xl overflow-hidden bg-background p-0 flex flex-col max-h-[85vh] gap-0">
 
                 {/* Header */}
                 <header className="px-4 py-3 border-b flex justify-between items-center">
@@ -253,7 +262,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                 placeholder="PIC"
                                             />
                                         </div>
-                                        
+
                                         <div className="space-y-1">
                                             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Arranger (手配者)</span>
                                             <input
@@ -352,15 +361,21 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     </div>
 
                     {/* Bottom Section: Contact */}
+
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Left Col: Notes */}
                         <div className="border rounded-lg p-3 bg-white space-y-3">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <NotepadText className="w-3 h-3" />
                                 <h2 className="text-[10px] font-semibold uppercase tracking-wider">Service Notes</h2>
                             </div>
-                            <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
-                                <p className="text-sm leading-relaxed">{booking.notes || 'No special instructions.'}</p>
-                            </div>
+                            <Textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                className="min-h-[100px] bg-muted/30 border-border/50 resize-none text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring"
+                                placeholder="Add service notes..."
+                            />
                         </div>
 
                         <div className="border rounded-lg p-3 bg-white space-y-3">
