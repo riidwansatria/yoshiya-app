@@ -64,7 +64,7 @@ export function TodayView({ restaurantId }: TodayViewProps) {
                                         <div className="text-sm text-muted-foreground">
                                             {halls.find(h => h.id === r.hallId)?.name} • {r.partySize} Pax
                                         </div>
-                                        {r.notes && <div className="text-xs text-red-500 mt-1">{r.notes}</div>}
+                                        {r.serviceNotes && <div className="text-xs text-red-500 mt-1">{r.serviceNotes}</div>}
                                     </div>
                                     <div>
                                         {menus.find(m => m.id === r.menuId)?.name}
