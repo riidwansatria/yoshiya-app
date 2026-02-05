@@ -205,13 +205,13 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                             <div
                                                 key={r.id}
                                                 className={cn(
-                                                    "absolute left-0 right-1 rounded-md text-[10px] pl-3 pr-1 py-2 mr-2 overflow-hidden cursor-pointer z-10 hover:brightness-102 transition-all flex flex-col leading-tight ring-1 ring-background",
+                                                    "absolute left-1 right-1 rounded-md text-[10px] pl-3 pr-1 py-2 overflow-hidden cursor-pointer z-10 hover:brightness-102 transition-all flex flex-col leading-tight ring-1 ring-background",
                                                     statusConfig.bg,
                                                     statusConfig.text
                                                 )}
                                                 style={{
-                                                    height: `${Math.max(height - 4, 20)}px`,
-                                                    top: `${top}px`
+                                                    height: `${Math.max(height - 8, 20)}px`,
+                                                    top: `${top + 4}px`
                                                 }}
                                                 onClick={() => setSelectedBookingId(r.id)}
                                             >
