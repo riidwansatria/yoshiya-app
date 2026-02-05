@@ -54,6 +54,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
     )
 
     const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null)
+    const [showStaffDetails, setShowStaffDetails] = React.useState(true)
 
     const handlePrevDay = () => setDate(d => subDays(d, 1))
     const handleNextDay = () => setDate(d => addDays(d, 1))
@@ -103,7 +104,15 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                         Today
                     </Button>
                 </div>
-                <div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant={showStaffDetails ? "secondary" : "outline"}
+                        size="sm"
+                        onClick={() => setShowStaffDetails(!showStaffDetails)}
+                        className={showStaffDetails ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : ""}
+                    >
+                        {showStaffDetails ? "担当表示中" : "担当非表示"}
+                    </Button>
                     <Button variant="secondary" size="sm" className="bg-slate-100 hover:bg-slate-200 text-slate-700">Day View</Button>
                 </div>
             </div>
@@ -223,9 +232,16 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                                 {prepDuration > 0 && (
                                                     <div
                                                         className={cn(
-                                                            "absolute left-1 right-1 rounded-t-md text-[10px] pl-3 pr-1 py-1 overflow-hidden z-5 flex items-end transition-all group-hover:brightness-95",
-                                                            statusConfig.bg,
-                                                            statusConfig.text
+                                                            "absolute left-1 right-1 text-[10px] pl-3 pr-1 py-1 overflow-hidden z-5 flex items-end transition-all",
+                                                            showStaffDetails ? [
+                                                                "rounded-t-md group-hover:brightness-95 border border-transparent",
+                                                                statusConfig.bg,
+                                                                statusConfig.text
+                                                            ] : [
+                                                                "rounded-t-md border border-dashed bg-transparent",
+                                                                r.status === 'confirmed' ? 'border-blue-400' : r.status === 'deposit_paid' ? 'border-green-400' : 'border-gray-400',
+                                                                r.status === 'confirmed' ? 'text-blue-500' : r.status === 'deposit_paid' ? 'text-green-500' : 'text-gray-500'
+                                                            ]
                                                         )}
                                                         style={{
                                                             height: `${Math.max(prepHeight - 4, 16)}px`,
@@ -239,15 +255,19 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                                                 background: `repeating-linear-gradient(180deg, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'}, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 6px)`,
                                                             }}
                                                         />
-                                                        <span className="opacity-70">準備:</span>
-                                                        <span className="font-medium truncate">{prepStaffNames}</span>
+                                                        {showStaffDetails && (
+                                                            <>
+                                                                <span className="opacity-70">準備:</span>
+                                                                <span className="font-medium truncate">{prepStaffNames}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 )}
 
                                                 {/* Main Event Block */}
                                                 <div
                                                     className={cn(
-                                                        "absolute left-1 right-1 text-[10px] pl-3 pr-1 py-2 overflow-hidden z-10 transition-all group-hover:brightness-95 flex flex-col justify-between leading-tight ring-1 ring-background",
+                                                        "absolute left-1 right-1 text-[10px] pl-3 pr-1 py-2 overflow-hidden z-10 transition-all group-hover:brightness-95 flex flex-col justify-between leading-tight border border-transparent",
                                                         prepDuration > 0 ? "rounded-none" : "rounded-t-md",
                                                         cleaningDuration > 0 ? "rounded-none" : "rounded-b-md",
                                                         statusConfig.bg,
@@ -274,7 +294,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                                     </div>
 
                                                     {/* Bottom content - Service Staff */}
-                                                    {height > 50 && serviceStaffNames && (
+                                                    {showStaffDetails && height > 50 && serviceStaffNames && (
                                                         <div className="opacity-70 truncate">
                                                             <span>担当: </span>
                                                             <span className="font-medium">{serviceStaffNames}</span>
@@ -286,9 +306,16 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                                 {cleaningDuration > 0 && (
                                                     <div
                                                         className={cn(
-                                                            "absolute left-1 right-1 rounded-b-md text-[10px] pl-3 pr-1 py-1 overflow-hidden z-5 flex items-start transition-all group-hover:brightness-95",
-                                                            statusConfig.bg,
-                                                            statusConfig.text
+                                                            "absolute left-1 right-1 text-[10px] pl-3 pr-1 py-1 overflow-hidden z-5 flex items-start transition-all",
+                                                            showStaffDetails ? [
+                                                                "rounded-b-md group-hover:brightness-95 border border-transparent",
+                                                                statusConfig.bg,
+                                                                statusConfig.text
+                                                            ] : [
+                                                                "rounded-b-md border border-dashed bg-transparent",
+                                                                r.status === 'confirmed' ? 'border-blue-400' : r.status === 'deposit_paid' ? 'border-green-400' : 'border-gray-400',
+                                                                r.status === 'confirmed' ? 'text-blue-500' : r.status === 'deposit_paid' ? 'text-green-500' : 'text-gray-500'
+                                                            ]
                                                         )}
                                                         style={{
                                                             height: `${Math.max(cleaningHeight - 4, 16)}px`,
@@ -302,8 +329,12 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                                                 background: `repeating-linear-gradient(180deg, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'}, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 6px)`,
                                                             }}
                                                         />
-                                                        <span className="opacity-70">片付け:</span>
-                                                        <span className="font-medium truncate">{cleaningStaffNames}</span>
+                                                        {showStaffDetails && (
+                                                            <>
+                                                                <span className="opacity-70">片付け:</span>
+                                                                <span className="font-medium truncate">{cleaningStaffNames}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
