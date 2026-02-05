@@ -62,6 +62,12 @@
         "tableSubtotal": "Subtotal",
         "totalEstimate": "Total Estimate",
         "serviceNotes": "Service Notes",
+        "staffAssignment": "Staff Assignment",
+        "roles": {
+            "preparation": "Preparation Staff",
+            "service": "Service Staff",
+            "cleaning": "Cleaning Staff"
+        },
         "bookingHistory": "Booking History",
         "history": {
             "created": "Created",

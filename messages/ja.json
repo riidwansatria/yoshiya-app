@@ -62,6 +62,12 @@
         "tableSubtotal": "小計",
         "totalEstimate": "概算見積",
         "serviceNotes": "業務連絡",
+        "staffAssignment": "スタッフ配役",
+        "roles": {
+            "preparation": "準備スタッフ",
+            "service": "接客スタッフ",
+            "cleaning": "清掃スタッフ"
+        },
         "bookingHistory": "予約履歴",
         "history": {
             "created": "作成",
