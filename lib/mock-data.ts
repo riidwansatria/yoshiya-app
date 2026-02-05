@@ -30,6 +30,15 @@ export const menus = [
   { id: '3', restaurant: 'banquet', name: '飲み放題', description: '2時間飲み放題（ビール・日本酒・焼酎・ソフトドリンク）', price: 2000 },
 ];
 
+export const staff = [
+  { id: '1', name: '山田', role: 'manager' },
+  { id: '2', name: '佐藤', role: 'staff' },
+  { id: '3', name: '鈴木', role: 'staff' },
+  { id: '4', name: '高橋', role: 'staff' },
+  { id: '5', name: '田中', role: 'part-time' },
+  { id: '6', name: '伊藤', role: 'part-time' },
+];
+
 export const reservations = [
   {
     id: '1',
@@ -43,6 +52,11 @@ export const reservations = [
     partySize: 20,
     status: 'confirmed',
     serviceNotes: '甲殻類アレルギー対応1名',
+    // Staff Assignment
+    prepDuration: 30, // minutes before startTime
+    prepStaffIds: ['2', '5'],
+    cleaningDuration: 30, // minutes after endTime
+    cleaningStaffIds: ['3', '6'],
     // Extended Client Info
     agencyName: 'JTB',
     branchName: '新宿支店',
@@ -117,10 +131,16 @@ export const reservations = [
     menuId: '2',
     date: '2026-02-05',
     startTime: '11:00',
-    endTime: '14:00',
+    endTime: '12:30', // 案内10分 + 食事・ドリンクサービス80分
     partySize: 28,
     status: 'pending',
     serviceNotes: 'Vegetarian option required',
+    // Staff Assignment - 1回転目
+    prepDuration: 15, // 準備: 2人×15分 for ~30名
+    prepStaffIds: ['1', '3'],
+    serviceStaffIds: ['1', '2', '3'], // 食事・ドリンクサービス
+    cleaningDuration: 15, // 片付け: 2人×15分 for ~30名
+    cleaningStaffIds: ['4', '5'],
     agencyName: 'KNT',
     branchName: '池袋支店',
     agencyTel: '03-1111-2222',
@@ -135,6 +155,181 @@ export const reservations = [
     confirmedAt: null,
     confirmedBy: null,
     lastEditedAt: '2026-01-28T14:00:00',
+    cancelledAt: null,
+    cancelledBy: null,
+  },
+  {
+    id: '9',
+    restaurant: 'banquet',
+    customerId: '2',
+    hallId: '1', // Same hall as id='4' (嵐山) - 2回転目
+    menuId: '1',
+    date: '2026-02-05',
+    startTime: '13:00', // Starts right after cleanup + prep
+    endTime: '14:30',
+    partySize: 35,
+    status: 'confirmed',
+    serviceNotes: 'Anniversary dinner',
+    // Staff Assignment - 2回転目
+    prepDuration: 15, // 準備: 2人×15分 for ~30名
+    prepStaffIds: ['2', '6'],
+    serviceStaffIds: ['2', '4', '5'], // 食事・ドリンクサービス
+    cleaningDuration: 15, // 片付け: 2人×15分 for ~30名
+    cleaningStaffIds: ['1', '4'],
+    agencyName: '',
+    branchName: '',
+    agencyTel: '',
+    agencyFax: '',
+    agencyAddress: '',
+    groupName: 'Anniversary Party',
+    arrangerName: '',
+    repName: '佐藤 花子',
+    tourConductorCount: 0,
+    crewCount: 0,
+    createdAt: '2026-01-30T10:00:00',
+    confirmedAt: '2026-01-31T11:00:00',
+    confirmedBy: 'Yamada',
+    lastEditedAt: '2026-02-01T09:00:00',
+    cancelledAt: null,
+    cancelledBy: null,
+  },
+  {
+    id: '10',
+    restaurant: 'banquet',
+    customerId: '3',
+    hallId: '1', // 嵐山 - 3回転目
+    menuId: '2',
+    date: '2026-02-05',
+    startTime: '15:00',
+    endTime: '16:30',
+    partySize: 20,
+    status: 'deposit_paid',
+    serviceNotes: 'Corporate meeting',
+    // Staff Assignment - 3回転目
+    prepDuration: 15, // 2人×15分
+    prepStaffIds: ['3', '5'],
+    serviceStaffIds: ['1', '6'], // 食事・ドリンクサービス
+    cleaningDuration: 25, // 1人×25分 (single staff)
+    cleaningStaffIds: ['2'],
+    agencyName: '',
+    branchName: '',
+    agencyTel: '',
+    agencyFax: '',
+    agencyAddress: '',
+    groupName: 'Corporate Meeting',
+    arrangerName: '',
+    repName: 'Honda Ken',
+    tourConductorCount: 0,
+    crewCount: 0,
+    createdAt: '2026-02-01T15:00:00',
+    confirmedAt: '2026-02-02T10:00:00',
+    confirmedBy: 'Suzuki',
+    lastEditedAt: '2026-02-02T10:00:00',
+    cancelledAt: null,
+    cancelledBy: null,
+  },
+  {
+    id: '11',
+    restaurant: 'banquet',
+    customerId: '1',
+    hallId: '2', // 百花亭
+    menuId: '1',
+    date: '2026-02-05',
+    startTime: '11:30',
+    endTime: '13:00',
+    partySize: 45,
+    status: 'confirmed',
+    serviceNotes: '大人数のため準備に余裕を',
+    // Staff Assignment - larger party
+    prepDuration: 20, // More prep time for larger group
+    prepStaffIds: ['1', '4', '6'],
+    serviceStaffIds: ['1', '2', '3', '4'], // 食事・ドリンクサービス (larger party needs more)
+    cleaningDuration: 20,
+    cleaningStaffIds: ['2', '3', '5'],
+    agencyName: 'HIS',
+    branchName: '京都支店',
+    agencyTel: '075-1234-5678',
+    agencyFax: '',
+    agencyAddress: '',
+    groupName: '会社研修',
+    arrangerName: '中村 (HIS)',
+    repName: '田中 太郎',
+    tourConductorCount: 2,
+    crewCount: 0,
+    createdAt: '2026-01-25T09:00:00',
+    confirmedAt: '2026-01-28T14:00:00',
+    confirmedBy: 'Yamada',
+    lastEditedAt: '2026-01-30T11:00:00',
+    cancelledAt: null,
+    cancelledBy: null,
+  },
+  {
+    id: '12',
+    restaurant: 'banquet',
+    customerId: '2',
+    hallId: '2', // 百花亭 - 2回転目
+    menuId: '2',
+    date: '2026-02-05',
+    startTime: '13:40',
+    endTime: '15:10',
+    partySize: 30,
+    status: 'confirmed',
+    serviceNotes: '',
+    // Staff Assignment
+    prepDuration: 15, // 2人×15分
+    prepStaffIds: ['1', '2'],
+    serviceStaffIds: ['3', '5', '6'], // 食事・ドリンクサービス
+    cleaningDuration: 15,
+    cleaningStaffIds: ['4', '6'],
+    agencyName: '',
+    branchName: '',
+    agencyTel: '',
+    agencyFax: '',
+    agencyAddress: '',
+    groupName: '同窓会',
+    arrangerName: '',
+    repName: '佐藤 花子',
+    tourConductorCount: 0,
+    crewCount: 0,
+    createdAt: '2026-02-01T11:00:00',
+    confirmedAt: '2026-02-03T09:00:00',
+    confirmedBy: 'Suzuki',
+    lastEditedAt: '2026-02-03T09:00:00',
+    cancelledAt: null,
+    cancelledBy: null,
+  },
+  {
+    id: '13',
+    restaurant: 'banquet',
+    customerId: '3',
+    hallId: '4', // 嵯峨
+    menuId: '1',
+    date: '2026-02-05',
+    startTime: '12:00',
+    endTime: '13:30',
+    partySize: 40,
+    status: 'deposit_paid',
+    serviceNotes: '誕生日ケーキ準備あり',
+    // Staff Assignment
+    prepDuration: 30, // 1人×30分 (single staff prep)
+    prepStaffIds: ['5'],
+    serviceStaffIds: ['2', '3', '4', '5'], // 食事・ドリンクサービス
+    cleaningDuration: 15,
+    cleaningStaffIds: ['3', '6'],
+    agencyName: 'JTB',
+    branchName: '大阪支店',
+    agencyTel: '06-1234-5678',
+    agencyFax: '',
+    agencyAddress: '',
+    groupName: '誕生日パーティー',
+    arrangerName: '木村 (JTB)',
+    repName: 'Honda Ken',
+    tourConductorCount: 1,
+    crewCount: 0,
+    createdAt: '2026-01-20T16:00:00',
+    confirmedAt: '2026-01-25T10:00:00',
+    confirmedBy: 'Yamada',
+    lastEditedAt: '2026-02-01T14:00:00',
     cancelledAt: null,
     cancelledBy: null,
   },

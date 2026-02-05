@@ -7,7 +7,7 @@ import { ja } from "date-fns/locale"
 
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { halls, reservations, customers } from "@/lib/mock-data"
+import { halls, reservations, customers, staff } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { BookingDetailModal } from "@/components/bookings/booking-detail-modal"
 
@@ -34,7 +34,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
     const startHour = 0
     const endHour = 24
     const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i)
-    const hourHeight = 60
+    const hourHeight = 120
     const headerHeight = 30
 
     const scrollContainerRef = React.useRef<HTMLDivElement>(null)
@@ -60,7 +60,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
     const handleToday = () => {
         setDate(new Date())
         if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = 9.5 * hourHeight
+            scrollContainerRef.current.scrollTop = 10.5 * hourHeight
         }
     }
 
@@ -201,29 +201,109 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                             r.status === 'deposit_paid' ? { bg: 'bg-green-50', text: 'text-green-700', accent: 'bg-green-500' } :
                                                 { bg: 'bg-gray-50', text: 'text-gray-700', accent: 'bg-gray-500' }
 
-                                        return (
-                                            <div
-                                                key={r.id}
-                                                className={cn(
-                                                    "absolute left-1 right-1 rounded-md text-[10px] pl-3 pr-1 py-2 overflow-hidden cursor-pointer z-10 hover:brightness-102 transition-all flex flex-col leading-tight ring-1 ring-background",
-                                                    statusConfig.bg,
-                                                    statusConfig.text
-                                                )}
-                                                style={{
-                                                    height: `${Math.max(height - 8, 20)}px`,
-                                                    top: `${top + 4}px`
-                                                }}
-                                                onClick={() => setSelectedBookingId(r.id)}
-                                            >
-                                                {/* Accent Bar - Pure Vertical Inner Edge */}
-                                                <div className={cn("absolute left-0 top-0 bottom-0 w-1", statusConfig.accent)} />
+                                        // Prep and Cleaning blocks
+                                        const prepDuration = 'prepDuration' in r ? (r.prepDuration as number) : 0
+                                        const cleaningDuration = 'cleaningDuration' in r ? (r.cleaningDuration as number) : 0
+                                        const prepStaffIds = 'prepStaffIds' in r ? (r.prepStaffIds as string[]) : []
+                                        const cleaningStaffIds = 'cleaningStaffIds' in r ? (r.cleaningStaffIds as string[]) : []
+                                        const serviceStaffIds = 'serviceStaffIds' in r ? (r.serviceStaffIds as string[]) : []
 
-                                                <div className="font-medium truncate">{customers.find(c => c.id === r.customerId)?.name}</div>
-                                                {height > 30 && (
-                                                    <div className="flex gap-1 opacity-80 mt-0.5 items-center">
-                                                        <span>{r.startTime}</span>
-                                                        <span>•</span>
-                                                        <span>{r.partySize}名</span>
+                                        const prepHeight = prepDuration * pixelsPerMinute
+                                        const cleaningHeight = cleaningDuration * pixelsPerMinute
+                                        const prepTop = top - prepHeight
+                                        const cleaningTop = top + height
+
+                                        const prepStaffNames = prepStaffIds.map(id => staff.find(s => s.id === id)?.name).filter(Boolean).join(' / ')
+                                        const cleaningStaffNames = cleaningStaffIds.map(id => staff.find(s => s.id === id)?.name).filter(Boolean).join(' / ')
+                                        const serviceStaffNames = serviceStaffIds.map(id => staff.find(s => s.id === id)?.name).filter(Boolean).join(' / ')
+
+                                        return (
+                                            <div key={r.id} className="group cursor-pointer" onClick={() => setSelectedBookingId(r.id)}>
+                                                {/* Prep Block */}
+                                                {prepDuration > 0 && (
+                                                    <div
+                                                        className={cn(
+                                                            "absolute left-1 right-1 rounded-t-md text-[10px] pl-3 pr-1 py-1 overflow-hidden z-5 flex items-end transition-all group-hover:brightness-95",
+                                                            statusConfig.bg,
+                                                            statusConfig.text
+                                                        )}
+                                                        style={{
+                                                            height: `${Math.max(prepHeight - 4, 16)}px`,
+                                                            top: `${prepTop + 4}px`,
+                                                        }}
+                                                    >
+                                                        {/* Striped Accent Bar */}
+                                                        <div
+                                                            className="absolute left-0 top-0 bottom-0 w-1"
+                                                            style={{
+                                                                background: `repeating-linear-gradient(180deg, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'}, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 6px)`,
+                                                            }}
+                                                        />
+                                                        <span className="opacity-70">準備:</span>
+                                                        <span className="font-medium truncate">{prepStaffNames}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Main Event Block */}
+                                                <div
+                                                    className={cn(
+                                                        "absolute left-1 right-1 text-[10px] pl-3 pr-1 py-2 overflow-hidden z-10 transition-all group-hover:brightness-95 flex flex-col justify-between leading-tight ring-1 ring-background",
+                                                        prepDuration > 0 ? "rounded-none" : "rounded-t-md",
+                                                        cleaningDuration > 0 ? "rounded-none" : "rounded-b-md",
+                                                        statusConfig.bg,
+                                                        statusConfig.text
+                                                    )}
+                                                    style={{
+                                                        height: `${Math.max(height - 8, 20)}px`,
+                                                        top: `${top + 4}px`
+                                                    }}
+                                                >
+                                                    {/* Accent Bar - Pure Vertical Inner Edge */}
+                                                    <div className={cn("absolute left-0 top-0 bottom-0 w-1", statusConfig.accent)} />
+
+                                                    {/* Top content */}
+                                                    <div>
+                                                        <div className="font-medium truncate">{r.groupName}</div>
+                                                        {height > 30 && (
+                                                            <div className="flex gap-1 opacity-80 mt-0.5 items-center">
+                                                                <span>{r.startTime}</span>
+                                                                <span>•</span>
+                                                                <span>{r.partySize}名</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Bottom content - Service Staff */}
+                                                    {height > 50 && serviceStaffNames && (
+                                                        <div className="opacity-70 truncate">
+                                                            <span>担当: </span>
+                                                            <span className="font-medium">{serviceStaffNames}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Cleaning Block */}
+                                                {cleaningDuration > 0 && (
+                                                    <div
+                                                        className={cn(
+                                                            "absolute left-1 right-1 rounded-b-md text-[10px] pl-3 pr-1 py-1 overflow-hidden z-5 flex items-start transition-all group-hover:brightness-95",
+                                                            statusConfig.bg,
+                                                            statusConfig.text
+                                                        )}
+                                                        style={{
+                                                            height: `${Math.max(cleaningHeight - 4, 16)}px`,
+                                                            top: `${cleaningTop}px`,
+                                                        }}
+                                                    >
+                                                        {/* Striped Accent Bar */}
+                                                        <div
+                                                            className="absolute left-0 top-0 bottom-0 w-1"
+                                                            style={{
+                                                                background: `repeating-linear-gradient(180deg, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'}, ${r.status === 'confirmed' ? '#3b82f6' : r.status === 'deposit_paid' ? '#22c55e' : '#6b7280'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 3px, ${r.status === 'confirmed' ? '#93c5fd' : r.status === 'deposit_paid' ? '#86efac' : '#d1d5db'} 6px)`,
+                                                            }}
+                                                        />
+                                                        <span className="opacity-70">片付け:</span>
+                                                        <span className="font-medium truncate">{cleaningStaffNames}</span>
                                                     </div>
                                                 )}
                                             </div>
