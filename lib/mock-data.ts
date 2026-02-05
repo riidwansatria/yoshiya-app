@@ -6,11 +6,16 @@ export const restaurants = [
 ];
 
 export const halls = [
-  { id: '1', restaurant: 'banquet', name: '桜の間', capacity: 30 },
-  { id: '2', restaurant: 'banquet', name: '松の間', capacity: 20 },
-  { id: '3', restaurant: 'banquet', name: '竹の間', capacity: 15 },
-  { id: '4', restaurant: 'banquet', name: '梅の間', capacity: 10 },
-  { id: '5', restaurant: 'banquet', name: '菊の間', capacity: 8 },
+  { id: '1', restaurant: 'banquet', name: '嵐山', capacity: 88 },
+  { id: '2', restaurant: 'banquet', name: '百花亭', capacity: 60 },
+  { id: '3', restaurant: 'banquet', name: '香花亭', capacity: 48 },
+  { id: '4', restaurant: 'banquet', name: '嵯峨', capacity: 56 },
+  { id: '5', restaurant: 'banquet', name: '福の間', capacity: 32 },
+  { id: '6', restaurant: 'banquet', name: '錦', capacity: 12 },
+  { id: '7', restaurant: 'banquet', name: '東山 松', capacity: 10 },
+  { id: '8', restaurant: 'banquet', name: '東山 桜', capacity: 10 },
+  { id: '9', restaurant: 'banquet', name: '東山 楓', capacity: 10 },
+  { id: '10', restaurant: 'banquet', name: '東山 欅', capacity: 8 },
 ];
 
 export const customers = [

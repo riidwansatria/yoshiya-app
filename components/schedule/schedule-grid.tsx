@@ -181,7 +181,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                         {restaurantHalls.map(hall => {
                             const hallBookings = dailyReservations.filter(r => r.hallId === hall.id)
                             return (
-                                <div key={`events-${hall.id}`} className="relative h-full w-full pointer-events-auto">
+                                <div key={`events-${hall.id}`} className="relative h-full w-full pointer-events-auto min-w-[150px]">
                                     {hallBookings.map(r => {
                                         const rStart = parseInt(r.startTime.split(':')[0])
                                         const startMin = parseInt(r.startTime.split(':')[1] || '0')
