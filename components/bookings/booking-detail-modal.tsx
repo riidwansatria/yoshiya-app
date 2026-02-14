@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { staff, halls } from "@/lib/mock-data"
 import { useTranslations } from "next-intl"
 
@@ -98,8 +99,119 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     if (!open) return null
     if (loading) return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="h-40 flex items-center justify-center">
-                <div className="text-muted-foreground">Loading...</div>
+            <DialogContent showCloseButton={false} className="max-w-[95vw] sm:max-w-7xl overflow-hidden bg-background p-0 flex flex-col max-h-[90vh] gap-0">
+                <DialogTitle className="sr-only">Loading booking details</DialogTitle>
+                {/* Skeleton Header */}
+                <header className="px-4 py-3 border-b flex justify-between items-center bg-white z-10">
+                    <div>
+                        <Skeleton className="h-6 w-40" />
+                        <Skeleton className="h-3 w-28 mt-1.5" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="h-7 w-24 rounded-full" />
+                        <div className="w-px h-6 bg-border mx-1" />
+                        <Skeleton className="h-8 w-8 rounded-md" />
+                    </div>
+                </header>
+
+                <div className="flex flex-1 overflow-hidden">
+                    <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/30">
+                        <div className="p-4 space-y-4">
+                            {/* Top Row: Date/Room + Client Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                {/* Left Card: Arrival & Room */}
+                                <div className="md:col-span-4 border rounded-lg p-3 space-y-3 bg-white shadow-sm">
+                                    <Skeleton className="h-3 w-20" />
+                                    <Skeleton className="h-8 w-36" />
+                                    <Skeleton className="h-4 w-28" />
+                                    <hr className="border-border/50" />
+                                    <Skeleton className="h-3 w-16" />
+                                    <Skeleton className="h-12 w-full rounded-lg" />
+                                </div>
+                                {/* Right Card: Client Details */}
+                                <div className="md:col-span-8 border rounded-lg p-3 bg-white shadow-sm">
+                                    <Skeleton className="h-3 w-28 mb-3" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1"><Skeleton className="h-3 w-16" /><Skeleton className="h-8 w-full" /></div>
+                                                <div className="space-y-1"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-full" /></div>
+                                            </div>
+                                            <div className="space-y-1"><Skeleton className="h-3 w-14" /><Skeleton className="h-8 w-full" /></div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1"><Skeleton className="h-3 w-10" /><Skeleton className="h-8 w-full" /></div>
+                                                <div className="space-y-1"><Skeleton className="h-3 w-10" /><Skeleton className="h-8 w-full" /></div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-8 w-full" /></div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-full" /></div>
+                                                <div className="space-y-1"><Skeleton className="h-3 w-14" /><Skeleton className="h-8 w-full" /></div>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                <div className="space-y-1"><Skeleton className="h-3 w-10" /><Skeleton className="h-8 w-full" /></div>
+                                                <div className="space-y-1"><Skeleton className="h-3 w-10" /><Skeleton className="h-8 w-full" /></div>
+                                                <div className="space-y-1"><Skeleton className="h-3 w-10" /><Skeleton className="h-8 w-full" /></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Menu Table Skeleton */}
+                            <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                                <div className="p-3 flex justify-between items-center bg-gray-50/50">
+                                    <Skeleton className="h-3 w-28" />
+                                    <Skeleton className="h-4 w-16" />
+                                </div>
+                                <div className="px-4 py-3 space-y-3">
+                                    <div className="flex justify-between items-center border-b pb-2">
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-3 w-12" />
+                                        <Skeleton className="h-3 w-8" />
+                                        <Skeleton className="h-3 w-16" />
+                                    </div>
+                                    <div className="flex justify-between items-start py-2">
+                                        <div className="space-y-1.5"><Skeleton className="h-5 w-32" /><Skeleton className="h-3 w-48" /></div>
+                                        <Skeleton className="h-4 w-8" />
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-6 w-10 rounded-md" />
+                                        <Skeleton className="h-5 w-20" />
+                                    </div>
+                                    <div className="flex justify-end items-center border-t pt-3">
+                                        <Skeleton className="h-6 w-28" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Bottom: Notes + History */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[200px]">
+                                <div className="border rounded-lg p-3 bg-white space-y-3 shadow-sm">
+                                    <Skeleton className="h-3 w-24" />
+                                    <Skeleton className="h-24 w-full rounded-md" />
+                                </div>
+                                <div className="border rounded-lg p-3 bg-white space-y-3 shadow-sm">
+                                    <Skeleton className="h-3 w-28" />
+                                    <div className="space-y-3">
+                                        <div className="flex gap-3"><Skeleton className="h-2.5 w-2.5 rounded-full shrink-0" /><div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-2.5 w-28" /></div></div>
+                                        <div className="flex gap-3"><Skeleton className="h-2.5 w-2.5 rounded-full shrink-0" /><div className="space-y-1"><Skeleton className="h-3 w-16" /><Skeleton className="h-2.5 w-28" /></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Skeleton Footer */}
+                <footer className="px-6 py-4 border-t flex items-center justify-between bg-white z-10">
+                    <Skeleton className="h-8 w-32" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-8 w-20" />
+                        <Skeleton className="h-8 w-16" />
+                    </div>
+                </footer>
             </DialogContent>
         </Dialog>
     )
