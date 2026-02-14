@@ -51,6 +51,7 @@
         "viewInvoice": "請求書を表示",
         "cancel": "キャンセル",
         "save": "変更を保存",
+        "saving": "保存中...",
         "arrival": "到着日時",
         "clientDetails": "顧客詳細",
         "agencyName": "旅行会社名",

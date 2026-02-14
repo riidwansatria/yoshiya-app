@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
+import { ja } from "date-fns/locale"
 import { Printer, Mail, User, FileText, CalendarIcon, ChevronDown, DoorOpen, Users, NotepadText, Utensils, Contact, Clock, FileClock, RotateCcw, PanelRight, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { staff, halls } from "@/lib/mock-data"
+import { getBookingDetails, updateBooking, getStaffList, getVenueList } from "@/lib/actions/bookings"
 import { useTranslations } from "next-intl"
 
 interface BookingDetailModalProps {
@@ -53,6 +54,30 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const [serviceStaffIds, setServiceStaffIds] = React.useState<string[]>([])
     const [cleaningStaffIds, setCleaningStaffIds] = React.useState<string[]>([])
 
+    // Booking Details State
+    const [date, setDate] = React.useState<Date | undefined>(undefined)
+    const [startTime, setStartTime] = React.useState('')
+    const [endTime, setEndTime] = React.useState('')
+    const [venueId, setVenueId] = React.useState('')
+
+    // Agency & Group State
+    const [agencyName, setAgencyName] = React.useState('')
+    const [branchName, setBranchName] = React.useState('')
+    const [agencyAddress, setAgencyAddress] = React.useState('')
+    const [agencyTel, setAgencyTel] = React.useState('')
+    const [agencyFax, setAgencyFax] = React.useState('')
+    const [groupName, setGroupName] = React.useState('')
+    const [repName, setRepName] = React.useState('')
+    const [arrangerName, setArrangerName] = React.useState('')
+
+    // Counts State
+    const [partySize, setPartySize] = React.useState(0)
+    const [conductorCount, setConductorCount] = React.useState(0)
+    const [crewCount, setCrewCount] = React.useState(0)
+    const [saving, setSaving] = React.useState(false)
+    const [staffList, setStaffList] = React.useState<{ id: string, name: string, role: string }[]>([])
+    const [venueList, setVenueList] = React.useState<{ id: string, name: string, capacity: number }[]>([])
+
     // Load booking data
     React.useEffect(() => {
         async function loadBooking() {
@@ -60,19 +85,51 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
 
             setLoading(true)
             try {
-                // Dynamic import to avoid server-side issues
-                const { getBookingDetails } = await import('@/lib/actions/bookings')
-                const result = await getBookingDetails(bookingId)
-                if (result.success && result.data) {
-                    setBooking(result.data)
+                const [bookingResult, staffResult, venueResult] = await Promise.all([
+                    getBookingDetails(bookingId),
+                    getStaffList(),
+                    getVenueList(restaurantId)
+                ])
+
+                if (staffResult.success && staffResult.data) {
+                    setStaffList(staffResult.data)
+                }
+
+                if (venueResult.success && venueResult.data) {
+                    setVenueList(venueResult.data)
+                }
+
+                if (bookingResult.success && bookingResult.data) {
+                    setBooking(bookingResult.data)
                     // Initialize form state
-                    setStatus(result.data.status)
-                    setNotes(result.data.notes || '')
+                    setStatus(bookingResult.data.status)
+                    setNotes(bookingResult.data.notes || '')
+
+                    // Booking Details
+                    setDate(bookingResult.data.date ? new Date(bookingResult.data.date) : undefined)
+                    setStartTime(bookingResult.data.start_time || '')
+                    setEndTime(bookingResult.data.end_time || '')
+                    setVenueId(bookingResult.data.venue_id || '')
+
+                    // Agency & Group Info
+                    setAgencyName(bookingResult.data.agency_name || '')
+                    setBranchName(bookingResult.data.agency_branch || '')
+                    setAgencyAddress(bookingResult.data.agency_address || '')
+                    setAgencyTel(bookingResult.data.agency_tel || '')
+                    setAgencyFax(bookingResult.data.agency_fax || '')
+                    setGroupName(bookingResult.data.group_name || '')
+                    setRepName(bookingResult.data.rep_name || '')
+                    setArrangerName(bookingResult.data.arranger_name || '')
+
+                    // Counts
+                    setPartySize(bookingResult.data.party_size || 0)
+                    setConductorCount(bookingResult.data.conductor_count || 0)
+                    setCrewCount(bookingResult.data.crew_count || 0)
 
                     // Parse staff assignments
-                    const prep = result.data.reservation_staff?.filter((s: any) => s.role === 'prep').map((s: any) => s.user_id) || []
-                    const service = result.data.reservation_staff?.filter((s: any) => s.role === 'service').map((s: any) => s.user_id) || []
-                    const cleaning = result.data.reservation_staff?.filter((s: any) => s.role === 'cleaning').map((s: any) => s.user_id) || []
+                    const prep = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'prep').map((s: any) => s.user_id) || []
+                    const service = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'service').map((s: any) => s.user_id) || []
+                    const cleaning = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'cleaning').map((s: any) => s.user_id) || []
 
                     setPrepStaffIds(prep)
                     setServiceStaffIds(service)
@@ -93,6 +150,27 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
         if (!open) {
             setBooking(null)
             setLoading(false)
+            // Reset form state
+            setStatus('pending')
+            setNotes('')
+            setDate(undefined)
+            setStartTime('')
+            setEndTime('')
+            setVenueId('')
+            setAgencyName('')
+            setBranchName('')
+            setAgencyAddress('')
+            setAgencyTel('')
+            setAgencyFax('')
+            setGroupName('')
+            setRepName('')
+            setArrangerName('')
+            setPartySize(0)
+            setConductorCount(0)
+            setCrewCount(0)
+            setPrepStaffIds([])
+            setServiceStaffIds([])
+            setCleaningStaffIds([])
         }
     }, [open])
 
@@ -231,26 +309,54 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const totalAmount = booking.reservation_menus?.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0) || 0
 
     // Format dates
-    const formattedDate = booking.date ? format(new Date(booking.date), "yyyy/MM/dd") : '---'
-
+    const formattedDate = date ? format(date, 'yyyy年M月d日 (EEE)', { locale: ja }) : ''
     const handleInvoice = () => {
         router.push(`/dashboard/${restaurantId}/bookings/${bookingId}/invoice`)
         onOpenChange(false)
     }
 
-    const handleSave = () => {
-        // TODO: Implement save functionality with Server Action
-        console.log('Saved booking updates:', {
-            id: booking.id,
-            status,
-            notes,
-            staff: {
-                prep: prepStaffIds,
-                service: serviceStaffIds,
-                cleaning: cleaningStaffIds
+    const handleSave = async () => {
+        if (!booking) return
+        setSaving(true)
+        try {
+            const { updateBooking } = await import('@/lib/actions/bookings')
+            const result = await updateBooking(
+                booking.id,
+                {
+                    status,
+                    notes,
+                    date: date ? format(date, 'yyyy-MM-dd') : undefined,
+                    start_time: startTime,
+                    end_time: endTime,
+                    venue_id: venueId,
+                    group_name: groupName,
+                    party_size: partySize,
+                    rep_name: repName,
+                    arranger_name: arrangerName,
+                    conductor_count: conductorCount,
+                    crew_count: crewCount,
+                    agency_name: agencyName,
+                    agency_branch: branchName,
+                    agency_tel: agencyTel,
+                    agency_fax: agencyFax,
+                    agency_address: agencyAddress,
+                },
+                {
+                    prep: prepStaffIds,
+                    service: serviceStaffIds,
+                    cleaning: cleaningStaffIds,
+                }
+            )
+            if (!result.success) {
+                console.error('Failed to save:', result.error)
             }
-        })
-        onOpenChange(false)
+        } catch (error) {
+            console.error('Failed to save booking:', error)
+        } finally {
+            setSaving(false)
+            onOpenChange(false)
+            router.refresh()
+        }
     }
 
     // Helper to toggle staff selection
@@ -286,7 +392,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                 </span>
             </div>
             <div className="flex flex-wrap gap-2">
-                {staff.map(member => {
+                {staffList.map(member => {
                     const isSelected = selectedIds.includes(member.id)
                     return (
                         <Button
@@ -391,7 +497,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <Calendar
                                                         mode="single"
                                                         captionLayout="dropdown"
-                                                        selected={new Date(booking.date)}
+                                                        selected={date}
+                                                        onSelect={setDate}
                                                         initialFocus
                                                     />
                                                 </PopoverContent>
@@ -401,13 +508,15 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <div className="flex items-center gap-1 text-sm text-muted-foreground -mx-2">
                                                 <input
                                                     type="time"
-                                                    defaultValue={booking.start_time || ''}
+                                                    value={startTime}
+                                                    onChange={(e) => setStartTime(e.target.value)}
                                                     className="bg-transparent border-0 p-0 px-2 py-1 text-sm font-normal hover:bg-muted/50 rounded-md focus:outline-none focus:ring-0 appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
                                                 />
                                                 <span className="text-muted-foreground/60">→</span>
                                                 <input
                                                     type="time"
-                                                    defaultValue={booking.end_time || ''}
+                                                    value={endTime}
+                                                    onChange={(e) => setEndTime(e.target.value)}
                                                     className="bg-transparent border-0 p-0 px-2 py-1 text-sm font-normal hover:bg-muted/50 rounded-md focus:outline-none focus:ring-0 appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
                                                 />
                                             </div>
@@ -421,12 +530,12 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <DoorOpen className="w-3 h-3" />
                                             <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.room')}</h2>
                                         </div>
-                                        <Select defaultValue={booking.venue_id}>
+                                        <Select value={venueId} onValueChange={setVenueId}>
                                             <SelectTrigger className="w-full h-12 border-input bg-muted/20 text-lg rounded-lg px-3 focus:ring-1 focus:ring-ring font-medium">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {halls.filter(h => h.restaurant === restaurantId).map(h => (
+                                                {venueList.map(h => (
                                                     <SelectItem key={h.id} value={h.id}>
                                                         <div className="flex items-center justify-between w-full gap-4">
                                                             <span>{h.name}</span>
@@ -454,7 +563,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.agencyName')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.agency_name}
+                                                        value={agencyName}
+                                                        onChange={(e) => setAgencyName(e.target.value)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.selectAgency')}
                                                     />
@@ -463,7 +573,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.branch')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.branchName}
+                                                        value={branchName}
+                                                        onChange={(e) => setBranchName(e.target.value)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.branchName')}
                                                     />
@@ -474,7 +585,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.address')}</span>
                                                 <Input
                                                     type="text"
-                                                    defaultValue={booking.agencyAddress}
+                                                    value={agencyAddress}
+                                                    onChange={(e) => setAgencyAddress(e.target.value)}
                                                     className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                     placeholder={t('bookingModal.placeholders.agencyAddress')}
                                                 />
@@ -485,7 +597,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.tel')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.agencyTel}
+                                                        value={agencyTel}
+                                                        onChange={(e) => setAgencyTel(e.target.value)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.tel')}
                                                     />
@@ -494,7 +607,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.fax')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.agencyFax}
+                                                        value={agencyFax}
+                                                        onChange={(e) => setAgencyFax(e.target.value)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.fax')}
                                                     />
@@ -508,7 +622,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.groupName')}</span>
                                                 <Input
                                                     type="text"
-                                                    defaultValue={booking.group_name}
+                                                    value={groupName}
+                                                    onChange={(e) => setGroupName(e.target.value)}
                                                     className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                     placeholder={t('bookingModal.placeholders.groupName')}
                                                 />
@@ -519,7 +634,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.pic')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.rep_name}
+                                                        value={repName}
+                                                        onChange={(e) => setRepName(e.target.value)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.pic')}
                                                     />
@@ -529,7 +645,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.arranger')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.arrangerName}
+                                                        value={arrangerName}
+                                                        onChange={(e) => setArrangerName(e.target.value)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.arrangerName')}
                                                     />
@@ -542,7 +659,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <Input
                                                         type="number"
                                                         min={0}
-                                                        defaultValue={booking.party_size}
+                                                        value={partySize}
+                                                        onChange={(e) => setPartySize(parseInt(e.target.value) || 0)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.partySize')}
                                                     />
@@ -552,7 +670,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <Input
                                                         type="number"
                                                         min={0}
-                                                        defaultValue={booking.tourConductorCount || 0}
+                                                        value={conductorCount}
+                                                        onChange={(e) => setConductorCount(parseInt(e.target.value) || 0)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.tourConductor')}
                                                     />
@@ -562,7 +681,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <Input
                                                         type="number"
                                                         min={0}
-                                                        defaultValue={booking.crewCount || 0}
+                                                        value={crewCount}
+                                                        onChange={(e) => setCrewCount(parseInt(e.target.value) || 0)}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.crew')}
                                                     />
@@ -759,7 +879,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     </Button>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('bookingModal.cancel')}</Button>
-                        <Button size="sm" onClick={handleSave}>{t('bookingModal.save')}</Button>
+                        <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? t('bookingModal.saving') : t('bookingModal.save')}</Button>
                     </div>
                 </footer>
 

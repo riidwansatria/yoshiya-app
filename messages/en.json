@@ -51,6 +51,7 @@
         "viewInvoice": "View Invoice",
         "cancel": "Cancel",
         "save": "Save Changes",
+        "saving": "Saving...",
         "arrival": "Arrival Date",
         "clientDetails": "Client Details",
         "agencyName": "Travel Agency",
