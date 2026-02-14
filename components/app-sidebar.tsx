@@ -6,6 +6,8 @@ import {
     Users,
     ClipboardList,
     CalendarCheck,
+    UserCog,
+    Settings,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -20,11 +22,14 @@ import {
     SidebarMenu,
     SidebarMenuItem,
     SidebarMenuButton,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
 } from "@/components/ui/sidebar"
 import { RestaurantSwitcher } from "@/components/restaurant-switcher"
 import { NavUser } from "@/components/nav-user"
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
     const t = useTranslations('nav')
     const params = useParams()
     const pathname = usePathname()
@@ -77,6 +82,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </SidebarMenuItem>
                     ))}
                 </SidebarMenu>
+
+                {userRole === 'manager' && (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Settings</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={pathname.includes('/settings/staff')}
+                                        tooltip="Staff Management"
+                                    >
+                                        <Link href="/dashboard/settings/staff">
+                                            <UserCog />
+                                            <span>Staff Management</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                )}
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />
