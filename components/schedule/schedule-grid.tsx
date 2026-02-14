@@ -235,9 +235,9 @@ export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialRese
                                         const prepTop = top - prepHeight
                                         const cleaningTop = top + height
 
-                                        const prepStaffNames = prepStaff.map((s: any) => s.users?.name).filter(Boolean).join(' / ')
-                                        const cleaningStaffNames = cleaningStaff.map((s: any) => s.users?.name).filter(Boolean).join(' / ')
-                                        const serviceStaffNames = serviceStaff.map((s: any) => s.users?.name).filter(Boolean).join(' / ')
+                                        const prepStaffNames = prepStaff.map((s: any) => s.users?.name || s.temp_name).filter(Boolean).join(' / ')
+                                        const cleaningStaffNames = cleaningStaff.map((s: any) => s.users?.name || s.temp_name).filter(Boolean).join(' / ')
+                                        const serviceStaffNames = serviceStaff.map((s: any) => s.users?.name || s.temp_name).filter(Boolean).join(' / ')
 
                                         return (
                                             <div key={r.id} className="group cursor-pointer" onClick={() => setSelectedBookingId(r.id)}>

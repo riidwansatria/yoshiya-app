@@ -9,7 +9,7 @@ export async function getReservations(restaurantId: string, options?: { date?: s
       *,
       venues ( name, capacity ),
       reservation_menus ( id, menu_name, quantity, unit_price, notes ),
-      reservation_staff ( id, user_id, role, duration_minutes, users ( name ) ),
+      reservation_staff ( id, user_id, temp_name, role, duration_minutes, users ( name ) ),
       customers ( name )
     `)
         .eq('restaurant_id', restaurantId)
@@ -43,7 +43,7 @@ export async function getReservationById(id: string) {
       *,
       venues ( name, capacity ),
       reservation_menus ( id, menu_name, quantity, unit_price, notes ),
-      reservation_staff ( id, user_id, role, duration_minutes, users ( name ) ),
+      reservation_staff ( id, user_id, temp_name, role, duration_minutes, users ( name ) ),
       customers ( name )
     `)
         .eq('id', id)

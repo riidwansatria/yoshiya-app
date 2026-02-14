@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { format, parse, differenceInMinutes } from "date-fns"
 import { ja } from "date-fns/locale"
-import { Printer, Mail, User, FileText, CalendarIcon, ChevronDown, DoorOpen, Users, NotepadText, Utensils, Contact, Clock, FileClock, RotateCcw, PanelRight, UserCog } from "lucide-react"
+import { Printer, Mail, User, FileText, CalendarIcon, ChevronDown, DoorOpen, Users, NotepadText, Utensils, Contact, Clock, FileClock, RotateCcw, PanelRight, UserCog, ChefHat, Sparkles, Loader2, X, Trash2, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,7 +33,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Trash2 } from "lucide-react"
+
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -62,6 +62,11 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const [prepStaffIds, setPrepStaffIds] = React.useState<string[]>([])
     const [serviceStaffIds, setServiceStaffIds] = React.useState<string[]>([])
     const [cleaningStaffIds, setCleaningStaffIds] = React.useState<string[]>([])
+
+    // Temp Staff State
+    const [prepTempNames, setPrepTempNames] = React.useState<string[]>([])
+    const [serviceTempNames, setServiceTempNames] = React.useState<string[]>([])
+    const [cleaningTempNames, setCleaningTempNames] = React.useState<string[]>([])
 
     // Booking Details State
     const [date, setDate] = React.useState<Date | undefined>(undefined)
@@ -97,6 +102,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
         title,
         selectedIds,
         setIds,
+        tempNames,
+        setTempNames,
         duration,
         setDuration,
         icon: Icon
@@ -104,57 +111,136 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
         title: string,
         selectedIds: string[],
         setIds: (ids: string[]) => void,
+        tempNames: string[],
+        setTempNames: (names: string[]) => void,
         duration?: number,
         setDuration?: (d: number) => void,
         icon: any
-    }) => (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Icon className="w-3 h-3" />
-                    <h3 className="text-[10px] font-semibold uppercase tracking-wider">{title}</h3>
+    }) => {
+        const [isInputVisible, setIsInputVisible] = React.useState(false)
+        const [inputValue, setInputValue] = React.useState('')
+        const inputRef = React.useRef<HTMLInputElement>(null)
+
+        React.useEffect(() => {
+            if (isInputVisible) {
+                inputRef.current?.focus()
+            }
+        }, [isInputVisible])
+
+        const handleAddTemp = () => {
+            if (inputValue.trim()) {
+                setTempNames([...tempNames, inputValue.trim()])
+                setInputValue('')
+                // Keep input visible for multiple entries
+                inputRef.current?.focus()
+            } else {
+                setIsInputVisible(false)
+            }
+        }
+
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddTemp()
+            } else if (e.key === 'Escape') {
+                setIsInputVisible(false)
+                setInputValue('')
+            }
+        }
+
+        const removeTemp = (indexToRemove: number) => {
+            setTempNames(tempNames.filter((_, index) => index !== indexToRemove))
+        }
+
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Icon className="w-3 h-3" />
+                        <h3 className="text-[10px] font-semibold uppercase tracking-wider">{title}</h3>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        {duration !== undefined && setDuration && (
+                            <Select value={String(duration)} onValueChange={(v) => setDuration(parseInt(v))}>
+                                <SelectTrigger className="h-5 w-auto gap-0.5 px-1.5 text-[10px] border-none shadow-none bg-transparent text-muted-foreground hover:text-foreground focus:ring-0 cursor-pointer">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent align="end" className="min-w-0">
+                                    {[5, 10, 15, 20, 30, 45, 60].map(v => (
+                                        <SelectItem key={v} value={String(v)} className="text-xs">{v} min</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border">
+                            {selectedIds.length + tempNames.length}
+                        </span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                    {duration !== undefined && setDuration && (
-                        <Select value={String(duration)} onValueChange={(v) => setDuration(parseInt(v))}>
-                            <SelectTrigger className="h-5 w-auto gap-0.5 px-1.5 text-[10px] border-none shadow-none bg-transparent text-muted-foreground hover:text-foreground focus:ring-0 cursor-pointer">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent align="end" className="min-w-0">
-                                {[5, 10, 15, 20, 30, 45, 60].map(v => (
-                                    <SelectItem key={v} value={String(v)} className="text-xs">{v} min</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border">
-                        {selectedIds.length}
-                    </span>
-                </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {staffList.map(member => {
-                    const isSelected = selectedIds.includes(member.id)
-                    return (
+                <div className="flex flex-wrap gap-2">
+                    {staffList.map(member => {
+                        const isSelected = selectedIds.includes(member.id)
+                        return (
+                            <Button
+                                key={member.id}
+                                variant={isSelected ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleStaff(member.id, selectedIds, setIds)}
+                                className={cn(
+                                    "h-7 px-3 text-xs border transition-colors",
+                                    isSelected
+                                        ? "bg-sky-300 hover:bg-sky-400 text-sky-950 border-transparent shadow-sm"
+                                        : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
+                                )}
+                            >
+                                {member.name}
+                            </Button>
+                        )
+                    })}
+
+                    {/* Temp Staff Chips */}
+                    {tempNames.map((name, index) => (
                         <Button
-                            key={member.id}
-                            variant={isSelected ? "default" : "outline"}
+                            key={`temp-${index}`}
+                            variant="outline"
                             size="sm"
-                            onClick={() => toggleStaff(member.id, selectedIds, setIds)}
-                            className={cn(
-                                "h-7 px-3 text-xs border",
-                                isSelected
-                                    ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                                    : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
-                            )}
+                            className="h-7 px-3 text-xs border border-dashed border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:border-sky-400 group relative pr-7"
+                            onClick={() => removeTemp(index)}
                         >
-                            {member.name}
+                            {name}
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 opacity-50 group-hover:opacity-100">
+                                ×
+                            </span>
                         </Button>
-                    )
-                })}
+                    ))}
+
+                    {/* Temp Input or Button */}
+                    {isInputVisible ? (
+                        <div className="relative">
+                            <Input
+                                ref={inputRef}
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                onBlur={handleAddTemp}
+                                className="h-7 w-32 text-xs px-2 py-0 min-h-0"
+                                placeholder="名前を入力..."
+                            />
+                        </div>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-transparent hover:border-border"
+                            onClick={() => setIsInputVisible(true)}
+                        >
+                            + 臨時
+                        </Button>
+                    )}
+                </div>
             </div>
-        </div>
-    )
+        )
+    }
 
     // Load booking data
     React.useEffect(() => {
@@ -209,9 +295,13 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     const serviceStaff = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'service') || []
                     const cleaningStaff = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'cleaning') || []
 
-                    setPrepStaffIds(prepStaff.map((s: any) => s.user_id))
-                    setServiceStaffIds(serviceStaff.map((s: any) => s.user_id))
-                    setCleaningStaffIds(cleaningStaff.map((s: any) => s.user_id))
+                    setPrepStaffIds(prepStaff.filter((s: any) => s.user_id).map((s: any) => s.user_id))
+                    setServiceStaffIds(serviceStaff.filter((s: any) => s.user_id).map((s: any) => s.user_id))
+                    setCleaningStaffIds(cleaningStaff.filter((s: any) => s.user_id).map((s: any) => s.user_id))
+
+                    setPrepTempNames(prepStaff.filter((s: any) => s.temp_name).map((s: any) => s.temp_name))
+                    setServiceTempNames(serviceStaff.filter((s: any) => s.temp_name).map((s: any) => s.temp_name))
+                    setCleaningTempNames(cleaningStaff.filter((s: any) => s.temp_name).map((s: any) => s.temp_name))
 
                     if (prepStaff.length > 0) setPrepDuration(prepStaff[0].duration_minutes || 30)
                     if (cleaningStaff.length > 0) setCleaningDuration(cleaningStaff[0].duration_minutes || 30)
@@ -252,6 +342,9 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
             setPrepStaffIds([])
             setServiceStaffIds([])
             setCleaningStaffIds([])
+            setPrepTempNames([])
+            setServiceTempNames([])
+            setCleaningTempNames([])
             setPrepDuration(30)
             setCleaningDuration(30)
         }
@@ -425,14 +518,15 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     agency_address: agencyAddress,
                 },
                 {
-                    prep: { ids: prepStaffIds, duration: prepDuration },
+                    prep: { ids: prepStaffIds, tempNames: prepTempNames, duration: prepDuration },
                     service: {
                         ids: serviceStaffIds,
+                        tempNames: serviceTempNames,
                         duration: (startTime && endTime)
                             ? differenceInMinutes(parse(endTime, 'HH:mm', new Date()), parse(startTime, 'HH:mm', new Date()))
                             : 0
                     },
-                    cleaning: { ids: cleaningStaffIds, duration: cleaningDuration },
+                    cleaning: { ids: cleaningStaffIds, tempNames: cleaningTempNames, duration: cleaningDuration },
                 }
             )
             if (!result.success) {
@@ -911,9 +1005,11 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     title={t('bookingModal.roles.preparation')}
                                     selectedIds={prepStaffIds}
                                     setIds={setPrepStaffIds}
+                                    tempNames={prepTempNames}
+                                    setTempNames={setPrepTempNames}
                                     duration={prepDuration}
                                     setDuration={setPrepDuration}
-                                    icon={Clock}
+                                    icon={ChefHat}
                                 />
 
                                 <div className="w-full flex justify-center"><div className="w-1 h-4 border-l-2 border-dashed border-slate-300/50"></div></div>
@@ -923,6 +1019,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     title={t('bookingModal.roles.service')}
                                     selectedIds={serviceStaffIds}
                                     setIds={setServiceStaffIds}
+                                    tempNames={serviceTempNames}
+                                    setTempNames={setServiceTempNames}
                                     icon={Utensils}
                                 />
 
@@ -933,9 +1031,11 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     title={t('bookingModal.roles.cleaning')}
                                     selectedIds={cleaningStaffIds}
                                     setIds={setCleaningStaffIds}
+                                    tempNames={cleaningTempNames}
+                                    setTempNames={setCleaningTempNames}
                                     duration={cleaningDuration}
                                     setDuration={setCleaningDuration}
-                                    icon={RotateCcw}
+                                    icon={Sparkles}
                                 />
                             </div>
                         </div>

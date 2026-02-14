@@ -48,9 +48,9 @@ export async function updateBooking(
         agency_address?: string
     },
     staffAssignments?: {
-        prep: { ids: string[], duration: number }
-        service: { ids: string[], duration: number }
-        cleaning: { ids: string[], duration: number }
+        prep: { ids: string[], tempNames: string[], duration: number }
+        service: { ids: string[], tempNames: string[], duration: number }
+        cleaning: { ids: string[], tempNames: string[], duration: number }
     }
 ) {
     try {
@@ -106,26 +106,34 @@ export async function updateBooking(
             }
 
             // Insert new assignments
-            const staffRows = [
-                ...staffAssignments.prep.ids.map(userId => ({
-                    reservation_id: id,
-                    user_id: userId,
-                    role: 'prep',
-                    duration_minutes: staffAssignments.prep.duration
-                })),
-                ...staffAssignments.service.ids.map(userId => ({
-                    reservation_id: id,
-                    user_id: userId,
-                    role: 'service',
-                    duration_minutes: staffAssignments.service.duration
-                })),
-                ...staffAssignments.cleaning.ids.map(userId => ({
-                    reservation_id: id,
-                    user_id: userId,
-                    role: 'cleaning',
-                    duration_minutes: staffAssignments.cleaning.duration
-                })),
-            ]
+            const staffRows: any[] = []
+
+            // Helper to add rows
+            const addRows = (role: string, ids: string[], tempNames: string[], duration: number) => {
+                // Registered staff
+                ids.forEach(userId => {
+                    staffRows.push({
+                        reservation_id: id,
+                        user_id: userId,
+                        role,
+                        duration_minutes: duration
+                    })
+                })
+                // Temp staff
+                tempNames.forEach(name => {
+                    staffRows.push({
+                        reservation_id: id,
+                        user_id: null,
+                        temp_name: name,
+                        role,
+                        duration_minutes: duration
+                    })
+                })
+            }
+
+            addRows('prep', staffAssignments.prep.ids, staffAssignments.prep.tempNames, staffAssignments.prep.duration)
+            addRows('service', staffAssignments.service.ids, staffAssignments.service.tempNames, staffAssignments.service.duration)
+            addRows('cleaning', staffAssignments.cleaning.ids, staffAssignments.cleaning.tempNames, staffAssignments.cleaning.duration)
 
             if (staffRows.length > 0) {
                 const { error: insertError } = await supabase
