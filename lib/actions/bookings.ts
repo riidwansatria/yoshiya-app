@@ -48,9 +48,9 @@ export async function updateBooking(
         agency_address?: string
     },
     staffAssignments?: {
-        prep: string[]
-        service: string[]
-        cleaning: string[]
+        prep: { ids: string[], duration: number }
+        service: { ids: string[], duration: number }
+        cleaning: { ids: string[], duration: number }
     }
 ) {
     try {
@@ -107,20 +107,23 @@ export async function updateBooking(
 
             // Insert new assignments
             const staffRows = [
-                ...staffAssignments.prep.map(userId => ({
+                ...staffAssignments.prep.ids.map(userId => ({
                     reservation_id: id,
                     user_id: userId,
                     role: 'prep',
+                    duration_minutes: staffAssignments.prep.duration
                 })),
-                ...staffAssignments.service.map(userId => ({
+                ...staffAssignments.service.ids.map(userId => ({
                     reservation_id: id,
                     user_id: userId,
                     role: 'service',
+                    duration_minutes: staffAssignments.service.duration
                 })),
-                ...staffAssignments.cleaning.map(userId => ({
+                ...staffAssignments.cleaning.ids.map(userId => ({
                     reservation_id: id,
                     user_id: userId,
                     role: 'cleaning',
+                    duration_minutes: staffAssignments.cleaning.duration
                 })),
             ]
 

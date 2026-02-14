@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { format } from "date-fns"
+import { format, parse, differenceInMinutes } from "date-fns"
 import { ja } from "date-fns/locale"
 import { Printer, Mail, User, FileText, CalendarIcon, ChevronDown, DoorOpen, Users, NotepadText, Utensils, Contact, Clock, FileClock, RotateCcw, PanelRight, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -74,9 +74,78 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const [partySize, setPartySize] = React.useState(0)
     const [conductorCount, setConductorCount] = React.useState(0)
     const [crewCount, setCrewCount] = React.useState(0)
+    const [prepDuration, setPrepDuration] = React.useState(30)
+
+    const [cleaningDuration, setCleaningDuration] = React.useState(30)
+
     const [saving, setSaving] = React.useState(false)
     const [staffList, setStaffList] = React.useState<{ id: string, name: string, role: string }[]>([])
     const [venueList, setVenueList] = React.useState<{ id: string, name: string, capacity: number }[]>([])
+
+    // ... (Effect hooks remain, will update loadBooking in next step) ...
+
+    const StaffSelector = ({
+        title,
+        selectedIds,
+        setIds,
+        duration,
+        setDuration,
+        icon: Icon
+    }: {
+        title: string,
+        selectedIds: string[],
+        setIds: (ids: string[]) => void,
+        duration?: number,
+        setDuration?: (d: number) => void,
+        icon: any
+    }) => (
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Icon className="w-3 h-3" />
+                    <h3 className="text-[10px] font-semibold uppercase tracking-wider">{title}</h3>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    {duration !== undefined && setDuration && (
+                        <Select value={String(duration)} onValueChange={(v) => setDuration(parseInt(v))}>
+                            <SelectTrigger className="h-5 w-auto gap-0.5 px-1.5 text-[10px] border-none shadow-none bg-transparent text-muted-foreground hover:text-foreground focus:ring-0 cursor-pointer">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent align="end" className="min-w-0">
+                                {[5, 10, 15, 20, 30, 45, 60].map(v => (
+                                    <SelectItem key={v} value={String(v)} className="text-xs">{v} min</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border">
+                        {selectedIds.length}
+                    </span>
+                </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {staffList.map(member => {
+                    const isSelected = selectedIds.includes(member.id)
+                    return (
+                        <Button
+                            key={member.id}
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleStaff(member.id, selectedIds, setIds)}
+                            className={cn(
+                                "h-7 px-3 text-xs border",
+                                isSelected
+                                    ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                                    : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
+                            )}
+                        >
+                            {member.name}
+                        </Button>
+                    )
+                })}
+            </div>
+        </div>
+    )
 
     // Load booking data
     React.useEffect(() => {
@@ -127,13 +196,16 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     setCrewCount(bookingResult.data.crew_count || 0)
 
                     // Parse staff assignments
-                    const prep = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'prep').map((s: any) => s.user_id) || []
-                    const service = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'service').map((s: any) => s.user_id) || []
-                    const cleaning = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'cleaning').map((s: any) => s.user_id) || []
+                    const prepStaff = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'prep') || []
+                    const serviceStaff = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'service') || []
+                    const cleaningStaff = bookingResult.data.reservation_staff?.filter((s: any) => s.role === 'cleaning') || []
 
-                    setPrepStaffIds(prep)
-                    setServiceStaffIds(service)
-                    setCleaningStaffIds(cleaning)
+                    setPrepStaffIds(prepStaff.map((s: any) => s.user_id))
+                    setServiceStaffIds(serviceStaff.map((s: any) => s.user_id))
+                    setCleaningStaffIds(cleaningStaff.map((s: any) => s.user_id))
+
+                    if (prepStaff.length > 0) setPrepDuration(prepStaff[0].duration_minutes || 30)
+                    if (cleaningStaff.length > 0) setCleaningDuration(cleaningStaff[0].duration_minutes || 30)
                 }
             } catch (error) {
                 console.error('Failed to load booking:', error)
@@ -171,6 +243,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
             setPrepStaffIds([])
             setServiceStaffIds([])
             setCleaningStaffIds([])
+            setPrepDuration(30)
+            setCleaningDuration(30)
         }
     }, [open])
 
@@ -342,9 +416,14 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     agency_address: agencyAddress,
                 },
                 {
-                    prep: prepStaffIds,
-                    service: serviceStaffIds,
-                    cleaning: cleaningStaffIds,
+                    prep: { ids: prepStaffIds, duration: prepDuration },
+                    service: {
+                        ids: serviceStaffIds,
+                        duration: (startTime && endTime)
+                            ? differenceInMinutes(parse(endTime, 'HH:mm', new Date()), parse(startTime, 'HH:mm', new Date()))
+                            : 0
+                    },
+                    cleaning: { ids: cleaningStaffIds, duration: cleaningDuration },
                 }
             )
             if (!result.success) {
@@ -370,50 +449,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
 
 
 
-    const StaffSelector = ({
-        title,
-        selectedIds,
-        setIds,
-        icon: Icon
-    }: {
-        title: string,
-        selectedIds: string[],
-        setIds: (ids: string[]) => void,
-        icon: any
-    }) => (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Icon className="w-3 h-3" />
-                    <h3 className="text-[10px] font-semibold uppercase tracking-wider">{title}</h3>
-                </div>
-                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border">
-                    {selectedIds.length}
-                </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {staffList.map(member => {
-                    const isSelected = selectedIds.includes(member.id)
-                    return (
-                        <Button
-                            key={member.id}
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleStaff(member.id, selectedIds, setIds)}
-                            className={cn(
-                                "h-7 px-3 text-xs border",
-                                isSelected
-                                    ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                                    : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
-                            )}
-                        >
-                            {member.name}
-                        </Button>
-                    )
-                })}
-            </div>
-        </div>
-    )
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -845,6 +881,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     title={t('bookingModal.roles.preparation')}
                                     selectedIds={prepStaffIds}
                                     setIds={setPrepStaffIds}
+                                    duration={prepDuration}
+                                    setDuration={setPrepDuration}
                                     icon={Clock}
                                 />
 
@@ -865,6 +903,8 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     title={t('bookingModal.roles.cleaning')}
                                     selectedIds={cleaningStaffIds}
                                     setIds={setCleaningStaffIds}
+                                    duration={cleaningDuration}
+                                    setDuration={setCleaningDuration}
                                     icon={RotateCcw}
                                 />
                             </div>
