@@ -4,13 +4,12 @@
 import * as React from "react"
 import { format, addDays, subDays } from "date-fns"
 import { ja } from "date-fns/locale"
+import { useRouter } from "next/navigation"
 
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { halls, reservations, customers, staff } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { BookingDetailModal } from "@/components/bookings/booking-detail-modal"
-
 import { Calendar } from "@/components/ui/calendar"
 import {
     Popover,
@@ -22,13 +21,17 @@ import { Separator } from "@/components/ui/separator"
 
 interface ScheduleGridProps {
     restaurantId: string
+    dateStr: string
+    initialVenues: any[]
+    initialReservations: any[]
 }
 
-export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
-    // Use actual system date
-    const [date, setDate] = React.useState<Date>(new Date())
+export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialReservations }: ScheduleGridProps) {
+    const router = useRouter()
+    // Parse the date string passed from server
+    const date = new Date(dateStr)
 
-    const restaurantHalls = halls.filter(h => h.restaurant === restaurantId)
+    const restaurantHalls = initialVenues
 
     // Time range: 00:00 to 24:00 (Full Day)
     const startHour = 0
@@ -48,18 +51,21 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
     }, [])
 
     // Filter reservations for this day and restaurant
-    const dailyReservations = reservations.filter(r =>
-        r.restaurant === restaurantId &&
-        r.date === format(date, 'yyyy-MM-dd')
-    )
+    const dailyReservations = initialReservations
 
     const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null)
     const [showStaffDetails, setShowStaffDetails] = React.useState(true)
 
-    const handlePrevDay = () => setDate(d => subDays(d, 1))
-    const handleNextDay = () => setDate(d => addDays(d, 1))
+    const handleDateChange = (newDate: Date | undefined) => {
+        if (!newDate) return
+        const formatted = format(newDate, 'yyyy-MM-dd')
+        router.push(`/dashboard/${restaurantId}/schedule?date=${formatted}`)
+    }
+
+    const handlePrevDay = () => handleDateChange(subDays(date, 1))
+    const handleNextDay = () => handleDateChange(addDays(date, 1))
     const handleToday = () => {
-        setDate(new Date())
+        handleDateChange(new Date())
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = 10.5 * hourHeight
         }
@@ -91,7 +97,7 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                     mode="single"
                                     captionLayout="dropdown"
                                     selected={date}
-                                    onSelect={(d) => d && setDate(d)}
+                                    onSelect={handleDateChange}
                                     initialFocus
                                 />
                             </PopoverContent>
@@ -188,17 +194,22 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
 
                         {/* Hall Event Columns */}
                         {restaurantHalls.map(hall => {
-                            const hallBookings = dailyReservations.filter(r => r.hallId === hall.id)
+                            // Supabase relation might return snake_case or we mapped it.
+                            // Our getReservations query returns *, so it has venue_id.
+                            // We need to check if r.venue_id matches hall.id
+                            const hallBookings = dailyReservations.filter(r => r.venue_id === hall.id)
                             return (
                                 <div key={`events-${hall.id}`} className="relative h-full w-full pointer-events-auto min-w-[150px]">
                                     {hallBookings.map(r => {
-                                        const rStart = parseInt(r.startTime.split(':')[0])
-                                        const startMin = parseInt(r.startTime.split(':')[1] || '0')
-                                        const rEndHour = parseInt(r.endTime.split(':')[0])
-                                        const rEndMin = parseInt(r.endTime.split(':')[1] || '0')
+                                        // Supabase time format is HH:MM:SS usually
+                                        const rStart = parseInt(r.start_time.split(':')[0])
+                                        const startMin = parseInt(r.start_time.split(':')[1] || '0')
+                                        const rEndHour = parseInt(r.end_time.split(':')[0])
+                                        const rEndMin = parseInt(r.end_time.split(':')[1] || '0')
 
                                         // Calculate Top & Height
                                         // Start time in minutes from grid start (11:00)
+                                        // Note: mock data had string times "HH:MM", we assume Supabase returns "HH:MM:SS" or similar
                                         const startTotalMinutes = (rStart * 60 + startMin) - (startHour * 60)
                                         const durationMinutes = ((rEndHour * 60) + rEndMin) - (rStart * 60 + startMin)
 
@@ -211,20 +222,22 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
                                                 { bg: 'bg-gray-50', text: 'text-gray-700', accent: 'bg-gray-500' }
 
                                         // Prep and Cleaning blocks
-                                        const prepDuration = 'prepDuration' in r ? (r.prepDuration as number) : 0
-                                        const cleaningDuration = 'cleaningDuration' in r ? (r.cleaningDuration as number) : 0
-                                        const prepStaffIds = 'prepStaffIds' in r ? (r.prepStaffIds as string[]) : []
-                                        const cleaningStaffIds = 'cleaningStaffIds' in r ? (r.cleaningStaffIds as string[]) : []
-                                        const serviceStaffIds = 'serviceStaffIds' in r ? (r.serviceStaffIds as string[]) : []
+                                        const prepStaff = r.reservation_staff?.filter((s: any) => s.role === 'prep') || []
+                                        const cleaningStaff = r.reservation_staff?.filter((s: any) => s.role === 'cleaning') || []
+                                        const serviceStaff = r.reservation_staff?.filter((s: any) => s.role === 'service') || []
+
+                                        // Assume duration is consistent across staff for same role, or take max
+                                        const prepDuration = prepStaff.length > 0 ? Math.max(...prepStaff.map((s: any) => s.duration_minutes || 0)) : 0
+                                        const cleaningDuration = cleaningStaff.length > 0 ? Math.max(...cleaningStaff.map((s: any) => s.duration_minutes || 0)) : 0
 
                                         const prepHeight = prepDuration * pixelsPerMinute
                                         const cleaningHeight = cleaningDuration * pixelsPerMinute
                                         const prepTop = top - prepHeight
                                         const cleaningTop = top + height
 
-                                        const prepStaffNames = prepStaffIds.map(id => staff.find(s => s.id === id)?.name).filter(Boolean).join(' / ')
-                                        const cleaningStaffNames = cleaningStaffIds.map(id => staff.find(s => s.id === id)?.name).filter(Boolean).join(' / ')
-                                        const serviceStaffNames = serviceStaffIds.map(id => staff.find(s => s.id === id)?.name).filter(Boolean).join(' / ')
+                                        const prepStaffNames = prepStaff.map((s: any) => s.users?.name).filter(Boolean).join(' / ')
+                                        const cleaningStaffNames = cleaningStaff.map((s: any) => s.users?.name).filter(Boolean).join(' / ')
+                                        const serviceStaffNames = serviceStaff.map((s: any) => s.users?.name).filter(Boolean).join(' / ')
 
                                         return (
                                             <div key={r.id} className="group cursor-pointer" onClick={() => setSelectedBookingId(r.id)}>
@@ -283,12 +296,12 @@ export function ScheduleGrid({ restaurantId }: ScheduleGridProps) {
 
                                                     {/* Top content */}
                                                     <div>
-                                                        <div className="font-medium truncate">{r.groupName}</div>
+                                                        <div className="font-medium truncate">{r.group_name}</div>
                                                         {height > 30 && (
                                                             <div className="flex gap-1 opacity-80 mt-0.5 items-center">
-                                                                <span>{r.startTime}</span>
+                                                                <span>{r.start_time?.substring(0, 5)}</span>
                                                                 <span>•</span>
-                                                                <span>{r.partySize}名</span>
+                                                                <span>{r.party_size}名</span>
                                                             </div>
                                                         )}
                                                     </div>

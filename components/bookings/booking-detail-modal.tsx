@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { reservations, customers, halls, menus, staff } from "@/lib/mock-data"
+import { staff, halls } from "@/lib/mock-data"
 import { useTranslations } from "next-intl"
 
 interface BookingDetailModalProps {
@@ -39,13 +39,12 @@ interface BookingDetailModalProps {
 export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId }: BookingDetailModalProps) {
     const t = useTranslations()
     const router = useRouter()
-    const booking = reservations.find(r => r.id === bookingId)
+    const [booking, setBooking] = React.useState<any>(null)
+    const [loading, setLoading] = React.useState(false)
 
-    const customer = customers.find(c => c.id === booking?.customerId)
-    const hall = halls.find(h => h.id === booking?.hallId)
-    const selectedMenu = menus.find(m => m.id === booking?.menuId)
-    const [status, setStatus] = React.useState(booking?.status || 'pending')
-    const [notes, setNotes] = React.useState(booking?.serviceNotes || '')
+    // UI and Form State
+    const [status, setStatus] = React.useState('pending')
+    const [notes, setNotes] = React.useState('')
     const [showStaffSidebar, setShowStaffSidebar] = React.useState(true)
 
     // Staff Assignment State
@@ -53,17 +52,74 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const [serviceStaffIds, setServiceStaffIds] = React.useState<string[]>([])
     const [cleaningStaffIds, setCleaningStaffIds] = React.useState<string[]>([])
 
+    // Load booking data
     React.useEffect(() => {
-        if (booking) {
-            setStatus(booking.status)
-            setNotes(booking.serviceNotes || '')
-            setPrepStaffIds(booking.prepStaffIds || [])
-            setServiceStaffIds(booking.serviceStaffIds || [])
-            setCleaningStaffIds(booking.cleaningStaffIds || [])
-        }
-    }, [booking])
+        async function loadBooking() {
+            if (!bookingId || !open) return
 
+            setLoading(true)
+            try {
+                // Dynamic import to avoid server-side issues
+                const { getBookingDetails } = await import('@/lib/actions/bookings')
+                const result = await getBookingDetails(bookingId)
+                if (result.success && result.data) {
+                    setBooking(result.data)
+                    // Initialize form state
+                    setStatus(result.data.status)
+                    setNotes(result.data.notes || '')
+
+                    // Parse staff assignments
+                    const prep = result.data.reservation_staff?.filter((s: any) => s.role === 'prep').map((s: any) => s.user_id) || []
+                    const service = result.data.reservation_staff?.filter((s: any) => s.role === 'service').map((s: any) => s.user_id) || []
+                    const cleaning = result.data.reservation_staff?.filter((s: any) => s.role === 'cleaning').map((s: any) => s.user_id) || []
+
+                    setPrepStaffIds(prep)
+                    setServiceStaffIds(service)
+                    setCleaningStaffIds(cleaning)
+                }
+            } catch (error) {
+                console.error('Failed to load booking:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        loadBooking()
+    }, [bookingId, open])
+
+    // Reset when closed
+    React.useEffect(() => {
+        if (!open) {
+            setBooking(null)
+            setLoading(false)
+        }
+    }, [open])
+
+    if (!open) return null
+    if (loading) return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="h-40 flex items-center justify-center">
+                <div className="text-muted-foreground">Loading...</div>
+            </DialogContent>
+        </Dialog>
+    )
     if (!booking) return null
+
+    const customerName = booking.customers?.name || 'Unknown'
+    const hallName = booking.venues?.name || 'Unknown'
+    const hallCapacity = booking.venues?.capacity || 0
+
+    // We assume mostly one menu per booking for now in the main view, 
+    // but the DB supports multiple. We'll take the first one for the summary.
+    const primaryMenu = booking.reservation_menus?.[0]
+    const menuName = primaryMenu?.menu_name
+    const unitPrice = primaryMenu?.unit_price || 0
+
+    // Calculate total from all menu items
+    const totalAmount = booking.reservation_menus?.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0) || 0
+
+    // Format dates
+    const formattedDate = booking.date ? format(new Date(booking.date), "yyyy/MM/dd") : '---'
 
     const handleInvoice = () => {
         router.push(`/dashboard/${restaurantId}/bookings/${bookingId}/invoice`)
@@ -71,33 +127,19 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     }
 
     const handleSave = () => {
-        if (booking) {
-            // Update the local mock data
-            // In a real app, these would be API calls to backend
-            booking.status = status as any
-            booking.serviceNotes = notes
-
-            // Staff assignments
-            booking.prepStaffIds = prepStaffIds
-            booking.serviceStaffIds = serviceStaffIds
-            booking.cleaningStaffIds = cleaningStaffIds
-
-            console.log('Saved booking updates:', {
-                id: booking.id,
-                status,
-                notes,
-                staff: {
-                    prep: prepStaffIds,
-                    service: serviceStaffIds,
-                    cleaning: cleaningStaffIds
-                }
-            })
-        }
+        // TODO: Implement save functionality with Server Action
+        console.log('Saved booking updates:', {
+            id: booking.id,
+            status,
+            notes,
+            staff: {
+                prep: prepStaffIds,
+                service: serviceStaffIds,
+                cleaning: cleaningStaffIds
+            }
+        })
         onOpenChange(false)
     }
-
-    const totalAmount = selectedMenu ? selectedMenu.price * booking.partySize : 0
-    const formattedDate = format(new Date(booking.date), "yyyy/MM/dd")
 
     // Helper to toggle staff selection
     const toggleStaff = (staffId: string, currentIds: string[], setIds: (ids: string[]) => void) => {
@@ -163,7 +205,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                 <header className="px-4 py-3 border-b flex justify-between items-center bg-white z-10">
                     <div>
                         <DialogTitle className="text-xl font-semibold">{t('bookingModal.title')}</DialogTitle>
-                        <p className="text-xs text-muted-foreground mt-0.5">#{booking.id.toUpperCase()}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">#{booking.display_id}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Select value={status} onValueChange={setStatus}>
@@ -247,13 +289,13 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <div className="flex items-center gap-1 text-sm text-muted-foreground -mx-2">
                                                 <input
                                                     type="time"
-                                                    defaultValue={booking.startTime}
+                                                    defaultValue={booking.start_time || ''}
                                                     className="bg-transparent border-0 p-0 px-2 py-1 text-sm font-normal hover:bg-muted/50 rounded-md focus:outline-none focus:ring-0 appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
                                                 />
                                                 <span className="text-muted-foreground/60">→</span>
                                                 <input
                                                     type="time"
-                                                    defaultValue={booking.endTime}
+                                                    defaultValue={booking.end_time || ''}
                                                     className="bg-transparent border-0 p-0 px-2 py-1 text-sm font-normal hover:bg-muted/50 rounded-md focus:outline-none focus:ring-0 appearance-none [&::-webkit-calendar-picker-indicator]:hidden"
                                                 />
                                             </div>
@@ -267,7 +309,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <DoorOpen className="w-3 h-3" />
                                             <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.room')}</h2>
                                         </div>
-                                        <Select defaultValue={hall?.id}>
+                                        <Select defaultValue={booking.venue_id}>
                                             <SelectTrigger className="w-full h-12 border-input bg-muted/20 text-lg rounded-lg px-3 focus:ring-1 focus:ring-ring font-medium">
                                                 <SelectValue />
                                             </SelectTrigger>
@@ -300,7 +342,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.agencyName')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.agencyName}
+                                                        defaultValue={booking.agency_name}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.selectAgency')}
                                                     />
@@ -354,7 +396,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                 <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.groupName')}</span>
                                                 <Input
                                                     type="text"
-                                                    defaultValue={booking.groupName}
+                                                    defaultValue={booking.group_name}
                                                     className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                     placeholder={t('bookingModal.placeholders.groupName')}
                                                 />
@@ -365,7 +407,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('bookingModal.pic')}</span>
                                                     <Input
                                                         type="text"
-                                                        defaultValue={booking.repName}
+                                                        defaultValue={booking.rep_name}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.pic')}
                                                     />
@@ -388,7 +430,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <Input
                                                         type="number"
                                                         min={0}
-                                                        defaultValue={booking.partySize}
+                                                        defaultValue={booking.party_size}
                                                         className="bg-muted/30 border-border/50 text-xs md:text-sm h-8"
                                                         placeholder={t('bookingModal.placeholders.partySize')}
                                                     />
@@ -445,18 +487,18 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                         <tbody className="divide-y">
                                             <tr className="group hover:bg-muted/30 transition-colors">
                                                 <td className="py-4 px-4 align-top">
-                                                    <div className="font-medium text-base">{selectedMenu?.name || t('bookingModal.noMenu')}</div>
-                                                    <div className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-sm">{selectedMenu?.description || t('bookingModal.standardCourse')}</div>
+                                                    <div className="font-medium text-base">{menuName || t('bookingModal.noMenu')}</div>
+                                                    <div className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-sm">{primaryMenu?.notes || t('bookingModal.standardCourse')}</div>
                                                 </td>
                                                 <td className="py-4 px-4 align-top">
                                                     <div className="text-muted-foreground text-sm lowercase italic">—</div>
                                                 </td>
                                                 <td className="py-4 px-4 text-right align-top">
-                                                    <div className="font-mono text-sm text-muted-foreground">¥{selectedMenu?.price.toLocaleString() || 0}</div>
+                                                    <div className="font-mono text-sm text-muted-foreground">¥{unitPrice.toLocaleString()}</div>
                                                 </td>
                                                 <td className="py-4 px-4 text-center align-top">
                                                     <div className="inline-flex items-center justify-center bg-muted/60 text-foreground text-sm font-medium px-2.5 py-0.5 rounded-md min-w-[2rem]">
-                                                        {booking.partySize}
+                                                        {booking.party_size}
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-4 text-right align-top">
@@ -504,7 +546,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <div className="h-2.5 w-2.5 rounded-full bg-blue-100 border border-blue-200 shrink-0 relative z-10 mt-0.5"></div>
                                             <div className="space-y-0.5">
                                                 <div className="text-xs font-medium">{t('bookingModal.history.created')}</div>
-                                                <div className="text-[10px] text-muted-foreground">{booking.createdAt && format(new Date(booking.createdAt), "yyyy/MM/dd HH:mm")}</div>
+                                                <div className="text-[10px] text-muted-foreground">{booking.created_at && format(new Date(booking.created_at), "yyyy/MM/dd HH:mm")}</div>
                                             </div>
                                         </div>
 
