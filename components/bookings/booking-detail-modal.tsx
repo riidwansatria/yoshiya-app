@@ -849,30 +849,30 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                         </div>
 
                                         {/* Confirmed */}
-                                        {booking.confirmedAt && (
+                                        {booking.confirmed_at && (
                                             <div className="flex gap-3 relative pb-4">
                                                 <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
                                                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-100 border border-emerald-200 shrink-0 relative z-10 mt-0.5"></div>
                                                 <div className="space-y-0.5">
                                                     <div className="text-xs font-medium flex items-center gap-1.5">
-                                                        {t('bookingModal.history.confirmed')} <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] text-emerald-700 font-normal border border-emerald-100">{t('bookingModal.history.by', { name: booking.confirmedBy })}</span>
+                                                        {t('bookingModal.history.confirmed')} {booking.confirmed_by && <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] text-emerald-700 font-normal border border-emerald-100">{t('bookingModal.history.by', { name: booking.confirmed_by })}</span>}
                                                     </div>
-                                                    <div className="text-[10px] text-muted-foreground">{format(new Date(booking.confirmedAt), "yyyy/MM/dd HH:mm")}</div>
+                                                    <div className="text-[10px] text-muted-foreground">{format(new Date(booking.confirmed_at), "yyyy/MM/dd HH:mm")}</div>
                                                 </div>
                                             </div>
                                         )}
 
                                         {/* Cancelled */}
-                                        {(booking.status === 'cancelled' || booking.cancelledAt) && (
+                                        {(booking.status === 'cancelled' || booking.cancelled_at) && (
                                             <div className="flex gap-3 relative pb-4">
                                                 <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
                                                 <div className="h-2.5 w-2.5 rounded-full bg-red-100 border border-red-200 shrink-0 relative z-10 mt-0.5"></div>
                                                 <div className="space-y-0.5">
                                                     <div className="text-xs font-medium flex items-center gap-1.5 text-red-600">
-                                                        {t('bookingModal.history.cancelled')} {booking.cancelledBy && <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-[9px] text-red-700 font-normal border border-red-100">{t('bookingModal.history.by', { name: booking.cancelledBy })}</span>}
+                                                        {t('bookingModal.history.cancelled')} {booking.cancelled_by && <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-[9px] text-red-700 font-normal border border-red-100">{t('bookingModal.history.by', { name: booking.cancelled_by })}</span>}
                                                     </div>
                                                     <div className="text-[10px] text-muted-foreground">
-                                                        {booking.cancelledAt ? format(new Date(booking.cancelledAt), "yyyy/MM/dd HH:mm") : format(new Date(), "yyyy/MM/dd HH:mm")}
+                                                        {booking.cancelled_at ? format(new Date(booking.cancelled_at), "yyyy/MM/dd HH:mm") : format(new Date(), "yyyy/MM/dd HH:mm")}
                                                     </div>
                                                 </div>
                                             </div>
@@ -883,7 +883,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                             <div className="h-2.5 w-2.5 rounded-full bg-muted border border-border shrink-0 relative z-10 mt-0.5"></div>
                                             <div className="space-y-0.5">
                                                 <div className="text-xs font-medium">{t('bookingModal.history.lastEdited')}</div>
-                                                <div className="text-[10px] text-muted-foreground">{booking.lastEditedAt && format(new Date(booking.lastEditedAt), "yyyy/MM/dd HH:mm")}</div>
+                                                <div className="text-[10px] text-muted-foreground">{booking.updated_at && format(new Date(booking.updated_at), "yyyy/MM/dd HH:mm")}</div>
                                             </div>
                                         </div>
                                     </div>
