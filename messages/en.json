@@ -92,6 +92,12 @@
             "crew": "0"
         },
         "noMenu": "No menu",
-        "standardCourse": "Standard course menu"
+        "standardCourse": "Standard course menu",
+        "actions": "Actions",
+        "delete": "Delete Booking",
+        "confirmDelete": "Are you sure you want to delete this booking? This action cannot be undone.",
+        "errors": {
+            "deleteFailed": "Failed to delete booking"
+        }
     }
 }

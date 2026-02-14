@@ -157,3 +157,25 @@ export async function getVenueList(restaurantId: string) {
         return { success: false, error: 'Failed to fetch venues' }
     }
 }
+
+export async function deleteBooking(id: string) {
+    try {
+        const supabase = await createClient()
+
+        const { error } = await supabase
+            .from('reservations')
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            console.error('Error deleting booking:', error)
+            return { success: false, error: error.message }
+        }
+
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to delete booking:', error)
+        return { success: false, error: 'Failed to delete booking' }
+    }
+}

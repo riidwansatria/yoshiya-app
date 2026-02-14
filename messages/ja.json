@@ -92,6 +92,12 @@
             "crew": "0"
         },
         "noMenu": "メニューなし",
-        "standardCourse": "標準コースメニュー"
+        "standardCourse": "標準コースメニュー",
+        "actions": "操作",
+        "delete": "予約を削除",
+        "confirmDelete": "この予約を削除してもよろしいですか？この操作は取り消せません。",
+        "errors": {
+            "deleteFailed": "予約の削除に失敗しました"
+        }
     }
 }

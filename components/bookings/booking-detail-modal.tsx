@@ -25,10 +25,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal, Trash2 } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getBookingDetails, updateBooking, getStaffList, getVenueList } from "@/lib/actions/bookings"
+import { getBookingDetails, updateBooking, getStaffList, getVenueList, deleteBooking } from "@/lib/actions/bookings"
 import { useTranslations } from "next-intl"
 
 interface BookingDetailModalProps {
@@ -444,6 +453,27 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
             setIds(currentIds.filter(id => id !== staffId))
         } else {
             setIds([...currentIds, staffId])
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!confirm(t('bookingModal.confirmDelete'))) return
+
+        setSaving(true)
+        try {
+            const result = await deleteBooking(booking.id)
+            if (result.success) {
+                onOpenChange(false)
+                router.refresh()
+            } else {
+                console.error('Failed to delete:', result.error)
+                alert(t('bookingModal.errors.deleteFailed'))
+            }
+        } catch (error) {
+            console.error('Failed to delete booking:', error)
+            alert(t('bookingModal.errors.deleteFailed'))
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -914,9 +944,26 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
 
                 {/* Footer */}
                 <footer className="px-6 py-4 border-t flex items-center justify-between bg-white z-10">
-                    <Button variant="ghost" size="sm" onClick={handleInvoice}>
-                        <Printer className="mr-1.5 h-4 w-4" /> {t('bookingModal.viewInvoice')}
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuLabel>{t('bookingModal.actions')}</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={handleInvoice}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                {t('bookingModal.viewInvoice')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {t('bookingModal.delete')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('bookingModal.cancel')}</Button>
                         <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? t('bookingModal.saving') : t('bookingModal.save')}</Button>
