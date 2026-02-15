@@ -190,7 +190,7 @@ const editStaffSchema = z.object({
 interface EditStaffDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    staff: { id: string; name: string; email?: string }
+    staff: { id: string; name: string; email?: string | null }
 }
 
 export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogProps) {
