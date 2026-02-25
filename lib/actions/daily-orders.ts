@@ -21,7 +21,7 @@ export async function saveDailyOrders(
 
     if (deleteError) {
         console.error('Error clearing old daily orders:', deleteError);
-        return { error: 'Failed to clear previous orders for this date' };
+        return { error: `Failed to clear previous orders: ${deleteError.message}` };
     }
 
     // Insert the new orders
@@ -40,7 +40,7 @@ export async function saveDailyOrders(
 
         if (insertError) {
             console.error('Error inserting daily orders:', insertError);
-            return { error: 'Failed to save daily orders' };
+            return { error: `Failed to save daily orders: ${insertError.message}` };
         }
     }
 
