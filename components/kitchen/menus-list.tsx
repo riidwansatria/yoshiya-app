@@ -128,8 +128,11 @@ export function MenusList({
                                                             disabled={duplicatingId === menu.id}
                                                             onClick={async () => {
                                                                 setDuplicatingId(menu.id);
-                                                                await duplicateMenu(menu.id);
+                                                                const result = await duplicateMenu(menu.id);
                                                                 setDuplicatingId(null);
+                                                                if (result?.data?.id) {
+                                                                    router.push(`/dashboard/${restaurantId}/menus/${result.data.id}`);
+                                                                }
                                                             }}
                                                         >
                                                             {duplicatingId === menu.id ? 'Duplicating...' : 'Duplicate'}

@@ -92,8 +92,11 @@ export function ComponentsList({
                                                     disabled={duplicatingId === component.id}
                                                     onClick={async () => {
                                                         setDuplicatingId(component.id);
-                                                        await duplicateComponent(component.id);
+                                                        const result = await duplicateComponent(component.id);
                                                         setDuplicatingId(null);
+                                                        if (result?.data?.id) {
+                                                            router.push(`/dashboard/${restaurantId}/components/${result.data.id}`);
+                                                        }
                                                     }}
                                                 >
                                                     {duplicatingId === component.id ? 'Duplicating...' : 'Duplicate'}
