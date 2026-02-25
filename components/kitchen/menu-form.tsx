@@ -42,7 +42,10 @@ const menuComponentSchema = z.object({
 const menuSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     season: z.string().optional(),
-    price: z.coerce.number().nullable().optional(),
+    price: z.preprocess(
+        (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+        z.number().nullable()
+    ).optional(),
     description: z.string().optional(),
     color: z.string().optional(),
     components: z.array(menuComponentSchema),
@@ -133,10 +136,10 @@ export function MenuForm({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1 min-h-0">
                     {/* Menu Details Column */}
-                    <div className="space-y-4 rounded-md border p-6 h-fit">
+                    <div className="space-y-4 rounded-md border p-6 h-fit overflow-y-auto">
                         <h3 className="font-semibold text-lg">Menu Details</h3>
 
                         <FormField
@@ -236,8 +239,8 @@ export function MenuForm({
                     </div>
 
                     {/* Components Mapping Column */}
-                    <div className="col-span-2 space-y-4 rounded-md border p-6">
-                        <div className="flex justify-between items-center">
+                    <div className="col-span-2 flex flex-col space-y-4 rounded-md border p-6 min-h-0">
+                        <div className="flex justify-between items-center shrink-0">
                             <div>
                                 <h3 className="font-semibold text-lg">Mapped Components</h3>
                                 <p className="text-sm text-muted-foreground">Build this menu by adding recipe components.</p>
@@ -265,12 +268,12 @@ export function MenuForm({
                         </div>
 
                         {fields.length === 0 ? (
-                            <div className="rounded-md border border-dashed p-8 text-center bg-muted/50">
+                            <div className="rounded-md border border-dashed p-8 text-center bg-muted/50 shrink-0">
                                 <p className="text-sm text-muted-foreground">No components added yet.</p>
                                 <p className="text-xs text-muted-foreground mt-1">Components dictate the ingredients required for this menu.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4 pr-2">
+                            <div className="flex-1 space-y-4 pr-2 overflow-y-auto min-h-0">
                                 {fields.map((field, index) => {
                                     return (
                                         <div key={field.id} className="flex gap-4 items-start bg-background border rounded-md p-3">
@@ -352,7 +355,7 @@ export function MenuForm({
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-4 shrink-0 pt-2">
                     <Button
                         type="button"
                         variant="outline"
