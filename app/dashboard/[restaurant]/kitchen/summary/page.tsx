@@ -1,4 +1,5 @@
 import { getIngredientsSummary } from '@/lib/queries/ingredients-summary';
+import { getComponentsSummary } from '@/lib/queries/components-summary';
 import { SummaryPrintView } from '@/components/kitchen/summary-print-view';
 import { format } from 'date-fns';
 
@@ -15,18 +16,22 @@ export default async function IngredientsSummaryPage({
     // Default to today if no date provided
     const targetDate = resolvedSearchParams.date || format(new Date(), 'yyyy-MM-dd');
 
-    const groupedIngredients = await getIngredientsSummary(restaurant, targetDate);
+    const [groupedIngredients, components] = await Promise.all([
+        getIngredientsSummary(restaurant, targetDate),
+        getComponentsSummary(restaurant, targetDate),
+    ]);
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Ingredients Summary</h2>
+        <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-between shrink-0">
+                <h2 className="text-3xl font-bold tracking-tight">Kitchen Summary</h2>
             </div>
-            <div className="h-full flex-1 flex-col space-y-8 md:flex">
+            <div className="flex-1 min-h-0">
                 <SummaryPrintView
                     restaurantId={restaurant}
                     targetDate={targetDate}
                     groupedIngredients={groupedIngredients}
+                    components={components}
                 />
             </div>
         </div>
