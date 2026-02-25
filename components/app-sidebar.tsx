@@ -8,6 +8,8 @@ import {
     CalendarCheck,
     UserCog,
     Settings,
+    UtensilsCrossed,
+    Leaf
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -104,6 +106,27 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                         </SidebarGroupContent>
                     </SidebarGroup>
                 )}
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Kitchen</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname.includes('/ingredients')}
+                                    tooltip="Ingredients"
+                                >
+                                    <Link href={`/dashboard/${restaurantId}/ingredients`}>
+                                        <Leaf />
+                                        <span>Ingredients</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />
