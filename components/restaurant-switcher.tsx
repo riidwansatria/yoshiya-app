@@ -58,7 +58,7 @@ export function RestaurantSwitcher() {
                                 <span className="truncate font-semibold">
                                     {activeRestaurant.name}
                                 </span>
-                                <span className="truncate text-xs">Based on Yoshiya</span>
+                                <span className="truncate text-xs">Yoshiya Arashiyama</span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>

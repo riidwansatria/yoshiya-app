@@ -3,6 +3,7 @@ export const restaurants = [
   { id: 'fine_dining', name: 'Fine Dining', icon: '🍷' },
   { id: 'local', name: 'Local Specialty', icon: '🍜' },
   { id: 'skewers', name: 'Skewers Shop', icon: '🍢' },
+  { id: 'kitchen', name: 'Kitchen', icon: '🧑‍🍳' },
 ];
 
 export const halls = [

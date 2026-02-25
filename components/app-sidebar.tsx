@@ -76,20 +76,22 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                 <RestaurantSwitcher />
             </SidebarHeader>
             <SidebarContent>
-                <SidebarMenu className="gap-2 p-2">
-                    {navItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild isActive={item.active} tooltip={item.title}>
-                                <Link href={item.url}>
-                                    <item.icon />
-                                    <span>{item.title}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
-                </SidebarMenu>
+                {restaurantId !== 'kitchen' && (
+                    <SidebarMenu className="gap-2 p-2">
+                        {navItems.map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton asChild isActive={item.active} tooltip={item.title}>
+                                    <Link href={item.url}>
+                                        <item.icon />
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                )}
 
-                {userRole === 'manager' && (
+                {restaurantId !== 'kitchen' && userRole === 'manager' && (
                     <SidebarGroup>
                         <SidebarGroupLabel>Settings</SidebarGroupLabel>
                         <SidebarGroupContent>

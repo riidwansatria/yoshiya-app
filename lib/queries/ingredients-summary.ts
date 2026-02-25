@@ -1,4 +1,4 @@
-
+import { createClient } from '@/lib/supabase/server';
 
 export interface AggregatedIngredient {
     ingredient_id: string;
@@ -68,7 +68,7 @@ export async function getIngredientsSummary(restaurantId: string, targetDate: st
         if (!menu || !menu.menu_components) continue;
 
         for (const mc of menu.menu_components) {
-            const component = mc.components;
+            const component = mc.components as any;
             if (!component || !component.component_ingredients) continue;
 
             const compYield = component.yield_servings || 1;

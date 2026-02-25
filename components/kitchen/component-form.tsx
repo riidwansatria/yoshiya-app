@@ -64,7 +64,7 @@ export function ComponentForm({
     })) || [];
 
     const form = useForm<FormValues>({
-        resolver: zodResolver(componentSchema),
+        resolver: zodResolver(componentSchema) as any,
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',
