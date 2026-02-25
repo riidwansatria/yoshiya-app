@@ -101,3 +101,42 @@ export async function updateComponentIngredients(
     revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
     return { success: true };
 }
+
+export async function duplicateComponent(id: string) {
+    const supabase = await createClient();
+
+    // Fetch original with ingredients
+    const { data: original, error: fetchError } = await supabase
+        .from('components')
+        .select('*, component_ingredients(*)')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !original) {
+        return { error: 'Failed to fetch component for duplication' };
+    }
+
+    const { id: _id, created_at: _ca, updated_at: _ua, component_ingredients, ...fields } = original;
+    const { data: newComp, error: insertError } = await supabase
+        .from('components')
+        .insert([{ ...fields, name: `Copy of ${original.name}` }])
+        .select()
+        .single();
+
+    if (insertError || !newComp) {
+        return { error: 'Failed to duplicate component' };
+    }
+
+    if (component_ingredients && component_ingredients.length > 0) {
+        const newIngredients = component_ingredients.map(
+            ({ id: _ciId, created_at: _ciCa, ...ci }: { id: string; created_at: string;[key: string]: unknown }) => ({
+                ...ci,
+                component_id: newComp.id,
+            })
+        );
+        await supabase.from('component_ingredients').insert(newIngredients);
+    }
+
+    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
+    return { success: true, data: newComp };
+}

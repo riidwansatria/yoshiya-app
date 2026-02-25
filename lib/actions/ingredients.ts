@@ -47,3 +47,29 @@ export async function deleteIngredient(id: string) {
     revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
     return { success: true };
 }
+
+export async function duplicateIngredient(id: string) {
+    const supabase = await createClient();
+
+    const { data: original, error: fetchError } = await supabase
+        .from('ingredients')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !original) {
+        return { error: 'Failed to fetch ingredient for duplication' };
+    }
+
+    const { id: _id, created_at: _ca, updated_at: _ua, ...fields } = original;
+    const { error: insertError } = await supabase
+        .from('ingredients')
+        .insert([{ ...fields, name: `Copy of ${original.name}` }]);
+
+    if (insertError) {
+        return { error: 'Failed to duplicate ingredient' };
+    }
+
+    revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
+    return { success: true };
+}

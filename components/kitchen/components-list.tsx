@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteComponentDialog } from './component-dialogs';
+import { duplicateComponent } from '@/lib/actions/components';
 
 export function ComponentsList({
     initialData,
@@ -33,6 +34,7 @@ export function ComponentsList({
 }) {
     const router = useRouter();
     const [deletingComponent, setDeletingComponent] = useState<RecipeComponent | null>(null);
+    const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
@@ -79,13 +81,22 @@ export function ComponentsList({
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuItem
                                                     onClick={() =>
                                                         router.push(`/dashboard/${restaurantId}/components/${component.id}`)
                                                     }
                                                 >
                                                     View / Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    disabled={duplicatingId === component.id}
+                                                    onClick={async () => {
+                                                        setDuplicatingId(component.id);
+                                                        await duplicateComponent(component.id);
+                                                        setDuplicatingId(null);
+                                                    }}
+                                                >
+                                                    {duplicatingId === component.id ? 'Duplicating...' : 'Duplicate'}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem

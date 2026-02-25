@@ -67,3 +67,44 @@ export async function deleteMenu(id: string) {
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     return { success: true };
 }
+
+export async function duplicateMenu(id: string) {
+    const supabase = await createClient();
+
+    // Fetch the original menu
+    const { data: original, error: fetchError } = await supabase
+        .from('menus')
+        .select('*, menu_components(*)')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !original) {
+        return { error: 'Failed to fetch menu for duplication' };
+    }
+
+    // Insert the new menu
+    const { id: _id, created_at: _ca, updated_at: _ua, menu_components, ...menuFields } = original;
+    const { data: newMenu, error: insertError } = await supabase
+        .from('menus')
+        .insert([{ ...menuFields, name: `Copy of ${original.name}` }])
+        .select()
+        .single();
+
+    if (insertError || !newMenu) {
+        return { error: 'Failed to duplicate menu' };
+    }
+
+    // Duplicate menu_components
+    if (menu_components && menu_components.length > 0) {
+        const newComponents = menu_components.map(
+            ({ id: _mcId, created_at: _mcCa, ...mc }: { id: string; created_at: string;[key: string]: unknown }) => ({
+                ...mc,
+                menu_id: newMenu.id,
+            })
+        );
+        await supabase.from('menu_components').insert(newComponents);
+    }
+
+    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
+    return { success: true, data: newMenu };
+}

@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteMenuDialog } from './menu-dialogs';
+import { duplicateMenu } from '@/lib/actions/menus';
 
 export function MenusList({
     initialData,
@@ -34,6 +35,7 @@ export function MenusList({
     const router = useRouter();
     const [deletingMenu, setDeletingMenu] = useState<Menu | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
     const toggleRow = (menuId: string) => {
         const newExpanded = new Set(expandedRows);
@@ -115,13 +117,22 @@ export function MenusList({
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                         <DropdownMenuItem
                                                             onClick={() =>
                                                                 router.push(`/dashboard/${restaurantId}/menus/${menu.id}`)
                                                             }
                                                         >
                                                             View / Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            disabled={duplicatingId === menu.id}
+                                                            onClick={async () => {
+                                                                setDuplicatingId(menu.id);
+                                                                await duplicateMenu(menu.id);
+                                                                setDuplicatingId(null);
+                                                            }}
+                                                        >
+                                                            {duplicatingId === menu.id ? 'Duplicating...' : 'Duplicate'}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem

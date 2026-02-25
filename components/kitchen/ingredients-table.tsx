@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { duplicateIngredient } from '@/lib/actions/ingredients';
 import {
     AddIngredientDialog,
     EditIngredientDialog,
@@ -30,6 +31,7 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
+    const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
@@ -72,9 +74,18 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuItem onClick={() => setEditingIngredient(ingredient)}>
                                                     Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    disabled={duplicatingId === ingredient.id}
+                                                    onClick={async () => {
+                                                        setDuplicatingId(ingredient.id);
+                                                        await duplicateIngredient(ingredient.id);
+                                                        setDuplicatingId(null);
+                                                    }}
+                                                >
+                                                    {duplicatingId === ingredient.id ? 'Duplicating...' : 'Duplicate'}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
