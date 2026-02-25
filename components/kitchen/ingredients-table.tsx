@@ -32,15 +32,15 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
+        <div className="flex flex-col h-full space-y-4 min-h-0">
+            <div className="flex justify-end shrink-0">
                 <Button onClick={() => setIsAddOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add Ingredient
                 </Button>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border flex-1 overflow-y-auto min-h-0">
                 <Table>
                     <TableHeader>
                         <TableRow>

@@ -13,7 +13,7 @@ export default async function ComponentsPage({
     const components = await getComponents(restaurant);
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Components</h2>
                 <div className="flex items-center space-x-2">
@@ -25,7 +25,7 @@ export default async function ComponentsPage({
                     </Button>
                 </div>
             </div>
-            <div className="hidden h-full flex-1 flex-col space-y-8 md:flex">
+            <div className="flex-1 min-h-0">
                 <ComponentsList initialData={components} restaurantId={restaurant} />
             </div>
         </div>

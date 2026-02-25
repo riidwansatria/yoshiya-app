@@ -46,8 +46,8 @@ export function MenusList({
     };
 
     return (
-        <div className="space-y-4">
-            <div className="rounded-md border">
+        <div className="flex flex-col h-full space-y-4 min-h-0">
+            <div className="rounded-md border flex-1 overflow-y-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
