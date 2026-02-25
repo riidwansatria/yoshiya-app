@@ -9,7 +9,11 @@ import {
     UserCog,
     Settings,
     UtensilsCrossed,
-    Leaf
+    Leaf,
+    BookOpen,
+    Menu as MenuIcon,
+    ClipboardPen,
+    FilePieChart
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -120,6 +124,54 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                     <Link href={`/dashboard/${restaurantId}/ingredients`}>
                                         <Leaf />
                                         <span>Ingredients</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname.includes('/components')}
+                                    tooltip="Components"
+                                >
+                                    <Link href={`/dashboard/${restaurantId}/components`}>
+                                        <BookOpen />
+                                        <span>Components</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname.includes('/menus')}
+                                    tooltip="Menus"
+                                >
+                                    <Link href={`/dashboard/${restaurantId}/menus`}>
+                                        <MenuIcon />
+                                        <span>Menus</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname.includes('/kitchen/orders')}
+                                    tooltip="Daily Orders"
+                                >
+                                    <Link href={`/dashboard/${restaurantId}/kitchen/orders`}>
+                                        <ClipboardPen />
+                                        <span>Daily Orders</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname.includes('/kitchen/summary')}
+                                    tooltip="Ingredients Summary"
+                                >
+                                    <Link href={`/dashboard/${restaurantId}/kitchen/summary`}>
+                                        <FilePieChart />
+                                        <span>Summary</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

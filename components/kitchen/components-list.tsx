@@ -1,6 +1,6 @@
 'use client';
 
-import { Ingredient } from '@/lib/queries/ingredients';
+import { RecipeComponent } from '@/lib/queries/components';
 import {
     Table,
     TableBody,
@@ -10,12 +10,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import {
-    AddIngredientDialog,
-    EditIngredientDialog,
-    DeleteIngredientDialog,
-} from './ingredient-dialogs';
+import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import {
     DropdownMenu,
@@ -25,44 +20,56 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { DeleteComponentDialog } from './component-dialogs';
 
-export function IngredientsTable({ initialData }: { initialData: Ingredient[] }) {
-    const [isAddOpen, setIsAddOpen] = useState(false);
-    const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
-    const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
+export function ComponentsList({
+    initialData,
+    restaurantId,
+}: {
+    initialData: RecipeComponent[];
+    restaurantId: string;
+}) {
+    const router = useRouter();
+    const [deletingComponent, setDeletingComponent] = useState<RecipeComponent | null>(null);
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
-                <Button onClick={() => setIsAddOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Ingredient
-                </Button>
-            </div>
-
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Unit</TableHead>
-                            <TableHead>Category</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Yield (Servings)</TableHead>
+                            <TableHead>Ingredients Count</TableHead>
                             <TableHead className="w-[100px]">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {initialData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
-                                    No ingredients found.
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    No components found.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            initialData.map((ingredient) => (
-                                <TableRow key={ingredient.id}>
-                                    <TableCell className="font-medium">{ingredient.name}</TableCell>
-                                    <TableCell>{ingredient.unit}</TableCell>
-                                    <TableCell>{ingredient.category || '-'}</TableCell>
+                            initialData.map((component) => (
+                                <TableRow key={component.id}>
+                                    <TableCell className="font-medium">
+                                        <Link
+                                            href={`/dashboard/${restaurantId}/components/${component.id}`}
+                                            className="hover:underline"
+                                        >
+                                            {component.name}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell className="max-w-[300px] truncate text-muted-foreground">
+                                        {component.description || '-'}
+                                    </TableCell>
+                                    <TableCell>{component.yield_servings}</TableCell>
+                                    <TableCell>{component.component_ingredients?.length || 0}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -73,13 +80,17 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => setEditingIngredient(ingredient)}>
-                                                    Edit
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        router.push(`/dashboard/${restaurantId}/components/${component.id}`)
+                                                    }
+                                                >
+                                                    View / Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     className="text-red-600 focus:text-red-600"
-                                                    onClick={() => setDeletingIngredient(ingredient)}
+                                                    onClick={() => setDeletingComponent(component)}
                                                 >
                                                     Delete
                                                 </DropdownMenuItem>
@@ -93,19 +104,11 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                 </Table>
             </div>
 
-            <AddIngredientDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
-            {editingIngredient && (
-                <EditIngredientDialog
-                    ingredient={editingIngredient}
-                    open={!!editingIngredient}
-                    onOpenChange={(open: boolean) => !open && setEditingIngredient(null)}
-                />
-            )}
-            {deletingIngredient && (
-                <DeleteIngredientDialog
-                    ingredient={deletingIngredient}
-                    open={!!deletingIngredient}
-                    onOpenChange={(open: boolean) => !open && setDeletingIngredient(null)}
+            {deletingComponent && (
+                <DeleteComponentDialog
+                    component={deletingComponent}
+                    open={!!deletingComponent}
+                    onOpenChange={(open: boolean) => !open && setDeletingComponent(null)}
                 />
             )}
         </div>
