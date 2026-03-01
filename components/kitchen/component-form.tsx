@@ -6,7 +6,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Trash, Plus } from 'lucide-react';
+import { Trash, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 
 import { RecipeComponent } from '@/lib/queries/components';
 import { Ingredient } from '@/lib/queries/ingredients';
@@ -69,10 +69,13 @@ export function ComponentForm({
         },
     });
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields, append, remove, move } = useFieldArray({
         control: form.control,
         name: 'ingredients',
     });
+
+    const handleMoveUp = useCallback((index: number) => move(index, index - 1), [move]);
+    const handleMoveDown = useCallback((index: number) => move(index, index + 1), [move]);
 
     // Guard against React Strict Mode double-firing append
     const appendGuard = useRef(false);
@@ -251,12 +254,13 @@ export function ComponentForm({
                                 );
 
                                 return (
-                                    <div key={field.id} className="flex gap-3 items-start">
+                                    <div key={field.id} className="flex gap-3 items-start bg-background border rounded-md p-3">
                                         <FormField
                                             control={form.control}
                                             name={`ingredients.${index}.ingredient_id`}
                                             render={({ field }) => (
                                                 <FormItem className="flex-[2]">
+                                                    <FormLabel className="text-xs">Ingredient</FormLabel>
                                                     <FormControl>
                                                         <IngredientCombobox
                                                             value={field.value}
@@ -275,35 +279,53 @@ export function ComponentForm({
                                             name={`ingredients.${index}.qty_per_serving`}
                                             render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <FormControl>
-                                                            <FractionalQuantityInput
-                                                                value={field.value || ''}
-                                                                onValueChange={field.onChange}
-                                                                onCommit={(parsed, error) =>
-                                                                    handleQuantityCommit(index, parsed, error)
-                                                                }
-                                                                label={`Qty per serving`}
-                                                            />
-                                                        </FormControl>
-                                                        <span className="text-xs text-muted-foreground min-w-[30px]">
-                                                            {unitLabel}
-                                                        </span>
-                                                    </div>
+                                                    <FormLabel className="text-xs">Qty / Serving ({unitLabel})</FormLabel>
+                                                    <FormControl>
+                                                        <FractionalQuantityInput
+                                                            value={field.value || ''}
+                                                            onValueChange={field.onChange}
+                                                            onCommit={(parsed, error) =>
+                                                                handleQuantityCommit(index, parsed, error)
+                                                            }
+                                                            label={`Qty per serving`}
+                                                        />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
 
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => remove(index)}
-                                            className="mt-0.5 text-muted-foreground hover:text-red-600"
-                                        >
-                                            <Trash className="h-4 w-4" />
-                                        </Button>
+                                        <div className="mt-6 flex items-center">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled={index === 0}
+                                                onClick={() => handleMoveUp(index)}
+                                                className="h-8 w-8 text-muted-foreground"
+                                            >
+                                                <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled={index === fields.length - 1}
+                                                onClick={() => handleMoveDown(index)}
+                                                className="h-8 w-8 text-muted-foreground"
+                                            >
+                                                <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => remove(index)}
+                                                className="h-8 w-8 text-muted-foreground hover:text-red-600 ml-1"
+                                            >
+                                                <Trash className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 );
                             })}

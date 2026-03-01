@@ -13,7 +13,6 @@ export interface Menu {
     price: number | null;
     description: string | null;
     color: string | null;
-    created_at: string;
     menu_components?: MenuComponent[];
 }
 
@@ -33,7 +32,7 @@ function buildMenusSelect({
     includeMenuComponents = false,
     includeComponentDetails = false,
 }: GetMenusOptions = {}) {
-    const baseSelect = 'id, restaurant_id, name, season, price, description, color, created_at';
+    const baseSelect = 'id, restaurant_id, name, season, price, description, color';
 
     if (!includeMenuComponents) {
         return baseSelect;
