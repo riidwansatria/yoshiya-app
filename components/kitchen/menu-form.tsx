@@ -14,10 +14,12 @@ import { Menu } from '@/lib/queries/menus';
 import { ComponentOption } from '@/lib/queries/components';
 import { createMenu, updateMenu } from '@/lib/actions/menus';
 import { updateMenuComponents } from '@/lib/actions/menu-components';
+import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { FractionalQuantityInput } from './fractional-quantity-input';
 import {
     Form,
     FormControl,
@@ -36,7 +38,7 @@ import {
 
 const menuComponentSchema = z.object({
     component_id: z.string().min(1, 'Please select a component'),
-    qty_per_order: z.number().min(0.01, 'Quantity must be > 0'),
+    qty_per_order: z.string().min(1, 'Quantity is required'),
 });
 
 const menuSchema = z.object({
@@ -59,6 +61,7 @@ type MenuComponentRowProps = {
     onMoveUp: (index: number) => void;
     onMoveDown: (index: number) => void;
     onRemove: (index: number) => void;
+    onQuantityCommit: (index: number, parsed: number | null, error: string | null) => void;
 };
 
 const MenuComponentRow = memo(function MenuComponentRow({
@@ -70,6 +73,7 @@ const MenuComponentRow = memo(function MenuComponentRow({
     onMoveUp,
     onMoveDown,
     onRemove,
+    onQuantityCommit,
 }: MenuComponentRowProps) {
     const [isSelectOpen, setIsSelectOpen] = useState(false);
     const [hasOpenedSelect, setHasOpenedSelect] = useState(false);
@@ -129,13 +133,11 @@ const MenuComponentRow = memo(function MenuComponentRow({
                     <FormItem className="flex-[1]">
                         <FormLabel className="text-xs">Qty / Order</FormLabel>
                         <FormControl>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                {...field}
-                                onChange={(e) =>
-                                    field.onChange(e.target.value ? Number(e.target.value) : 0)
-                                }
+                            <FractionalQuantityInput
+                                value={field.value || ''}
+                                onValueChange={field.onChange}
+                                onCommit={(parsed, error) => onQuantityCommit(index, parsed, error)}
+                                label="Qty / Order"
                             />
                         </FormControl>
                         <FormMessage />
@@ -203,7 +205,7 @@ export function MenuForm({
     // Map initial components if editing
     const initialComponents = initialData?.menu_components?.map((mc) => ({
         component_id: mc.component_id,
-        qty_per_order: mc.qty_per_order,
+        qty_per_order: mc.qty_per_order.toString(),
     })) || [];
 
     const form = useForm<FormValues>({
@@ -225,6 +227,17 @@ export function MenuForm({
     const handleMoveUp = useCallback((index: number) => move(index, index - 1), [move]);
     const handleMoveDown = useCallback((index: number) => move(index, index + 1), [move]);
     const handleRemove = useCallback((index: number) => remove(index), [remove]);
+    const handleQuantityCommit = useCallback(
+        (index: number, _parsed: number | null, error: string | null) => {
+            const path = `components.${index}.qty_per_order` as const;
+            if (error) {
+                form.setError(path, { type: 'manual', message: error });
+                return;
+            }
+            form.clearErrors(path);
+        },
+        [form]
+    );
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
@@ -255,9 +268,33 @@ export function MenuForm({
                 menuId = res.data.id;
             }
 
+            const parsedComponents = data.components.map((component, index) => {
+                const parsed = parseFractionalQuantity(component.qty_per_order);
+                if (!parsed.ok) {
+                    form.setError(`components.${index}.qty_per_order`, {
+                        type: 'manual',
+                        message: parsed.error,
+                    });
+                    return null;
+                }
+                form.clearErrors(`components.${index}.qty_per_order`);
+                return {
+                    component_id: component.component_id,
+                    qty_per_order: parsed.value,
+                };
+            });
+
+            if (parsedComponents.some((component) => component === null)) {
+                toast.error('Please fix quantity errors before saving.');
+                return;
+            }
+
             // Update mapping
             if (menuId) {
-                const mappingRes = await updateMenuComponents(menuId, data.components);
+                const mappingRes = await updateMenuComponents(
+                    menuId,
+                    parsedComponents as { component_id: string; qty_per_order: number }[]
+                );
                 if (mappingRes.error) throw new Error(mappingRes.error);
             }
 
@@ -381,6 +418,9 @@ export function MenuForm({
                             <div>
                                 <h3 className="font-semibold text-lg">Mapped Components</h3>
                                 <p className="text-sm text-muted-foreground">Build this menu by adding recipe components.</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Accepted: decimal (0.5), fraction (1/6), mixed (1 1/2).
+                                </p>
                             </div>
                             <div className="flex gap-2">
                                 <Button
@@ -396,7 +436,7 @@ export function MenuForm({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => append({ component_id: '', qty_per_order: 1 })}
+                                    onClick={() => append({ component_id: '', qty_per_order: '1' })}
                                 >
                                     <Plus className="mr-2 h-4 w-4" />
                                     Add Row
@@ -422,6 +462,7 @@ export function MenuForm({
                                         onMoveUp={handleMoveUp}
                                         onMoveDown={handleMoveDown}
                                         onRemove={handleRemove}
+                                        onQuantityCommit={handleQuantityCommit}
                                     />
                                 ))}
                             </div>
@@ -449,7 +490,7 @@ export function MenuForm({
                 restaurantId={restaurantId}
                 onSuccess={(newComp) => {
                     setLocalComponentsList(prev => [...prev, { id: newComp.id, name: newComp.name }]);
-                    append({ component_id: newComp.id, qty_per_order: 1 });
+                    append({ component_id: newComp.id, qty_per_order: '1' });
                 }}
             />
         </Form>

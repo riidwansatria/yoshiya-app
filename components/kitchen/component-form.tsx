@@ -12,10 +12,12 @@ import { RecipeComponent } from '@/lib/queries/components';
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createComponent, updateComponent, updateComponentIngredients } from '@/lib/actions/components';
 import { AddIngredientDialog } from '@/components/kitchen/ingredient-dialogs';
+import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { FractionalQuantityInput } from './fractional-quantity-input';
 import {
     Form,
     FormControl,
@@ -34,13 +36,13 @@ import {
 
 const ingredientSchema = z.object({
     ingredient_id: z.string().min(1, 'Please select an ingredient'),
-    qty_per_serving: z.coerce.number().min(0.01, 'Quantity must be > 0'),
+    qty_per_serving: z.string().min(1, 'Quantity is required'),
 });
 
 const componentSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     description: z.string().optional(),
-    yield_servings: z.coerce.number().min(1, 'Yield must be at least 1'),
+    yield_servings: z.number().min(1, 'Yield must be at least 1'),
     ingredients: z.array(ingredientSchema),
 });
 
@@ -62,11 +64,11 @@ export function ComponentForm({
     // Map initial ingredients if editing
     const initialIngredients = initialData?.component_ingredients?.map((ci) => ({
         ingredient_id: ci.ingredient_id,
-        qty_per_serving: ci.qty_per_serving,
+        qty_per_serving: ci.qty_per_serving.toString(),
     })) || [];
 
     const form = useForm<FormValues>({
-        resolver: zodResolver(componentSchema) as any,
+        resolver: zodResolver(componentSchema),
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',
@@ -85,9 +87,21 @@ export function ComponentForm({
     const safeAppend = useCallback(() => {
         if (appendGuard.current) return;
         appendGuard.current = true;
-        append({ ingredient_id: '', qty_per_serving: 0 });
+        append({ ingredient_id: '', qty_per_serving: '1' });
         setTimeout(() => { appendGuard.current = false; }, 100);
     }, [append]);
+
+    const handleQuantityCommit = useCallback(
+        (index: number, _parsed: number | null, error: string | null) => {
+            const path = `ingredients.${index}.qty_per_serving` as const;
+            if (error) {
+                form.setError(path, { type: 'manual', message: error });
+                return;
+            }
+            form.clearErrors(path);
+        },
+        [form]
+    );
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
@@ -114,16 +128,41 @@ export function ComponentForm({
                 componentId = res.data.id;
             }
 
+            const parsedIngredients = data.ingredients.map((ingredient, index) => {
+                const parsed = parseFractionalQuantity(ingredient.qty_per_serving);
+                if (!parsed.ok) {
+                    form.setError(`ingredients.${index}.qty_per_serving`, {
+                        type: 'manual',
+                        message: parsed.error,
+                    });
+                    return null;
+                }
+                form.clearErrors(`ingredients.${index}.qty_per_serving`);
+                return {
+                    ingredient_id: ingredient.ingredient_id,
+                    qty_per_serving: parsed.value,
+                };
+            });
+
+            if (parsedIngredients.some((ingredient) => ingredient === null)) {
+                toast.error('Please fix quantity errors before saving.');
+                return;
+            }
+
             // Update mapping
             if (componentId) {
-                const mappingRes = await updateComponentIngredients(componentId, data.ingredients);
+                const mappingRes = await updateComponentIngredients(
+                    componentId,
+                    parsedIngredients as { ingredient_id: string; qty_per_serving: number }[]
+                );
                 if (mappingRes.error) throw new Error(mappingRes.error);
             }
 
             toast.success(initialData ? 'Component updated' : 'Component created');
             router.push(`/dashboard/${restaurantId}/components`);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to save component';
+            toast.error(message);
         } finally {
             setIsSaving(false);
         }
@@ -170,7 +209,13 @@ export function ComponentForm({
                             <FormItem>
                                 <FormLabel>Yield (Servings produced)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} />
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) =>
+                                            field.onChange(e.target.value ? Number(e.target.value) : 0)
+                                        }
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -180,7 +225,12 @@ export function ComponentForm({
 
                 <div className="space-y-4 rounded-md border p-6">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-semibold text-lg">Ingredients</h3>
+                        <div>
+                            <h3 className="font-semibold text-lg">Ingredients</h3>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Accepted: decimal (0.5), fraction (1/6), mixed (1 1/2).
+                            </p>
+                        </div>
                         <div className="flex items-center gap-2">
                             <Button
                                 type="button"
@@ -245,9 +295,16 @@ export function ComponentForm({
                                                 <FormItem className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <FormControl>
-                                                            <Input type="number" step="0.01" {...field} />
+                                                            <FractionalQuantityInput
+                                                                value={field.value || ''}
+                                                                onValueChange={field.onChange}
+                                                                onCommit={(parsed, error) =>
+                                                                    handleQuantityCommit(index, parsed, error)
+                                                                }
+                                                                label={`Qty per serving`}
+                                                            />
                                                         </FormControl>
-                                                        <span className="text-sm text-muted-foreground min-w-[30px]">
+                                                        <span className="text-xs text-muted-foreground min-w-[30px]">
                                                             {unitLabel}
                                                         </span>
                                                     </div>
