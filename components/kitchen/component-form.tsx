@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -79,6 +79,15 @@ export function ComponentForm({
         control: form.control,
         name: 'ingredients',
     });
+
+    // Guard against React Strict Mode double-firing append
+    const appendGuard = useRef(false);
+    const safeAppend = useCallback(() => {
+        if (appendGuard.current) return;
+        appendGuard.current = true;
+        append({ ingredient_id: '', qty_per_serving: 0 });
+        setTimeout(() => { appendGuard.current = false; }, 100);
+    }, [append]);
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
@@ -186,7 +195,7 @@ export function ComponentForm({
                                 type="button"
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => append({ ingredient_id: '', qty_per_serving: 0 })}
+                                onClick={safeAppend}
                             >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Row

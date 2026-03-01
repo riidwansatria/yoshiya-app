@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createIngredient, updateIngredient, deleteIngredient } from '@/lib/actions/ingredients';
 import {
@@ -34,19 +36,26 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function AddIngredientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+    const [isSaving, setIsSaving] = useState(false);
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
         defaultValues: { name: '', unit: '', category: '' },
     });
 
     async function onSubmit(data: FormValues) {
-        const result = await createIngredient(data);
-        if (result.error) {
-            toast.error(result.error);
-        } else {
-            toast.success('Ingredient added successfully');
-            form.reset();
-            onOpenChange(false);
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            const result = await createIngredient(data);
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success('Ingredient added successfully');
+                form.reset();
+                onOpenChange(false);
+            }
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -99,7 +108,9 @@ export function AddIngredientDialog({ open, onOpenChange }: { open: boolean; onO
                             )}
                         />
                         <DialogFooter>
-                            <Button type="submit">Save Ingredient</Button>
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Ingredient'}
+                            </Button>
                         </DialogFooter>
                     </form>
                 </Form>
