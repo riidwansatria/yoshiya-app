@@ -11,6 +11,7 @@ import { Trash, Plus } from 'lucide-react';
 import { RecipeComponent } from '@/lib/queries/components';
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createComponent, updateComponent, updateComponentIngredients } from '@/lib/actions/components';
+import { AddIngredientDialog } from '@/components/kitchen/ingredient-dialogs';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ export function ComponentForm({
 }) {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
+    const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
 
     // Map initial ingredients if editing
     const initialIngredients = initialData?.component_ingredients?.map((ci) => ({
@@ -170,15 +172,26 @@ export function ComponentForm({
                 <div className="space-y-4 rounded-md border p-6">
                     <div className="flex justify-between items-center">
                         <h3 className="font-semibold text-lg">Ingredients</h3>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => append({ ingredient_id: '', qty_per_serving: 0 })}
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Ingredient
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsAddIngredientOpen(true)}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Master Ingredient
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => append({ ingredient_id: '', qty_per_serving: 0 })}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Row
+                            </Button>
+                        </div>
                     </div>
 
                     {fields.length === 0 ? (
@@ -263,6 +276,11 @@ export function ComponentForm({
                     </Button>
                 </div>
             </form>
+
+            <AddIngredientDialog
+                open={isAddIngredientOpen}
+                onOpenChange={setIsAddIngredientOpen}
+            />
         </Form>
     );
 }

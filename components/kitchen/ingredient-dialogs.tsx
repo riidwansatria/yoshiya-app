@@ -27,7 +27,7 @@ import { toast } from 'sonner';
 
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
-    unit: z.string().min(1, 'Unit is required (e.g., g, ml, pcs)'),
+    unit: z.string().optional().default(''),
     category: z.string().optional(),
 });
 
@@ -77,7 +77,7 @@ export function AddIngredientDialog({ open, onOpenChange }: { open: boolean; onO
                             name="unit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Unit</FormLabel>
+                                    <FormLabel>Unit (Optional)</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g. g, ml, pcs" {...field} />
                                     </FormControl>
@@ -162,7 +162,7 @@ export function EditIngredientDialog({
                             name="unit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Unit</FormLabel>
+                                    <FormLabel>Unit (Optional)</FormLabel>
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>

@@ -14,6 +14,9 @@ export async function createIngredient(data: { name: string; unit: string; categ
     }
 
     revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
+    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
+    revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
+    revalidatePath('/[lang]/dashboard/[restaurant]/components/new', 'page');
     return { success: true };
 }
 
