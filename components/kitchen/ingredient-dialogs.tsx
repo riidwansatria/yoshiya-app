@@ -27,7 +27,7 @@ import { toast } from 'sonner';
 
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
-    unit: z.string().optional().default(''),
+    unit: z.string(),
     category: z.string().optional(),
 });
 
