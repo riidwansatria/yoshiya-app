@@ -7,7 +7,10 @@ export default async function MenuMatrixPage({
     params: Promise<{ restaurant: string }>;
 }) {
     const { restaurant } = await params;
-    const menus = await getMenus(restaurant);
+    const menus = await getMenus(restaurant, {
+        includeMenuComponents: true,
+        includeComponentDetails: true,
+    });
 
     return (
         <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">

@@ -1,5 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
-import { RecipeComponent } from './components';
+
+export interface MenuComponentReference {
+    id: string;
+    name: string;
+}
 
 export interface Menu {
     id: string;
@@ -17,23 +21,37 @@ export interface MenuComponent {
     menu_id: string;
     component_id: string;
     qty_per_order: number;
-    components?: RecipeComponent;
+    components?: MenuComponentReference | null;
 }
 
-export async function getMenus(restaurantId: string): Promise<Menu[]> {
+interface GetMenusOptions {
+    includeMenuComponents?: boolean;
+    includeComponentDetails?: boolean;
+}
+
+function buildMenusSelect({
+    includeMenuComponents = false,
+    includeComponentDetails = false,
+}: GetMenusOptions = {}) {
+    const baseSelect = 'id, restaurant_id, name, season, price, description, color, created_at';
+
+    if (!includeMenuComponents) {
+        return baseSelect;
+    }
+
+    const componentSelect = includeComponentDetails ? ', components (id, name)' : '';
+    return `${baseSelect}, menu_components (menu_id, component_id, qty_per_order${componentSelect})`;
+}
+
+export async function getMenus(
+    restaurantId: string,
+    options?: GetMenusOptions
+): Promise<Menu[]> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('menus')
-        .select(`
-            *,
-            menu_components (
-                menu_id,
-                component_id,
-                qty_per_order,
-                components (*)
-            )
-        `)
+        .select(buildMenusSelect(options))
         .eq('restaurant_id', restaurantId)
         .order('name');
 
@@ -42,7 +60,7 @@ export async function getMenus(restaurantId: string): Promise<Menu[]> {
         return [];
     }
 
-    return data as Menu[];
+    return (data ?? []) as unknown as Menu[];
 }
 
 export async function getMenuById(id: string): Promise<Menu | null> {
@@ -50,15 +68,7 @@ export async function getMenuById(id: string): Promise<Menu | null> {
 
     const { data, error } = await supabase
         .from('menus')
-        .select(`
-            *,
-            menu_components (
-                menu_id,
-                component_id,
-                qty_per_order,
-                components (*)
-            )
-        `)
+        .select(buildMenusSelect({ includeMenuComponents: true }))
         .eq('id', id)
         .single();
 
@@ -67,5 +77,5 @@ export async function getMenuById(id: string): Promise<Menu | null> {
         return null;
     }
 
-    return data as Menu;
+    return data as unknown as Menu;
 }

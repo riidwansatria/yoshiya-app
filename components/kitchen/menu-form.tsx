@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { Control, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
@@ -11,7 +11,7 @@ import { Trash, Plus, PlusCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import { AddComponentDialogInline } from './add-component-dialog-inline';
 
 import { Menu } from '@/lib/queries/menus';
-import { RecipeComponent } from '@/lib/queries/components';
+import { ComponentOption } from '@/lib/queries/components';
 import { createMenu, updateMenu } from '@/lib/actions/menus';
 import { updateMenuComponents } from '@/lib/actions/menu-components';
 
@@ -36,16 +36,13 @@ import {
 
 const menuComponentSchema = z.object({
     component_id: z.string().min(1, 'Please select a component'),
-    qty_per_order: z.coerce.number().min(0.01, 'Quantity must be > 0'),
+    qty_per_order: z.number().min(0.01, 'Quantity must be > 0'),
 });
 
 const menuSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     season: z.string().optional(),
-    price: z.preprocess(
-        (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
-        z.number().nullable()
-    ).optional(),
+    price: z.number().nullable().optional(),
     description: z.string().optional(),
     color: z.string().optional(),
     components: z.array(menuComponentSchema),
@@ -53,19 +50,155 @@ const menuSchema = z.object({
 
 type FormValues = z.infer<typeof menuSchema>;
 
+type MenuComponentRowProps = {
+    index: number;
+    rowCount: number;
+    control: Control<FormValues>;
+    componentOptions: ComponentOption[];
+    componentNameById: Map<string, string>;
+    onMoveUp: (index: number) => void;
+    onMoveDown: (index: number) => void;
+    onRemove: (index: number) => void;
+};
+
+const MenuComponentRow = memo(function MenuComponentRow({
+    index,
+    rowCount,
+    control,
+    componentOptions,
+    componentNameById,
+    onMoveUp,
+    onMoveDown,
+    onRemove,
+}: MenuComponentRowProps) {
+    const [isSelectOpen, setIsSelectOpen] = useState(false);
+    const [hasOpenedSelect, setHasOpenedSelect] = useState(false);
+
+    const handleSelectOpenChange = useCallback((open: boolean) => {
+        if (open) {
+            setHasOpenedSelect(true);
+        }
+        setIsSelectOpen(open);
+    }, []);
+
+    return (
+        <div className="flex gap-4 items-start bg-background border rounded-md p-3">
+            <FormField
+                control={control}
+                name={`components.${index}.component_id`}
+                render={({ field }) => {
+                    const selectedName =
+                        typeof field.value === 'string' ? componentNameById.get(field.value) : undefined;
+
+                    return (
+                        <FormItem className="flex-[2]">
+                            <FormLabel className="text-xs">Component</FormLabel>
+                            <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                open={isSelectOpen}
+                                onOpenChange={handleSelectOpenChange}
+                            >
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select component">
+                                            {selectedName}
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                </FormControl>
+                                {hasOpenedSelect ? (
+                                    <SelectContent>
+                                        {componentOptions.map((component) => (
+                                            <SelectItem key={component.id} value={component.id}>
+                                                {component.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                ) : null}
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    );
+                }}
+            />
+
+            <FormField
+                control={control}
+                name={`components.${index}.qty_per_order`}
+                render={({ field }) => (
+                    <FormItem className="flex-[1]">
+                        <FormLabel className="text-xs">Qty / Order</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                onChange={(e) =>
+                                    field.onChange(e.target.value ? Number(e.target.value) : 0)
+                                }
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <div className="mt-6 flex items-center">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={index === 0}
+                    onClick={() => onMoveUp(index)}
+                    className="h-8 w-8 text-muted-foreground"
+                >
+                    <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={index === rowCount - 1}
+                    onClick={() => onMoveDown(index)}
+                    className="h-8 w-8 text-muted-foreground"
+                >
+                    <ArrowDown className="h-4 w-4" />
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onRemove(index)}
+                    className="h-8 w-8 text-muted-foreground hover:text-red-600 ml-1"
+                >
+                    <Trash className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+    );
+});
+
 export function MenuForm({
     initialData,
     availableComponents,
     restaurantId,
 }: {
     initialData: Menu | null;
-    availableComponents: RecipeComponent[];
+    availableComponents: ComponentOption[];
     restaurantId: string;
 }) {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [isAddDialog, setIsAddDialog] = useState(false);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
+    const sortedComponentOptions = useMemo(
+        () => [...localComponentsList].sort((a, b) => a.name.localeCompare(b.name)),
+        [localComponentsList]
+    );
+    const componentNameById = useMemo(
+        () => new Map(sortedComponentOptions.map((component) => [component.id, component.name])),
+        [sortedComponentOptions]
+    );
 
     // Map initial components if editing
     const initialComponents = initialData?.menu_components?.map((mc) => ({
@@ -74,7 +207,7 @@ export function MenuForm({
     })) || [];
 
     const form = useForm<FormValues>({
-        resolver: zodResolver(menuSchema) as any,
+        resolver: zodResolver(menuSchema),
         defaultValues: {
             name: initialData?.name || '',
             season: initialData?.season || '',
@@ -89,6 +222,9 @@ export function MenuForm({
         control: form.control,
         name: 'components',
     });
+    const handleMoveUp = useCallback((index: number) => move(index, index - 1), [move]);
+    const handleMoveDown = useCallback((index: number) => move(index, index + 1), [move]);
+    const handleRemove = useCallback((index: number) => remove(index), [remove]);
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
@@ -127,8 +263,9 @@ export function MenuForm({
 
             toast.success(initialData ? 'Menu updated' : 'Menu created');
             router.push(`/dashboard/${restaurantId}/menus`);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to save menu';
+            toast.error(message);
         } finally {
             setIsSaving(false);
         }
@@ -274,82 +411,19 @@ export function MenuForm({
                             </div>
                         ) : (
                             <div className="flex-1 space-y-4 pr-2 overflow-y-auto min-h-0">
-                                {fields.map((field, index) => {
-                                    return (
-                                        <div key={field.id} className="flex gap-4 items-start bg-background border rounded-md p-3">
-                                            <FormField
-                                                control={form.control}
-                                                name={`components.${index}.component_id`}
-                                                render={({ field }) => (
-                                                    <FormItem className="flex-[2]">
-                                                        <FormLabel className="text-xs">Component</FormLabel>
-                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select component" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {localComponentsList.map((c) => (
-                                                                    <SelectItem key={c.id} value={c.id}>
-                                                                        {c.name}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <FormField
-                                                control={form.control}
-                                                name={`components.${index}.qty_per_order`}
-                                                render={({ field }) => (
-                                                    <FormItem className="flex-[1]">
-                                                        <FormLabel className="text-xs">Qty / Order</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" step="0.01" {...field} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <div className="mt-6 flex items-center">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    disabled={index === 0}
-                                                    onClick={() => move(index, index - 1)}
-                                                    className="h-8 w-8 text-muted-foreground"
-                                                >
-                                                    <ArrowUp className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    disabled={index === fields.length - 1}
-                                                    onClick={() => move(index, index + 1)}
-                                                    className="h-8 w-8 text-muted-foreground"
-                                                >
-                                                    <ArrowDown className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => remove(index)}
-                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 ml-1"
-                                                >
-                                                    <Trash className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                {fields.map((field, index) => (
+                                    <MenuComponentRow
+                                        key={field.id}
+                                        index={index}
+                                        rowCount={fields.length}
+                                        control={form.control}
+                                        componentOptions={sortedComponentOptions}
+                                        componentNameById={componentNameById}
+                                        onMoveUp={handleMoveUp}
+                                        onMoveDown={handleMoveDown}
+                                        onRemove={handleRemove}
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>
@@ -374,7 +448,7 @@ export function MenuForm({
                 onOpenChange={setIsAddDialog}
                 restaurantId={restaurantId}
                 onSuccess={(newComp) => {
-                    setLocalComponentsList(prev => [...prev, newComp].sort((a, b) => a.name.localeCompare(b.name)));
+                    setLocalComponentsList(prev => [...prev, { id: newComp.id, name: newComp.name }]);
                     append({ component_id: newComp.id, qty_per_order: 1 });
                 }}
             />

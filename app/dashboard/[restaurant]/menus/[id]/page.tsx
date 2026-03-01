@@ -1,5 +1,5 @@
 import { getMenuById } from '@/lib/queries/menus';
-import { getComponents } from '@/lib/queries/components';
+import { getComponentOptions } from '@/lib/queries/components';
 import { MenuForm } from '@/components/kitchen/menu-form';
 import { notFound } from 'next/navigation';
 
@@ -13,7 +13,7 @@ export default async function MenuDetailPage({
 
     const [menu, components] = await Promise.all([
         isNew ? null : getMenuById(id),
-        getComponents(restaurant),
+        getComponentOptions(restaurant),
     ]);
 
     if (!isNew && !menu) {

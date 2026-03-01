@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu } from '@/lib/queries/menus';
 import { Download } from 'lucide-react';
@@ -9,30 +10,29 @@ interface MenuMatrixExportProps {
 }
 
 export function MenuMatrixExport({ menus }: MenuMatrixExportProps) {
-    // Build a sorted unique list of all components across all menus
-    const componentMap = new Map<string, string>(); // id → name
-    for (const menu of menus) {
-        for (const mc of menu.menu_components ?? []) {
-            if (mc.components) {
-                componentMap.set(mc.components.id, mc.components.name);
+    const { components, lookup } = useMemo(() => {
+        const componentMap = new Map<string, string>();
+        const nextLookup = new Map<string, Map<string, number>>();
+
+        for (const menu of menus) {
+            const inner = new Map<string, number>();
+            for (const mc of menu.menu_components ?? []) {
+                inner.set(mc.component_id, mc.qty_per_order);
+                if (mc.components) {
+                    componentMap.set(mc.components.id, mc.components.name);
+                }
             }
+            nextLookup.set(menu.id, inner);
         }
-    }
-    const components = Array.from(componentMap.entries()).sort((a, b) =>
-        a[1].localeCompare(b[1])
-    );
 
-    // Build lookup: menuId → componentId → qty
-    const lookup = new Map<string, Map<string, number>>();
-    for (const menu of menus) {
-        const inner = new Map<string, number>();
-        for (const mc of menu.menu_components ?? []) {
-            inner.set(mc.component_id, mc.qty_per_order);
-        }
-        lookup.set(menu.id, inner);
-    }
+        const nextComponents = Array.from(componentMap.entries()).sort((a, b) =>
+            a[1].localeCompare(b[1])
+        );
 
-    const buildCsv = (): string => {
+        return { components: nextComponents, lookup: nextLookup };
+    }, [menus]);
+
+    const buildCsv = useCallback((): string => {
         const header = ['Menu', ...components.map(([, name]) => name)];
         const rows = menus.map((menu) => {
             const cells = components.map(([compId]) => {
@@ -48,7 +48,7 @@ export function MenuMatrixExport({ menus }: MenuMatrixExportProps) {
                 : val;
 
         return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
-    };
+    }, [components, lookup, menus]);
 
     const downloadCsv = () => {
         const csv = buildCsv();

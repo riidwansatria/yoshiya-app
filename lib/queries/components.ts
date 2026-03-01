@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import { Ingredient } from './ingredients';
 
+export interface ComponentOption {
+    id: string;
+    name: string;
+}
+
 export interface RecipeComponent {
     id: string;
     restaurant_id: string;
@@ -66,4 +71,21 @@ export async function getComponentById(id: string): Promise<RecipeComponent | nu
     }
 
     return data as RecipeComponent;
+}
+
+export async function getComponentOptions(restaurantId: string): Promise<ComponentOption[]> {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from('components')
+        .select('id, name')
+        .eq('restaurant_id', restaurantId)
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching component options:', error);
+        return [];
+    }
+
+    return data as ComponentOption[];
 }

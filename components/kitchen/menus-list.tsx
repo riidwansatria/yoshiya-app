@@ -10,13 +10,12 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useState, Fragment } from 'react';
+import { useCallback, useState, Fragment } from 'react';
 import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -37,15 +36,17 @@ export function MenusList({
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
-    const toggleRow = (menuId: string) => {
-        const newExpanded = new Set(expandedRows);
-        if (newExpanded.has(menuId)) {
-            newExpanded.delete(menuId);
-        } else {
-            newExpanded.add(menuId);
-        }
-        setExpandedRows(newExpanded);
-    };
+    const toggleRow = useCallback((menuId: string) => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+            if (next.has(menuId)) {
+                next.delete(menuId);
+            } else {
+                next.add(menuId);
+            }
+            return next;
+        });
+    }, []);
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
