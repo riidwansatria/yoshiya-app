@@ -33,15 +33,6 @@ export function IngredientCombobox({
 
     const selected = ingredients.find((i) => i.id === value) ?? null;
 
-    // Build items list for the combobox
-    const items = ingredients.map((i) => ({
-        id: i.id,
-        label: `${i.name}${i.unit ? ` (${i.unit})` : ''}`,
-        name: i.name,
-        unit: i.unit,
-        isUsed: usedIds.has(i.id) && i.id !== value,
-    }));
-
     return (
         <>
             <Combobox
@@ -50,7 +41,8 @@ export function IngredientCombobox({
                     if (item) onValueChange(item.id);
                 }}
                 items={ingredients}
-                itemToStringLabel={(item) => `${item.name}${item.unit ? ` (${item.unit})` : ''}`}
+                itemToStringLabel={(item) => item.name}
+                autoHighlight
             >
                 <ComboboxInput
                     placeholder="Search ingredient..."
@@ -69,11 +61,6 @@ export function IngredientCombobox({
                                 >
                                     <span className="truncate">
                                         {ingredient.name}
-                                        {ingredient.unit && (
-                                            <span className="text-muted-foreground ml-1">
-                                                ({ingredient.unit})
-                                            </span>
-                                        )}
                                     </span>
                                     {isUsed && (
                                         <span className="ml-auto text-xs text-muted-foreground">
