@@ -66,7 +66,7 @@ export async function getComponentById(id: string): Promise<RecipeComponent | nu
         .single();
 
     if (error) {
-        console.error('Error fetching component by ID:', error);
+        console.error('[getComponentById] Error for ID:', id, '→', error.message, error.code, error.details);
         return null;
     }
 

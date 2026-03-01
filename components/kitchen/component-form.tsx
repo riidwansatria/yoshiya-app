@@ -11,7 +11,7 @@ import { Trash, Plus } from 'lucide-react';
 import { RecipeComponent } from '@/lib/queries/components';
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createComponent, updateComponent, updateComponentIngredients } from '@/lib/actions/components';
-import { AddIngredientDialog } from '@/components/kitchen/ingredient-dialogs';
+import { IngredientCombobox } from '@/components/kitchen/ingredient-combobox';
 import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
@@ -26,13 +26,6 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 const ingredientSchema = z.object({
     ingredient_id: z.string().min(1, 'Please select an ingredient'),
@@ -59,7 +52,6 @@ export function ComponentForm({
 }) {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
-    const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
 
     // Map initial ingredients if editing
     const initialIngredients = initialData?.component_ingredients?.map((ci) => ({
@@ -228,29 +220,18 @@ export function ComponentForm({
                         <div>
                             <h3 className="font-semibold text-lg">Ingredients</h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Accepted: decimal (0.5), fraction (1/6), mixed (1 1/2).
+                                Qty accepts: decimal (0.5), fraction (1/6), mixed (1 1/2).
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsAddIngredientOpen(true)}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                New Master Ingredient
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={safeAppend}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Row
-                            </Button>
-                        </div>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={safeAppend}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Row
+                        </Button>
                     </div>
 
                     {fields.length === 0 ? (
@@ -260,29 +241,30 @@ export function ComponentForm({
                             {fields.map((field, index) => {
                                 const selectedIngredientId = form.watch(`ingredients.${index}.ingredient_id`);
                                 const selectedIngredient = availableIngredients.find(i => i.id === selectedIngredientId);
-                                const unitLabel = selectedIngredient ? selectedIngredient.unit : 'unit';
+                                const unitLabel = selectedIngredient?.unit || 'unit';
+
+                                // Collect IDs used in other rows
+                                const usedIds = new Set(
+                                    fields
+                                        .map((_, i) => form.watch(`ingredients.${i}.ingredient_id`))
+                                        .filter((id): id is string => !!id)
+                                );
 
                                 return (
-                                    <div key={field.id} className="flex gap-4 items-start">
+                                    <div key={field.id} className="flex gap-3 items-start">
                                         <FormField
                                             control={form.control}
                                             name={`ingredients.${index}.ingredient_id`}
                                             render={({ field }) => (
                                                 <FormItem className="flex-[2]">
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select ingredient" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {availableIngredients.map((i) => (
-                                                                <SelectItem key={i.id} value={i.id}>
-                                                                    {i.name} ({i.unit})
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <IngredientCombobox
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                            ingredients={availableIngredients}
+                                                            usedIds={usedIds}
+                                                        />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -342,11 +324,6 @@ export function ComponentForm({
                     </Button>
                 </div>
             </form>
-
-            <AddIngredientDialog
-                open={isAddIngredientOpen}
-                onOpenChange={setIsAddIngredientOpen}
-            />
         </Form>
     );
 }
