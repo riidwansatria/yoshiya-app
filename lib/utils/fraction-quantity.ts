@@ -105,3 +105,43 @@ export function parseFractionalQuantity(input: string): FractionalQuantityParseR
         normalized: rounded.toString(),
     };
 }
+
+/** Convert repeating decimals to fraction strings for display.
+ *  Only converts when a very close fraction match exists (e.g. 0.333333 → "1/3").
+ *  Clean decimals like 0.05 are returned as-is.
+ */
+export function decimalToFraction(value: number | string, maxDenominator = 12): string {
+    const num = typeof value === 'string' ? Number(value) : value;
+    if (!Number.isFinite(num) || num <= 0) return String(value);
+
+    const whole = Math.floor(num);
+    const decimal = num - whole;
+
+    // No fractional part — just return the integer
+    if (decimal < 1e-6) return whole.toString();
+
+    // Find best fraction match for the decimal part
+    let bestNum = 1;
+    let bestDen = 1;
+    let bestErr = Infinity;
+
+    for (let den = 2; den <= maxDenominator; den++) {
+        const n = Math.round(decimal * den);
+        if (n <= 0 || n >= den) continue;
+        const err = Math.abs(decimal - n / den);
+        if (err < bestErr) {
+            bestErr = err;
+            bestNum = n;
+            bestDen = den;
+        }
+    }
+
+    // Only use fraction if match is very tight (covers repeating decimals)
+    // Otherwise return the original decimal value as-is
+    if (bestErr > 1e-4) {
+        return whole > 0 ? num.toString() : num.toString();
+    }
+
+    const fracStr = `${bestNum}/${bestDen}`;
+    return whole > 0 ? `${whole} ${fracStr}` : fracStr;
+}

@@ -12,7 +12,7 @@ import { RecipeComponent } from '@/lib/queries/components';
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createComponent, updateComponent, updateComponentIngredients } from '@/lib/actions/components';
 import { IngredientCombobox } from '@/components/kitchen/ingredient-combobox';
-import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
+import { parseFractionalQuantity, decimalToFraction } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +56,7 @@ export function ComponentForm({
     // Map initial ingredients if editing
     const initialIngredients = initialData?.component_ingredients?.map((ci) => ({
         ingredient_id: ci.ingredient_id,
-        qty_per_serving: ci.qty_per_serving.toString(),
+        qty_per_serving: decimalToFraction(ci.qty_per_serving),
     })) || [];
 
     const form = useForm<FormValues>({

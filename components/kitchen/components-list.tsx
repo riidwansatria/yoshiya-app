@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useCallback, useState, Fragment } from 'react';
 import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -151,7 +152,7 @@ export function ComponentsList({
                                                                 {component.component_ingredients.map(ci => (
                                                                     <li key={ci.ingredient_id} className="text-sm flex items-center gap-3">
                                                                         <span className="inline-block w-[3em] text-right font-medium text-foreground tabular-nums">
-                                                                            {ci.qty_per_serving}
+                                                                            {decimalToFraction(ci.qty_per_serving)}
                                                                         </span>
                                                                         <span className="text-muted-foreground text-xs">
                                                                             {ci.ingredients?.unit || ''}
