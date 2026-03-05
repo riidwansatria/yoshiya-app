@@ -10,8 +10,9 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useCallback, useState, Fragment } from 'react';
-import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { useCallback, useState, useMemo, Fragment } from 'react';
+import { ChevronDown, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,6 +36,17 @@ export function MenusList({
     const [deletingMenu, setDeletingMenu] = useState<Menu | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
+
+    const filtered = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return initialData;
+        return initialData.filter((m) =>
+            m.name.toLowerCase().includes(q) ||
+            (m.season ?? '').toLowerCase().includes(q) ||
+            (m.description ?? '').toLowerCase().includes(q)
+        );
+    }, [initialData, search]);
 
     const toggleRow = useCallback((menuId: string) => {
         setExpandedRows((prev) => {
@@ -50,6 +62,15 @@ export function MenusList({
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
+            <div className="relative shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search menus..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-9"
+                />
+            </div>
             <div className="rounded-md border flex-1 overflow-y-auto">
                 <Table>
                     <TableHeader>
@@ -63,14 +84,14 @@ export function MenusList({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {initialData.length === 0 ? (
+                        {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-24 text-center">
-                                    No menus found.
+                                    {search ? `No menus matching "${search}".` : 'No menus found.'}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            initialData.map((menu) => {
+                            filtered.map((menu) => {
                                 const isExpanded = expandedRows.has(menu.id);
                                 return (
                                     <Fragment key={menu.id}>

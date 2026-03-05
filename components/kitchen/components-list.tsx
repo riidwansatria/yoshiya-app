@@ -10,8 +10,9 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useCallback, useState, Fragment } from 'react';
-import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { useCallback, useState, useMemo, Fragment } from 'react';
+import { ChevronDown, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 import {
     DropdownMenu,
@@ -36,6 +37,16 @@ export function ComponentsList({
     const [deletingComponent, setDeletingComponent] = useState<RecipeComponent | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
+
+    const filtered = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return initialData;
+        return initialData.filter((c) =>
+            c.name.toLowerCase().includes(q) ||
+            (c.description ?? '').toLowerCase().includes(q)
+        );
+    }, [initialData, search]);
 
     const toggleRow = useCallback((componentId: string) => {
         setExpandedRows((prev) => {
@@ -51,6 +62,15 @@ export function ComponentsList({
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
+            <div className="relative shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search components..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-9"
+                />
+            </div>
             <div className="rounded-md border flex-1 overflow-y-auto min-h-0">
                 <Table>
                     <TableHeader>
@@ -64,14 +84,14 @@ export function ComponentsList({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {initialData.length === 0 ? (
+                        {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
-                                    No components found.
+                                    {search ? `No components matching "${search}".` : 'No components found.'}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            initialData.map((component) => {
+                            filtered.map((component) => {
                                 const isExpanded = expandedRows.has(component.id);
                                 return (
                                     <Fragment key={component.id}>
