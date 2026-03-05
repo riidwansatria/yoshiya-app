@@ -52,6 +52,7 @@ export function ComponentForm({
 }) {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
+    const [localIngredients, setLocalIngredients] = useState(availableIngredients);
 
     // Map initial ingredients if editing
     const initialIngredients = initialData?.component_ingredients?.map((ci) => ({
@@ -265,8 +266,11 @@ export function ComponentForm({
                                                         <IngredientCombobox
                                                             value={field.value}
                                                             onValueChange={field.onChange}
-                                                            ingredients={availableIngredients}
+                                                            ingredients={localIngredients}
                                                             usedIds={usedIds}
+                                                            onNewIngredient={(newIng) =>
+                                                                setLocalIngredients(prev => [...prev, newIng])
+                                                            }
                                                         />
                                                     </FormControl>
                                                     <FormMessage />

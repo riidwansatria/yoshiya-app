@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createIngredient, updateIngredient, deleteIngredient } from '@/lib/actions/ingredients';
@@ -35,12 +35,29 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function AddIngredientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function AddIngredientDialog({
+    open,
+    onOpenChange,
+    initialName = '',
+    onSuccess,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    initialName?: string;
+    onSuccess?: (ingredient: Ingredient) => void;
+}) {
     const [isSaving, setIsSaving] = useState(false);
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
-        defaultValues: { name: '', unit: '', category: '' },
+        defaultValues: { name: initialName, unit: '', category: '' },
     });
+
+    // Sync name field whenever dialog opens with a new initialName
+    useEffect(() => {
+        if (open) {
+            form.setValue('name', initialName);
+        }
+    }, [open, initialName, form]);
 
     async function onSubmit(data: FormValues) {
         if (isSaving) return;
@@ -53,6 +70,9 @@ export function AddIngredientDialog({ open, onOpenChange }: { open: boolean; onO
                 toast.success('Ingredient added successfully');
                 form.reset();
                 onOpenChange(false);
+                if (result.data && onSuccess) {
+                    onSuccess(result.data as Ingredient);
+                }
             }
         } finally {
             setIsSaving(false);

@@ -6,7 +6,11 @@ import { revalidatePath } from 'next/cache';
 export async function createIngredient(data: { name: string; unit: string; category?: string | null }) {
     const supabase = await createClient();
 
-    const { error } = await supabase.from('ingredients').insert([data]);
+    const { data: created, error } = await supabase
+        .from('ingredients')
+        .insert([data])
+        .select()
+        .single();
 
     if (error) {
         console.error('Error creating ingredient:', error);
@@ -17,7 +21,7 @@ export async function createIngredient(data: { name: string; unit: string; categ
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/components/new', 'page');
-    return { success: true };
+    return { success: true, data: created };
 }
 
 export async function updateIngredient(
