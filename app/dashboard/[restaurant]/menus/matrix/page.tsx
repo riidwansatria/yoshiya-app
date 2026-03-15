@@ -23,7 +23,7 @@ export default async function MenuMatrixPage({
                 </div>
             </div>
             <div className="flex-1 min-h-0">
-                <MenuMatrixExport menus={menus} />
+                <MenuMatrixExport menus={menus} restaurantId={restaurant} />
             </div>
         </div>
     );

@@ -20,7 +20,7 @@ export default async function ComponentMatrixPage({
                 </div>
             </div>
             <div className="flex-1 min-h-0">
-                <ComponentMatrixExport components={components} />
+                <ComponentMatrixExport components={components} restaurantId={restaurant} />
             </div>
         </div>
     );
