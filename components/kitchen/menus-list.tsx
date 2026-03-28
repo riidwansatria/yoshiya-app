@@ -188,9 +188,19 @@ export function MenusList({
                                                                         <span className="inline-block w-[1.5em] text-right font-medium text-foreground">
                                                                             {mc.qty_per_order}x
                                                                         </span>
-                                                                        <span className="text-foreground">
-                                                                            {mc.components?.name || 'Unknown Component'}
-                                                                        </span>
+                                                                        {mc.components?.id ? (
+                                                                            <Link
+                                                                                href={`/dashboard/${restaurantId}/components/${mc.components.id}`}
+                                                                                className="text-foreground hover:underline"
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            >
+                                                                                {mc.components.name}
+                                                                            </Link>
+                                                                        ) : (
+                                                                            <span className="text-foreground">
+                                                                                {mc.components?.name || 'Unknown Component'}
+                                                                            </span>
+                                                                        )}
                                                                     </li>
                                                                 ))}
                                                             </ul>
