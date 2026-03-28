@@ -34,18 +34,10 @@ const menuComponentSchema = z.object({
     qty_per_order: z.string().min(1, 'Quantity is required'),
 });
 
-const optionalPriceSchema = z.preprocess((value) => {
-    if (value === '' || value === undefined) {
-        return null;
-    }
-
-    return value;
-}, z.number().nullable());
-
 const menuSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     season: z.string().optional(),
-    price: optionalPriceSchema,
+    price: z.number().nullable(),
     description: z.string().optional(),
     color: z.string().optional(),
     components: z.array(menuComponentSchema),
