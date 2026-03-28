@@ -34,10 +34,18 @@ const menuComponentSchema = z.object({
     qty_per_order: z.string().min(1, 'Quantity is required'),
 });
 
+const optionalPriceSchema = z.preprocess((value) => {
+    if (value === '' || value === undefined) {
+        return null;
+    }
+
+    return value;
+}, z.number().nullable());
+
 const menuSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     season: z.string().optional(),
-    price: z.number().nullable().optional(),
+    price: optionalPriceSchema,
     description: z.string().optional(),
     color: z.string().optional(),
     components: z.array(menuComponentSchema),
@@ -177,7 +185,7 @@ export function MenuForm({
         defaultValues: {
             name: initialData?.name || '',
             season: initialData?.season || '',
-            price: initialData?.price || null,
+            price: initialData?.price ?? null,
             description: initialData?.description || '',
             color: initialData?.color || '', // optional color
             components: initialComponents,
@@ -272,7 +280,15 @@ export function MenuForm({
                 if (mappingRes.error) throw new Error(mappingRes.error);
             }
 
-            toast.success(initialData ? 'Menu updated' : 'Menu created');
+            toast.success(
+                data.price == null
+                    ? initialData
+                        ? 'Menu updated. Price was left blank.'
+                        : 'Menu created. Price was left blank.'
+                    : initialData
+                        ? 'Menu updated'
+                        : 'Menu created'
+            );
             router.push(`/dashboard/${restaurantId}/menus`);
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Failed to save menu';
@@ -329,7 +345,7 @@ export function MenuForm({
                                             <Input
                                                 type="number"
                                                 {...field}
-                                                value={field.value || ''}
+                                                value={field.value ?? ''}
                                                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                                             />
                                         </FormControl>
