@@ -1,6 +1,7 @@
 'use client';
 
 import { RecipeComponent } from '@/lib/queries/components';
+import { Menu } from '@/lib/queries/menus';
 import {
     Table,
     TableBody,
@@ -28,9 +29,11 @@ import { duplicateComponent } from '@/lib/actions/components';
 
 export function ComponentsList({
     initialData,
+    menus,
     restaurantId,
 }: {
     initialData: RecipeComponent[];
+    menus: Menu[];
     restaurantId: string;
 }) {
     const router = useRouter();
@@ -38,15 +41,39 @@ export function ComponentsList({
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const menuUsageByComponentId = useMemo(() => {
+        const usage = new Map<string, { menuId: string; menuName: string; qtyPerOrder: number }[]>();
+
+        for (const menu of menus) {
+            for (const menuComponent of menu.menu_components ?? []) {
+                const current = usage.get(menuComponent.component_id) ?? [];
+                current.push({
+                    menuId: menu.id,
+                    menuName: menu.name,
+                    qtyPerOrder: menuComponent.qty_per_order,
+                });
+                usage.set(menuComponent.component_id, current);
+            }
+        }
+
+        return usage;
+    }, [menus]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         if (!q) return initialData;
         return initialData.filter((c) =>
             c.name.toLowerCase().includes(q) ||
-            (c.description ?? '').toLowerCase().includes(q)
+            (c.description ?? '').toLowerCase().includes(q) ||
+            (c.component_ingredients ?? []).some((componentIngredient) =>
+                (componentIngredient.ingredients?.name ?? '').toLowerCase().includes(q) ||
+                (componentIngredient.ingredients?.unit ?? '').toLowerCase().includes(q)
+            ) ||
+            (menuUsageByComponentId.get(c.id) ?? []).some((usage) =>
+                usage.menuName.toLowerCase().includes(q)
+            )
         );
-    }, [initialData, search]);
+    }, [initialData, menuUsageByComponentId, search]);
 
     const toggleRow = useCallback((componentId: string) => {
         setExpandedRows((prev) => {
@@ -93,6 +120,7 @@ export function ComponentsList({
                         ) : (
                             filtered.map((component) => {
                                 const isExpanded = expandedRows.has(component.id);
+                                const menuUsage = menuUsageByComponentId.get(component.id) ?? [];
                                 return (
                                     <Fragment key={component.id}>
                                         <TableRow
@@ -184,6 +212,31 @@ export function ComponentsList({
                                                                 ))}
                                                             </ul>
                                                         )}
+                                                        <div className="mt-4 border-t pt-4">
+                                                            <h4 className="text-sm font-medium">Used In Menus</h4>
+                                                            {menuUsage.length === 0 ? (
+                                                                <p className="mt-2 text-sm text-muted-foreground italic">
+                                                                    This component is not mapped to any menus yet.
+                                                                </p>
+                                                            ) : (
+                                                                <ul className="mt-2 space-y-2">
+                                                                    {menuUsage.map((usage) => (
+                                                                        <li key={`${usage.menuId}-${component.id}`} className="text-sm flex items-center gap-3">
+                                                                            <span className="inline-block w-[3em] text-right font-medium text-foreground tabular-nums">
+                                                                                {usage.qtyPerOrder}x
+                                                                            </span>
+                                                                            <Link
+                                                                                href={`/dashboard/${restaurantId}/menus/${usage.menuId}`}
+                                                                                className="text-foreground hover:underline"
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            >
+                                                                                {usage.menuName}
+                                                                            </Link>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

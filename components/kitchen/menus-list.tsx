@@ -44,7 +44,10 @@ export function MenusList({
         return initialData.filter((m) =>
             m.name.toLowerCase().includes(q) ||
             (m.season ?? '').toLowerCase().includes(q) ||
-            (m.description ?? '').toLowerCase().includes(q)
+            (m.description ?? '').toLowerCase().includes(q) ||
+            (m.menu_components ?? []).some((menuComponent) =>
+                (menuComponent.components?.name ?? '').toLowerCase().includes(q)
+            )
         );
     }, [initialData, search]);
 

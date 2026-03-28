@@ -1,6 +1,7 @@
 'use client';
 
 import { Ingredient } from '@/lib/queries/ingredients';
+import { RecipeComponent } from '@/lib/queries/components';
 import {
     Table,
     TableBody,
@@ -10,7 +11,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Search } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { duplicateIngredient } from '@/lib/actions/ingredients';
 import {
@@ -18,7 +19,7 @@ import {
     EditIngredientDialog,
     DeleteIngredientDialog,
 } from './ingredient-dialogs';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment, useCallback } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,6 +27,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
 
 function formatPackageDisplay(ingredient: Ingredient) {
     if (!ingredient.package_size) {
@@ -36,12 +38,39 @@ function formatPackageDisplay(ingredient: Ingredient) {
     return `1 ${packageLabel} = ${ingredient.package_size} ${ingredient.unit}`;
 }
 
-export function IngredientsTable({ initialData }: { initialData: Ingredient[] }) {
+export function IngredientsTable({
+    initialData,
+    components,
+    restaurantId,
+}: {
+    initialData: Ingredient[];
+    components: RecipeComponent[];
+    restaurantId: string;
+}) {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const componentUsageByIngredientId = useMemo(() => {
+        const usage = new Map<string, { componentId: string; componentName: string; qtyPerServing: number; unit: string }[]>();
+
+        for (const component of components) {
+            for (const componentIngredient of component.component_ingredients ?? []) {
+                const current = usage.get(componentIngredient.ingredient_id) ?? [];
+                current.push({
+                    componentId: component.id,
+                    componentName: component.name,
+                    qtyPerServing: componentIngredient.qty_per_serving,
+                    unit: componentIngredient.ingredients?.unit ?? '',
+                });
+                usage.set(componentIngredient.ingredient_id, current);
+            }
+        }
+
+        return usage;
+    }, [components]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -51,9 +80,24 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
             i.unit.toLowerCase().includes(q) ||
             (i.category ?? '').toLowerCase().includes(q) ||
             (i.package_label ?? '').toLowerCase().includes(q) ||
-            (i.package_size?.toString() ?? '').includes(q)
+            (i.package_size?.toString() ?? '').includes(q) ||
+            (componentUsageByIngredientId.get(i.id) ?? []).some((usage) =>
+                usage.componentName.toLowerCase().includes(q)
+            )
         );
-    }, [initialData, search]);
+    }, [componentUsageByIngredientId, initialData, search]);
+
+    const toggleRow = useCallback((ingredientId: string) => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+            if (next.has(ingredientId)) {
+                next.delete(ingredientId);
+            } else {
+                next.add(ingredientId);
+            }
+            return next;
+        });
+    }, []);
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
@@ -77,6 +121,7 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[40px]"></TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Unit</TableHead>
                             <TableHead>Package</TableHead>
@@ -87,51 +132,102 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
+                                <TableCell colSpan={6} className="h-24 text-center">
                                     {search ? `No ingredients matching "${search}".` : 'No ingredients found.'}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filtered.map((ingredient) => (
-                                <TableRow key={ingredient.id}>
-                                    <TableCell className="font-medium">{ingredient.name}</TableCell>
-                                    <TableCell>{ingredient.unit}</TableCell>
-                                    <TableCell>{formatPackageDisplay(ingredient)}</TableCell>
-                                    <TableCell>{ingredient.category || '-'}</TableCell>
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => setEditingIngredient(ingredient)}>
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    disabled={duplicatingId === ingredient.id}
-                                                    onClick={async () => {
-                                                        setDuplicatingId(ingredient.id);
-                                                        await duplicateIngredient(ingredient.id);
-                                                        setDuplicatingId(null);
-                                                    }}
-                                                >
-                                                    {duplicatingId === ingredient.id ? 'Duplicating...' : 'Duplicate'}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem
-                                                    className="text-red-600 focus:text-red-600"
-                                                    onClick={() => setDeletingIngredient(ingredient)}
-                                                >
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                            filtered.map((ingredient) => {
+                                const isExpanded = expandedRows.has(ingredient.id);
+                                const componentUsage = componentUsageByIngredientId.get(ingredient.id) ?? [];
+
+                                return (
+                                    <Fragment key={ingredient.id}>
+                                        <TableRow
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => toggleRow(ingredient.id)}
+                                        >
+                                            <TableCell>
+                                                {isExpanded ? (
+                                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                                ) : (
+                                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="font-medium">{ingredient.name}</TableCell>
+                                            <TableCell>{ingredient.unit}</TableCell>
+                                            <TableCell>{formatPackageDisplay(ingredient)}</TableCell>
+                                            <TableCell>{ingredient.category || '-'}</TableCell>
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                            <span className="sr-only">Open menu</span>
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => setEditingIngredient(ingredient)}>
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            disabled={duplicatingId === ingredient.id}
+                                                            onClick={async () => {
+                                                                setDuplicatingId(ingredient.id);
+                                                                await duplicateIngredient(ingredient.id);
+                                                                setDuplicatingId(null);
+                                                            }}
+                                                        >
+                                                            {duplicatingId === ingredient.id ? 'Duplicating...' : 'Duplicate'}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            className="text-red-600 focus:text-red-600"
+                                                            onClick={() => setDeletingIngredient(ingredient)}
+                                                        >
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+
+                                        {isExpanded && (
+                                            <TableRow className="bg-muted/30 hover:bg-muted/30">
+                                                <TableCell colSpan={6} className="border-b p-0">
+                                                    <div className="space-y-4 p-4 pl-14">
+                                                        <div>
+                                                            <h4 className="text-sm font-medium">Used In Components</h4>
+                                                            {componentUsage.length === 0 ? (
+                                                                <p className="mt-2 text-sm text-muted-foreground italic">
+                                                                    This ingredient is not mapped to any components yet.
+                                                                </p>
+                                                            ) : (
+                                                                <ul className="mt-2 space-y-2">
+                                                                    {componentUsage.map((usage) => (
+                                                                        <li key={`${ingredient.id}-${usage.componentId}`} className="text-sm flex items-center gap-3">
+                                                                            <span className="inline-block min-w-[5em] text-right font-medium text-foreground tabular-nums">
+                                                                                {usage.qtyPerServing} {usage.unit}
+                                                                            </span>
+                                                                            <Link
+                                                                                href={`/dashboard/${restaurantId}/components/${usage.componentId}`}
+                                                                                className="text-foreground hover:underline"
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            >
+                                                                                {usage.componentName}
+                                                                            </Link>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </Fragment>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>

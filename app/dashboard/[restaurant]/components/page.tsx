@@ -1,4 +1,5 @@
 import { getComponents } from '@/lib/queries/components';
+import { getMenus } from '@/lib/queries/menus';
 import { ComponentsList } from '@/components/kitchen/components-list';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, LayoutList } from 'lucide-react';
@@ -10,7 +11,10 @@ export default async function ComponentsPage({
     params: Promise<{ restaurant: string }>;
 }) {
     const { restaurant } = await params;
-    const components = await getComponents(restaurant);
+    const [components, menus] = await Promise.all([
+        getComponents(restaurant),
+        getMenus(restaurant, { includeMenuComponents: true, includeComponentDetails: true }),
+    ]);
 
     return (
         <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
@@ -32,7 +36,7 @@ export default async function ComponentsPage({
                 </div>
             </div>
             <div className="flex-1 min-h-0">
-                <ComponentsList initialData={components} restaurantId={restaurant} />
+                <ComponentsList initialData={components} menus={menus} restaurantId={restaurant} />
             </div>
         </div>
     );
