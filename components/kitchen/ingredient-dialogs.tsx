@@ -31,6 +31,12 @@ const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     unit: z.string(),
     category: z.string().optional(),
+    package_size: z.string().optional().refine((value) => {
+        const trimmed = (value ?? '').trim();
+
+        return trimmed === '' || (!Number.isNaN(Number(trimmed)) && Number(trimmed) > 0);
+    }, 'Package size must be greater than 0'),
+    package_label: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -49,13 +55,25 @@ export function AddIngredientDialog({
     const [isSaving, setIsSaving] = useState(false);
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
-        defaultValues: { name: initialName, unit: '', category: '' },
+        defaultValues: {
+            name: initialName,
+            unit: '',
+            category: '',
+            package_size: '',
+            package_label: '',
+        },
     });
 
     // Sync name field whenever dialog opens with a new initialName
     useEffect(() => {
         if (open) {
-            form.setValue('name', initialName);
+            form.reset({
+                name: initialName,
+                unit: '',
+                category: '',
+                package_size: '',
+                package_label: '',
+            });
         }
     }, [open, initialName, form]);
 
@@ -63,7 +81,14 @@ export function AddIngredientDialog({
         if (isSaving) return;
         setIsSaving(true);
         try {
-            const result = await createIngredient(data);
+            const trimmedPackageSize = data.package_size?.trim() ?? '';
+            const result = await createIngredient({
+                name: data.name,
+                unit: data.unit,
+                category: data.category,
+                package_size: trimmedPackageSize ? Number(trimmedPackageSize) : null,
+                package_label: data.package_label,
+            });
             if (result.error) {
                 toast.error(result.error);
             } else {
@@ -127,6 +152,46 @@ export function AddIngredientDialog({
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="package_size"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Package Size (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                step="any"
+                                                placeholder="e.g. 10, 500, 1000"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            How many base units are in one pack.
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="package_label"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Package Label (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. pack, bag, box" {...field} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            Display name for the package type.
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <DialogFooter>
                             <Button type="submit" disabled={isSaving}>
                                 {isSaving ? 'Saving...' : 'Save Ingredient'}
@@ -154,11 +219,20 @@ export function EditIngredientDialog({
             name: ingredient.name,
             unit: ingredient.unit,
             category: ingredient.category || '',
+            package_size: ingredient.package_size?.toString() || '',
+            package_label: ingredient.package_label || '',
         },
     });
 
     async function onSubmit(data: FormValues) {
-        const result = await updateIngredient(ingredient.id, data);
+        const trimmedPackageSize = data.package_size?.trim() ?? '';
+        const result = await updateIngredient(ingredient.id, {
+            name: data.name,
+            unit: data.unit,
+            category: data.category,
+            package_size: trimmedPackageSize ? Number(trimmedPackageSize) : null,
+            package_label: data.package_label,
+        });
         if (result.error) {
             toast.error(result.error);
         } else {
@@ -214,6 +288,40 @@ export function EditIngredientDialog({
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="package_size"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Package Size (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="0" step="any" {...field} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            How many base units are in one package.
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="package_label"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Package Label (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. pack, bag, box" {...field} />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            Display name for the package type.
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <DialogFooter>
                             <Button type="submit">Save Changes</Button>
                         </DialogFooter>

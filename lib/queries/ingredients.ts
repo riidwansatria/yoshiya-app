@@ -5,6 +5,8 @@ export interface Ingredient {
     name: string;
     unit: string;
     category: string | null;
+    package_size: number | null;
+    package_label: string | null;
     created_at: string;
 }
 

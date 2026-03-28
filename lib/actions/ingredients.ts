@@ -3,12 +3,46 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function createIngredient(data: { name: string; unit: string; category?: string | null }) {
+type IngredientPayload = {
+    name: string;
+    unit: string;
+    category?: string | null;
+    package_size?: number | null;
+    package_label?: string | null;
+};
+
+function normalizeIngredientPayload(data: IngredientPayload) {
+    const packageSize = data.package_size ?? null;
+
+    return {
+        name: data.name.trim(),
+        unit: data.unit.trim(),
+        category: data.category?.trim() ? data.category.trim() : null,
+        package_size: packageSize,
+        package_label: data.package_label?.trim() ? data.package_label.trim() : null,
+    };
+}
+
+function validateIngredientPayload(data: ReturnType<typeof normalizeIngredientPayload>) {
+    if (data.package_size !== null && data.package_size <= 0) {
+        return 'Package size must be greater than 0';
+    }
+
+    return null;
+}
+
+export async function createIngredient(data: IngredientPayload) {
     const supabase = await createClient();
+    const payload = normalizeIngredientPayload(data);
+    const validationError = validateIngredientPayload(payload);
+
+    if (validationError) {
+        return { error: validationError };
+    }
 
     const { data: created, error } = await supabase
         .from('ingredients')
-        .insert([data])
+        .insert([payload])
         .select()
         .single();
 
@@ -26,11 +60,17 @@ export async function createIngredient(data: { name: string; unit: string; categ
 
 export async function updateIngredient(
     id: string,
-    data: { name: string; unit: string; category?: string | null }
+    data: IngredientPayload
 ) {
     const supabase = await createClient();
+    const payload = normalizeIngredientPayload(data);
+    const validationError = validateIngredientPayload(payload);
 
-    const { error } = await supabase.from('ingredients').update(data).eq('id', id);
+    if (validationError) {
+        return { error: validationError };
+    }
+
+    const { error } = await supabase.from('ingredients').update(payload).eq('id', id);
 
     if (error) {
         console.error('Error updating ingredient:', error);
@@ -68,7 +108,10 @@ export async function duplicateIngredient(id: string) {
         return { error: 'Failed to fetch ingredient for duplication' };
     }
 
-    const { id: _id, created_at: _ca, updated_at: _ua, ...fields } = original;
+    const fields = { ...original } as Record<string, unknown>;
+    delete fields.id;
+    delete fields.created_at;
+    delete fields.updated_at;
     const { error: insertError } = await supabase
         .from('ingredients')
         .insert([{ ...fields, name: `Copy of ${original.name}` }]);

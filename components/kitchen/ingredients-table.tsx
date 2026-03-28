@@ -23,10 +23,18 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+function formatPackageDisplay(ingredient: Ingredient) {
+    if (!ingredient.package_size) {
+        return '-';
+    }
+
+    const packageLabel = ingredient.package_label?.trim() || 'pack';
+    return `1 ${packageLabel} = ${ingredient.package_size} ${ingredient.unit}`;
+}
 
 export function IngredientsTable({ initialData }: { initialData: Ingredient[] }) {
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -41,7 +49,9 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
         return initialData.filter((i) =>
             i.name.toLowerCase().includes(q) ||
             i.unit.toLowerCase().includes(q) ||
-            (i.category ?? '').toLowerCase().includes(q)
+            (i.category ?? '').toLowerCase().includes(q) ||
+            (i.package_label ?? '').toLowerCase().includes(q) ||
+            (i.package_size?.toString() ?? '').includes(q)
         );
     }, [initialData, search]);
 
@@ -69,6 +79,7 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Unit</TableHead>
+                            <TableHead>Package</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead className="w-[100px]">Actions</TableHead>
                         </TableRow>
@@ -76,7 +87,7 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
+                                <TableCell colSpan={5} className="h-24 text-center">
                                     {search ? `No ingredients matching "${search}".` : 'No ingredients found.'}
                                 </TableCell>
                             </TableRow>
@@ -85,6 +96,7 @@ export function IngredientsTable({ initialData }: { initialData: Ingredient[] })
                                 <TableRow key={ingredient.id}>
                                     <TableCell className="font-medium">{ingredient.name}</TableCell>
                                     <TableCell>{ingredient.unit}</TableCell>
+                                    <TableCell>{formatPackageDisplay(ingredient)}</TableCell>
                                     <TableCell>{ingredient.category || '-'}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
