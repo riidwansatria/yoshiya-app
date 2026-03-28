@@ -6,9 +6,9 @@ import { Control, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Trash, Plus, PlusCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 
-import { AddComponentDialogInline } from './add-component-dialog-inline';
+import { ComponentCombobox } from './component-combobox';
 
 import { Menu } from '@/lib/queries/menus';
 import { ComponentOption } from '@/lib/queries/components';
@@ -28,13 +28,6 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 const menuComponentSchema = z.object({
     component_id: z.string().min(1, 'Please select a component'),
@@ -57,7 +50,9 @@ type MenuComponentRowProps = {
     rowCount: number;
     control: Control<FormValues>;
     componentOptions: ComponentOption[];
-    componentNameById: Map<string, string>;
+    restaurantId: string;
+    usedIds: Set<string>;
+    onNewComponent: (component: ComponentOption) => void;
     onMoveUp: (index: number) => void;
     onMoveDown: (index: number) => void;
     onRemove: (index: number) => void;
@@ -69,61 +64,35 @@ const MenuComponentRow = memo(function MenuComponentRow({
     rowCount,
     control,
     componentOptions,
-    componentNameById,
+    restaurantId,
+    usedIds,
+    onNewComponent,
     onMoveUp,
     onMoveDown,
     onRemove,
     onQuantityCommit,
 }: MenuComponentRowProps) {
-    const [isSelectOpen, setIsSelectOpen] = useState(false);
-    const [hasOpenedSelect, setHasOpenedSelect] = useState(false);
-
-    const handleSelectOpenChange = useCallback((open: boolean) => {
-        if (open) {
-            setHasOpenedSelect(true);
-        }
-        setIsSelectOpen(open);
-    }, []);
-
     return (
         <div className="flex gap-4 items-start bg-background border rounded-md p-3">
             <FormField
                 control={control}
                 name={`components.${index}.component_id`}
-                render={({ field }) => {
-                    const selectedName =
-                        typeof field.value === 'string' ? componentNameById.get(field.value) : undefined;
-
-                    return (
-                        <FormItem className="flex-[2]">
-                            <FormLabel className="text-xs">Component</FormLabel>
-                            <Select
+                render={({ field }) => (
+                    <FormItem className="flex-[2]">
+                        <FormLabel className="text-xs">Component</FormLabel>
+                        <FormControl>
+                            <ComponentCombobox
                                 value={field.value}
                                 onValueChange={field.onChange}
-                                open={isSelectOpen}
-                                onOpenChange={handleSelectOpenChange}
-                            >
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select component">
-                                            {selectedName}
-                                        </SelectValue>
-                                    </SelectTrigger>
-                                </FormControl>
-                                {hasOpenedSelect ? (
-                                    <SelectContent>
-                                        {componentOptions.map((component) => (
-                                            <SelectItem key={component.id} value={component.id}>
-                                                {component.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                ) : null}
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    );
-                }}
+                                components={componentOptions}
+                                restaurantId={restaurantId}
+                                usedIds={usedIds}
+                                onNewComponent={onNewComponent}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
 
             <FormField
@@ -191,15 +160,10 @@ export function MenuForm({
 }) {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
-    const [isAddDialog, setIsAddDialog] = useState(false);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const sortedComponentOptions = useMemo(
         () => [...localComponentsList].sort((a, b) => a.name.localeCompare(b.name)),
         [localComponentsList]
-    );
-    const componentNameById = useMemo(
-        () => new Map(sortedComponentOptions.map((component) => [component.id, component.name])),
-        [sortedComponentOptions]
     );
 
     // Map initial components if editing
@@ -227,6 +191,15 @@ export function MenuForm({
     const handleMoveUp = useCallback((index: number) => move(index, index - 1), [move]);
     const handleMoveDown = useCallback((index: number) => move(index, index + 1), [move]);
     const handleRemove = useCallback((index: number) => remove(index), [remove]);
+    const handleNewComponent = useCallback((newComponent: ComponentOption) => {
+        setLocalComponentsList((prev) => {
+            if (prev.some((component) => component.id === newComponent.id)) {
+                return prev;
+            }
+
+            return [...prev, newComponent];
+        });
+    }, []);
     const handleQuantityCommit = useCallback(
         (index: number, _parsed: number | null, error: string | null) => {
             const path = `components.${index}.qty_per_order` as const;
@@ -238,6 +211,7 @@ export function MenuForm({
         },
         [form]
     );
+    const watchedComponents = form.watch('components') ?? [];
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
@@ -427,15 +401,6 @@ export function MenuForm({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setIsAddDialog(true)}
-                                >
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    New Component
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
                                     onClick={() => append({ component_id: '', qty_per_order: '1' })}
                                 >
                                     <Plus className="mr-2 h-4 w-4" />
@@ -451,20 +416,30 @@ export function MenuForm({
                             </div>
                         ) : (
                             <div className="flex-1 space-y-4 pr-2 overflow-y-auto min-h-0">
-                                {fields.map((field, index) => (
-                                    <MenuComponentRow
-                                        key={field.id}
-                                        index={index}
-                                        rowCount={fields.length}
-                                        control={form.control}
-                                        componentOptions={sortedComponentOptions}
-                                        componentNameById={componentNameById}
-                                        onMoveUp={handleMoveUp}
-                                        onMoveDown={handleMoveDown}
-                                        onRemove={handleRemove}
-                                        onQuantityCommit={handleQuantityCommit}
-                                    />
-                                ))}
+                                {fields.map((field, index) => {
+                                    const usedIds = new Set(
+                                        watchedComponents
+                                            .map((component) => component?.component_id)
+                                            .filter((id): id is string => !!id)
+                                    );
+
+                                    return (
+                                        <MenuComponentRow
+                                            key={field.id}
+                                            index={index}
+                                            rowCount={fields.length}
+                                            control={form.control}
+                                            componentOptions={sortedComponentOptions}
+                                            restaurantId={restaurantId}
+                                            usedIds={usedIds}
+                                            onNewComponent={handleNewComponent}
+                                            onMoveUp={handleMoveUp}
+                                            onMoveDown={handleMoveDown}
+                                            onRemove={handleRemove}
+                                            onQuantityCommit={handleQuantityCommit}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -483,16 +458,6 @@ export function MenuForm({
                     </Button>
                 </div>
             </form>
-
-            <AddComponentDialogInline
-                open={isAddDialog}
-                onOpenChange={setIsAddDialog}
-                restaurantId={restaurantId}
-                onSuccess={(newComp) => {
-                    setLocalComponentsList(prev => [...prev, { id: newComp.id, name: newComp.name }]);
-                    append({ component_id: newComp.id, qty_per_order: '1' });
-                }}
-            />
         </Form>
     );
 }

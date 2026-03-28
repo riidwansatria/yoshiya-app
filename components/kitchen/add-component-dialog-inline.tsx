@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,16 +20,29 @@ export function AddComponentDialogInline({
     open,
     onOpenChange,
     restaurantId,
+    initialName = '',
     onSuccess,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     restaurantId: string;
+    initialName?: string;
     onSuccess: (newComponent: RecipeComponent) => void;
 }) {
-    const [name, setName] = useState('');
+    const [name, setName] = useState(initialName);
     const [yieldServings, setYieldServings] = useState(1);
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (!open) {
+            setName('');
+            setYieldServings(1);
+            return;
+        }
+
+        setName(initialName);
+        setYieldServings(1);
+    }, [initialName, open]);
 
     async function handleSave() {
         if (!name.trim()) {
@@ -59,10 +72,8 @@ export function AddComponentDialogInline({
             }
 
             onOpenChange(false);
-            setName('');
-            setYieldServings(1);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to create component');
         } finally {
             setIsSaving(false);
         }
