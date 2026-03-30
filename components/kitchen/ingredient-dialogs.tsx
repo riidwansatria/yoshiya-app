@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { type FormEvent, useState, useEffect } from 'react';
 
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createIngredient, updateIngredient, deleteIngredient } from '@/lib/actions/ingredients';
@@ -40,6 +40,10 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+function stopDialogFormPropagation(event: FormEvent<HTMLFormElement>) {
+    event.stopPropagation();
+}
 
 export function AddIngredientDialog({
     open,
@@ -112,7 +116,13 @@ export function AddIngredientDialog({
                     <DialogDescription>Add a new ingredient to the master list.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={(event) => {
+                            stopDialogFormPropagation(event);
+                            void form.handleSubmit(onSubmit)(event);
+                        }}
+                        className="space-y-4"
+                    >
                         <FormField
                             control={form.control}
                             name="name"
@@ -248,7 +258,13 @@ export function EditIngredientDialog({
                     <DialogTitle>Edit Ingredient</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={(event) => {
+                            stopDialogFormPropagation(event);
+                            void form.handleSubmit(onSubmit)(event);
+                        }}
+                        className="space-y-4"
+                    >
                         <FormField
                             control={form.control}
                             name="name"

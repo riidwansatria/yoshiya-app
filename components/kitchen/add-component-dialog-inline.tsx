@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,6 +15,10 @@ import { Label } from '@/components/ui/label';
 import { createComponent } from '@/lib/actions/components';
 import { RecipeComponent } from '@/lib/queries/components';
 import { toast } from 'sonner';
+
+function stopDialogFormPropagation(event: FormEvent<HTMLFormElement>) {
+    event.stopPropagation();
+}
 
 export function AddComponentDialogInline({
     open,
@@ -88,36 +92,44 @@ export function AddComponentDialogInline({
                         Create a new component here to assign to your menu. You can add the specific ingredients to this component later from the Components tab.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="component-name">Name</Label>
-                        <Input
-                            id="component-name"
-                            placeholder="e.g. Dashi"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
+                <form
+                    onSubmit={(event) => {
+                        stopDialogFormPropagation(event);
+                        event.preventDefault();
+                        void handleSave();
+                    }}
+                >
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="component-name">Name</Label>
+                            <Input
+                                id="component-name"
+                                placeholder="e.g. Dashi"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="component-yield">Yield (Servings)</Label>
+                            <Input
+                                id="component-yield"
+                                type="number"
+                                min="1"
+                                value={yieldServings}
+                                onChange={(e) => setYieldServings(parseInt(e.target.value) || 1)}
+                            />
+                            <p className="text-xs text-muted-foreground">Standard output of a single prep batch.</p>
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="component-yield">Yield (Servings)</Label>
-                        <Input
-                            id="component-yield"
-                            type="number"
-                            min="1"
-                            value={yieldServings}
-                            onChange={(e) => setYieldServings(parseInt(e.target.value) || 1)}
-                        />
-                        <p className="text-xs text-muted-foreground">Standard output of a single prep batch.</p>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
-                    </Button>
-                    <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving ? 'Creating...' : 'Create Component'}
-                    </Button>
-                </DialogFooter>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving ? 'Creating...' : 'Create Component'}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );
