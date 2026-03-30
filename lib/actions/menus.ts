@@ -3,24 +3,50 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function createMenu(data: {
-    restaurant_id: string;
+type MenuFields = {
     name: string;
     season?: string | null;
     price?: number | null;
     description?: string | null;
     color?: string | null;
-}) {
+};
+
+type MenuCreatePayload = MenuFields & {
+    restaurant_id: string;
+};
+
+function normalizeMenuFields(data: MenuFields) {
+    return {
+        name: data.name.trim(),
+        season: data.season?.trim() ? data.season.trim() : null,
+        price: data.price ?? null,
+        description: data.description?.trim() ? data.description.trim() : null,
+        color: data.color?.trim() ? data.color.trim() : null,
+    };
+}
+
+export async function createMenu(data: MenuCreatePayload) {
     const supabase = await createClient();
+    const payload = {
+        restaurant_id: data.restaurant_id,
+        ...normalizeMenuFields(data),
+    };
+
+    if (!payload.name) {
+        return { error: 'Menu name is required' };
+    }
 
     const { data: newMenu, error } = await supabase
         .from('menus')
-        .insert([data])
+        .insert([payload])
         .select()
         .single();
 
     if (error) {
         console.error('Error creating menu:', error);
+        if (error.code === '23505') {
+            return { error: 'A menu with this name already exists' };
+        }
         return { error: 'Failed to create menu' };
     }
 
@@ -30,20 +56,22 @@ export async function createMenu(data: {
 
 export async function updateMenu(
     id: string,
-    data: {
-        name?: string;
-        season?: string | null;
-        price?: number | null;
-        description?: string | null;
-        color?: string | null;
-    }
+    data: MenuFields
 ) {
     const supabase = await createClient();
+    const updatePayload = normalizeMenuFields(data);
 
-    const { error } = await supabase.from('menus').update(data).eq('id', id);
+    if (!updatePayload.name) {
+        return { error: 'Menu name is required' };
+    }
+
+    const { error } = await supabase.from('menus').update(updatePayload).eq('id', id);
 
     if (error) {
         console.error('Error updating menu:', error);
+        if (error.code === '23505') {
+            return { error: 'A menu with this name already exists' };
+        }
         return { error: 'Failed to update menu' };
     }
 
@@ -83,7 +111,12 @@ export async function duplicateMenu(id: string) {
     }
 
     // Insert the new menu
-    const { id: _id, created_at: _ca, updated_at: _ua, menu_components, ...menuFields } = original;
+    const menuFields = { ...original } as Record<string, unknown>;
+    delete menuFields.id;
+    delete menuFields.created_at;
+    delete menuFields.updated_at;
+    const menuComponents = menuFields.menu_components as { id: string; created_at: string;[key: string]: unknown }[] | undefined;
+    delete menuFields.menu_components;
     const { data: newMenu, error: insertError } = await supabase
         .from('menus')
         .insert([{ ...menuFields, name: `Copy of ${original.name}` }])
@@ -95,13 +128,16 @@ export async function duplicateMenu(id: string) {
     }
 
     // Duplicate menu_components
-    if (menu_components && menu_components.length > 0) {
-        const newComponents = menu_components.map(
-            ({ id: _mcId, created_at: _mcCa, ...mc }: { id: string; created_at: string;[key: string]: unknown }) => ({
-                ...mc,
+    if (menuComponents && menuComponents.length > 0) {
+        const newComponents = menuComponents.map((menuComponent) => {
+            const next = { ...menuComponent } as Record<string, unknown>;
+            delete next.id;
+            delete next.created_at;
+            return {
+                ...next,
                 menu_id: newMenu.id,
-            })
-        );
+            };
+        });
         await supabase.from('menu_components').insert(newComponents);
     }
 

@@ -24,6 +24,10 @@ function normalizeIngredientPayload(data: IngredientPayload) {
 }
 
 function validateIngredientPayload(data: ReturnType<typeof normalizeIngredientPayload>) {
+    if (!data.name) {
+        return 'Ingredient name is required';
+    }
+
     if (data.package_size !== null && data.package_size <= 0) {
         return 'Package size must be greater than 0';
     }
@@ -48,6 +52,9 @@ export async function createIngredient(data: IngredientPayload) {
 
     if (error) {
         console.error('Error creating ingredient:', error);
+        if (error.code === '23505') {
+            return { error: 'An ingredient with this name already exists' };
+        }
         return { error: 'Failed to create ingredient' };
     }
 
@@ -74,6 +81,9 @@ export async function updateIngredient(
 
     if (error) {
         console.error('Error updating ingredient:', error);
+        if (error.code === '23505') {
+            return { error: 'An ingredient with this name already exists' };
+        }
         return { error: 'Failed to update ingredient' };
     }
 
