@@ -205,9 +205,19 @@ export function ComponentsList({
                                                                         <span className="text-muted-foreground text-xs">
                                                                             {ci.ingredients?.unit || ''}
                                                                         </span>
-                                                                        <span className="text-foreground">
-                                                                            {ci.ingredients?.name || 'Unknown Ingredient'}
-                                                                        </span>
+                                                                        {ci.ingredients?.id ? (
+                                                                            <Link
+                                                                                href={`/dashboard/${restaurantId}/ingredients`}
+                                                                                className="text-foreground hover:underline"
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            >
+                                                                                {ci.ingredients.name}
+                                                                            </Link>
+                                                                        ) : (
+                                                                            <span className="text-foreground">
+                                                                                {ci.ingredients?.name || 'Unknown Ingredient'}
+                                                                            </span>
+                                                                        )}
                                                                     </li>
                                                                 ))}
                                                             </ul>
