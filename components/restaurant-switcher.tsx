@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { useRouter, usePathname, useParams } from "next/navigation"
 
 import {
@@ -16,6 +16,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar"
+import { useTranslations } from "next-intl"
 import { restaurants } from "@/lib/mock-data"
 
 export function RestaurantSwitcher() {
@@ -23,8 +24,26 @@ export function RestaurantSwitcher() {
     const router = useRouter()
     const pathname = usePathname()
     const params = useParams()
+    const t = useTranslations('restaurantSwitcher')
 
     const activeRestaurant = restaurants.find(r => r.id === params.restaurant) || restaurants[0]
+
+    const getRestaurantLabel = (restaurantId: string) => {
+        switch (restaurantId) {
+            case 'banquet':
+                return t('banquet')
+            case 'fine_dining':
+                return t('fineDining')
+            case 'local':
+                return t('local')
+            case 'skewers':
+                return t('skewers')
+            case 'kitchen':
+                return t('kitchen')
+            default:
+                return activeRestaurant.name
+        }
+    }
 
     const handleSwitch = (restaurantId: string) => {
         // Replace the current restaurant ID in the path with the new one
@@ -56,9 +75,9 @@ export function RestaurantSwitcher() {
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">
-                                    {activeRestaurant.name}
+                                    {getRestaurantLabel(activeRestaurant.id)}
                                 </span>
-                                <span className="truncate text-xs">Yoshiya Arashiyama</span>
+                                <span className="truncate text-xs">{t('subtitle')}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>
@@ -78,7 +97,7 @@ export function RestaurantSwitcher() {
                                 <div className="flex size-6 items-center justify-center rounded-sm border">
                                     {restaurant.icon}
                                 </div>
-                                {restaurant.name}
+                                {getRestaurantLabel(restaurant.id)}
                                 {activeRestaurant.id === restaurant.id && (
                                     <Check className="ml-auto h-4 w-4" />
                                 )}

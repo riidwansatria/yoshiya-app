@@ -5,13 +5,11 @@ import {
     Globe,
     Settings,
     LogOut,
-    User,
 } from "lucide-react"
 
 import {
     Avatar,
     AvatarFallback,
-    AvatarImage,
 } from "@/components/ui/avatar"
 import {
     DropdownMenu,
@@ -33,12 +31,14 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 export function NavUser() {
+    const t = useTranslations('userMenu')
     const { isMobile } = useSidebar()
     const router = useRouter()
     const [user, setUser] = useState<SupabaseUser | null>(null)
@@ -62,7 +62,7 @@ export function NavUser() {
         router.refresh()
     }
 
-    const username = user?.email?.split('@')[0] || 'User'
+    const username = user?.email?.split('@')[0] || t('defaultName')
     const userInitial = username.substring(0, 2).toUpperCase()
 
     return (
@@ -106,20 +106,20 @@ export function NavUser() {
                         <DropdownMenuGroup>
                             <DropdownMenuItem>
                                 <Settings className="mr-2 h-4 w-4" />
-                                Settings
+                                {t('settings')}
                             </DropdownMenuItem>
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>
                                     <Globe className="mr-2 h-4 w-4" />
-                                    Language
+                                    {t('language')}
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
                                         <DropdownMenuItem onClick={() => handleLanguageChange('ja')}>
-                                            日本語 (Japanese)
+                                            {t('japanese')}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
-                                            English
+                                            {t('english')}
                                         </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
@@ -128,7 +128,7 @@ export function NavUser() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
-                            Log out
+                            {t('logout')}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

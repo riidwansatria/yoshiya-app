@@ -3,7 +3,30 @@
         "schedule": "スケジュール",
         "bookings": "予約一覧",
         "today": "本日",
-        "customers": "顧客"
+        "customers": "顧客",
+        "settings": "設定",
+        "staffManagement": "スタッフ管理",
+        "kitchen": "厨房",
+        "dailyOrders": "日次発注",
+        "summary": "集計",
+        "dashboard": "ダッシュボード",
+        "appName": "Yoshiya App"
+    },
+    "userMenu": {
+        "settings": "設定",
+        "language": "言語",
+        "logout": "ログアウト",
+        "defaultName": "ユーザー",
+        "japanese": "日本語",
+        "english": "英語"
+    },
+    "restaurantSwitcher": {
+        "banquet": "宴会場",
+        "fineDining": "高級料理",
+        "local": "ご当地料理",
+        "skewers": "串焼き店",
+        "kitchen": "厨房",
+        "subtitle": "よしや嵐山"
     },
     "booking": {
         "newBooking": "新規予約",
@@ -98,6 +121,178 @@
         "confirmDelete": "この予約を削除してもよろしいですか？この操作は取り消せません。",
         "errors": {
             "deleteFailed": "予約の削除に失敗しました"
+        }
+    },
+    "kitchen": {
+        "pages": {
+            "ingredients": "食材",
+            "components": "仕込み品",
+            "menus": "メニュー",
+            "newComponent": "仕込み品を新規作成",
+            "editComponent": "仕込み品を編集",
+            "newMenu": "メニューを新規作成",
+            "editMenu": "メニューを編集",
+            "matrixExport": "マトリクス出力",
+            "newComponentButton": "新規仕込み品",
+            "newMenuButton": "新規メニュー"
+        },
+        "common": {
+            "actions": "操作",
+            "name": "名称",
+            "description": "説明",
+            "category": "カテゴリ",
+            "unit": "単位",
+            "package": "荷姿",
+            "season": "季節",
+            "price": "価格",
+            "cancel": "キャンセル",
+            "save": "保存",
+            "saving": "保存中...",
+            "edit": "編集",
+            "duplicate": "複製",
+            "delete": "削除",
+            "viewEdit": "表示 / 編集",
+            "duplicating": "複製中...",
+            "search": "検索",
+            "none": "-",
+            "used": "使用中",
+            "openMenu": "メニューを開く"
+        },
+        "ingredients": {
+            "searchPlaceholder": "食材を検索...",
+            "addButton": "食材を追加",
+            "noResults": "食材がありません。",
+            "noResultsMatching": "「{query}」に一致する食材はありません。",
+            "usedInComponents": "使用中の仕込み品",
+            "notUsedInComponents": "この食材はまだどの仕込み品にも登録されていません。",
+            "addTitle": "食材を追加",
+            "addDescription": "食材マスタに新しい食材を追加します。",
+            "editTitle": "食材を編集",
+            "deleteTitle": "食材を削除",
+            "deleteDescription": "{name} を削除してもよろしいですか？この操作は元に戻せません。",
+            "saveButton": "食材を保存",
+            "saveChanges": "変更を保存",
+            "added": "食材を追加しました",
+            "updated": "食材を更新しました",
+            "deleted": "食材を削除しました",
+            "unitOptional": "単位（任意）",
+            "categoryOptional": "カテゴリ（任意）",
+            "packageSizeOptional": "荷姿数（任意）",
+            "packageLabelOptional": "荷姿ラベル（任意）",
+            "packageSizeHint": "1パックに入っている基準単位の数量です。",
+            "packageLabelHint": "荷姿の表示名です。",
+            "packageDisplay": "1{label} = {size}{unit}",
+            "defaultPackageLabel": "パック",
+            "validation": {
+                "nameRequired": "名称は必須です",
+                "packageSizePositive": "荷姿数は 0 より大きい値を入力してください"
+            },
+            "placeholders": {
+                "name": "例: トマト",
+                "unit": "例: g、ml、個",
+                "category": "例: 野菜",
+                "packageSize": "例: 10、500、1000",
+                "packageLabel": "例: パック、袋、箱"
+            }
+        },
+        "ingredientCombobox": {
+            "searchPlaceholder": "食材を検索...",
+            "empty": "該当する食材がありません。",
+            "createNew": "新しい食材を作成...",
+            "createNamed": "「{name}」を作成..."
+        },
+        "components": {
+            "searchPlaceholder": "仕込み品を検索...",
+            "noResults": "仕込み品がありません。",
+            "noResultsMatching": "「{query}」に一致する仕込み品はありません。",
+            "yieldServings": "出来高（人分）",
+            "ingredientsCount": "食材数",
+            "noIngredientsMapped": "この仕込み品にはまだ食材が登録されていません。",
+            "usedInMenus": "使用中のメニュー",
+            "notUsedInMenus": "この仕込み品はまだどのメニューにも登録されていません。",
+            "unknownIngredient": "不明な食材",
+            "unknownComponent": "不明な仕込み品",
+            "deleteTitle": "仕込み品を削除",
+            "deleteDescription": "{name} を削除してもよろしいですか？この操作は元に戻せません。",
+            "deleted": "仕込み品を削除しました",
+            "form": {
+                "details": "仕込み品情報",
+                "name": "名称",
+                "description": "説明",
+                "yield": "出来高（人分）",
+                "ingredients": "食材",
+                "quantityHint": "数量は小数（0.5）、分数（1/6）、帯分数（1 1/2）で入力できます。",
+                "addRow": "行を追加",
+                "empty": "食材がまだ追加されていません。",
+                "ingredient": "食材",
+                "qtyPerServing": "1人前あたり数量（{unit}）",
+                "qtyPerServingLabel": "1人前あたり数量",
+                "save": "仕込み品を保存",
+                "created": "仕込み品を作成しました",
+                "updated": "仕込み品を更新しました",
+                "saveFailed": "仕込み品の保存に失敗しました",
+                "fixQuantityErrors": "保存前に数量エラーを修正してください。"
+            },
+            "placeholders": {
+                "name": "例: すし飯ベース",
+                "description": "補足があれば入力..."
+            },
+            "quickCreate": {
+                "title": "仕込み品を簡易作成",
+                "description": "ここで新しい仕込み品を作成してメニューに割り当てられます。詳細な食材は後から仕込み品タブで追加できます。",
+                "yield": "出来高（人分）",
+                "yieldHint": "1バッチあたりの標準出来高です。",
+                "create": "仕込み品を作成",
+                "creating": "作成中...",
+                "created": "仕込み品を作成しました",
+                "nameRequired": "仕込み品名は必須です",
+                "yieldPositive": "出来高は 1 以上で入力してください",
+                "createFailed": "仕込み品の作成に失敗しました"
+            }
+        },
+        "componentCombobox": {
+            "searchPlaceholder": "仕込み品を検索...",
+            "empty": "該当する仕込み品がありません。",
+            "createNew": "新しい仕込み品を作成...",
+            "createNamed": "「{name}」を作成..."
+        },
+        "menus": {
+            "searchPlaceholder": "メニューを検索...",
+            "noResults": "メニューがありません。",
+            "noResultsMatching": "「{query}」に一致するメニューはありません。",
+            "priceEmpty": "価格は未入力のまま保存しました。",
+            "deleteTitle": "メニューを削除",
+            "deleteDescription": "{name} を削除してもよろしいですか？このメニューに紐づく仕込み品の割り当ては解除されますが、仕込み品自体は削除されません。この操作は元に戻せません。",
+            "deleted": "メニューを削除しました",
+            "noComponentsMapped": "このメニューにはまだ仕込み品が登録されていません。",
+            "form": {
+                "details": "メニュー情報",
+                "name": "名称",
+                "season": "季節",
+                "priceOptional": "価格（¥・任意）",
+                "labelColor": "ラベルカラー",
+                "description": "説明",
+                "mappedComponents": "登録済み仕込み品",
+                "mappedComponentsHint": "このメニューに使用する仕込み品を追加します。",
+                "quantityHint": "数量は小数（0.5）、分数（1/6）、帯分数（1 1/2）で入力できます。",
+                "addRow": "行を追加",
+                "empty": "仕込み品がまだ追加されていません。",
+                "emptyHint": "仕込み品を登録すると、このメニューで必要な食材を集計できます。",
+                "component": "仕込み品",
+                "qtyPerOrder": "1注文あたり数量",
+                "save": "メニューを保存",
+                "created": "メニューを作成しました",
+                "updated": "メニューを更新しました",
+                "saveFailed": "メニューの保存に失敗しました",
+                "fixQuantityErrors": "保存前に数量エラーを修正してください。"
+            },
+            "placeholders": {
+                "name": "例: 春の会席",
+                "season": "例: 2026年 春",
+                "price": "不要なら空欄",
+                "color": "#ffffff",
+                "description": "補足があれば入力..."
+            }
         }
     }
 }

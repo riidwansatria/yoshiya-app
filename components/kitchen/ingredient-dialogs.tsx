@@ -1,6 +1,7 @@
 'use client';
 
 import { type FormEvent, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { Ingredient } from '@/lib/queries/ingredients';
 import { createIngredient, updateIngredient, deleteIngredient } from '@/lib/actions/ingredients';
@@ -56,6 +57,7 @@ export function AddIngredientDialog({
     initialName?: string;
     onSuccess?: (ingredient: Ingredient) => void;
 }) {
+    const t = useTranslations('kitchen');
     const [isSaving, setIsSaving] = useState(false);
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
@@ -96,7 +98,7 @@ export function AddIngredientDialog({
             if (result.error) {
                 toast.error(result.error);
             } else {
-                toast.success('Ingredient added successfully');
+                toast.success(t('ingredients.added'));
                 form.reset();
                 onOpenChange(false);
                 if (result.data && onSuccess) {
@@ -112,8 +114,8 @@ export function AddIngredientDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add Ingredient</DialogTitle>
-                    <DialogDescription>Add a new ingredient to the master list.</DialogDescription>
+                    <DialogTitle>{t('ingredients.addTitle')}</DialogTitle>
+                    <DialogDescription>{t('ingredients.addDescription')}</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form
@@ -128,9 +130,9 @@ export function AddIngredientDialog({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Name</FormLabel>
+                                    <FormLabel>{t('common.name')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Tomato" {...field} />
+                                        <Input placeholder={t('ingredients.placeholders.name')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -141,9 +143,9 @@ export function AddIngredientDialog({
                             name="unit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Unit (Optional)</FormLabel>
+                                    <FormLabel>{t('ingredients.unitOptional')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. g, ml, pcs" {...field} />
+                                        <Input placeholder={t('ingredients.placeholders.unit')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -154,9 +156,9 @@ export function AddIngredientDialog({
                             name="category"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Category (Optional)</FormLabel>
+                                    <FormLabel>{t('ingredients.categoryOptional')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Vegetables" {...field} />
+                                        <Input placeholder={t('ingredients.placeholders.category')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -168,18 +170,18 @@ export function AddIngredientDialog({
                                 name="package_size"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Package Size (Optional)</FormLabel>
+                                        <FormLabel>{t('ingredients.packageSizeOptional')}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
                                                 min="0"
                                                 step="any"
-                                                placeholder="e.g. 10, 500, 1000"
+                                                placeholder={t('ingredients.placeholders.packageSize')}
                                                 {...field}
                                             />
                                         </FormControl>
                                         <p className="text-xs text-muted-foreground">
-                                            How many base units are in one pack.
+                                            {t('ingredients.packageSizeHint')}
                                         </p>
                                         <FormMessage />
                                     </FormItem>
@@ -190,12 +192,12 @@ export function AddIngredientDialog({
                                 name="package_label"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Package Label (Optional)</FormLabel>
+                                        <FormLabel>{t('ingredients.packageLabelOptional')}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. pack, bag, box" {...field} />
+                                            <Input placeholder={t('ingredients.placeholders.packageLabel')} {...field} />
                                         </FormControl>
                                         <p className="text-xs text-muted-foreground">
-                                            Display name for the package type.
+                                            {t('ingredients.packageLabelHint')}
                                         </p>
                                         <FormMessage />
                                     </FormItem>
@@ -204,7 +206,7 @@ export function AddIngredientDialog({
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Ingredient'}
+                                {isSaving ? t('common.saving') : t('ingredients.saveButton')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -223,6 +225,7 @@ export function EditIngredientDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const t = useTranslations('kitchen');
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
         defaultValues: {
@@ -246,7 +249,7 @@ export function EditIngredientDialog({
         if (result.error) {
             toast.error(result.error);
         } else {
-            toast.success('Ingredient updated successfully');
+            toast.success(t('ingredients.updated'));
             onOpenChange(false);
         }
     }
@@ -255,7 +258,7 @@ export function EditIngredientDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Ingredient</DialogTitle>
+                    <DialogTitle>{t('ingredients.editTitle')}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form
@@ -270,7 +273,7 @@ export function EditIngredientDialog({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Name</FormLabel>
+                                    <FormLabel>{t('common.name')}</FormLabel>
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>
@@ -283,7 +286,7 @@ export function EditIngredientDialog({
                             name="unit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Unit (Optional)</FormLabel>
+                                    <FormLabel>{t('ingredients.unitOptional')}</FormLabel>
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>
@@ -296,7 +299,7 @@ export function EditIngredientDialog({
                             name="category"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Category</FormLabel>
+                                    <FormLabel>{t('common.category')}</FormLabel>
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>
@@ -310,12 +313,12 @@ export function EditIngredientDialog({
                                 name="package_size"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Package Size (Optional)</FormLabel>
+                                        <FormLabel>{t('ingredients.packageSizeOptional')}</FormLabel>
                                         <FormControl>
                                             <Input type="number" min="0" step="any" {...field} />
                                         </FormControl>
                                         <p className="text-xs text-muted-foreground">
-                                            How many base units are in one package.
+                                            {t('ingredients.packageSizeHint')}
                                         </p>
                                         <FormMessage />
                                     </FormItem>
@@ -326,12 +329,12 @@ export function EditIngredientDialog({
                                 name="package_label"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Package Label (Optional)</FormLabel>
+                                        <FormLabel>{t('ingredients.packageLabelOptional')}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. pack, bag, box" {...field} />
+                                            <Input placeholder={t('ingredients.placeholders.packageLabel')} {...field} />
                                         </FormControl>
                                         <p className="text-xs text-muted-foreground">
-                                            Display name for the package type.
+                                            {t('ingredients.packageLabelHint')}
                                         </p>
                                         <FormMessage />
                                     </FormItem>
@@ -339,7 +342,7 @@ export function EditIngredientDialog({
                             />
                         </div>
                         <DialogFooter>
-                            <Button type="submit">Save Changes</Button>
+                            <Button type="submit">{t('ingredients.saveChanges')}</Button>
                         </DialogFooter>
                     </form>
                 </Form>
@@ -357,12 +360,13 @@ export function DeleteIngredientDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const t = useTranslations('kitchen');
     async function onSubmit() {
         const result = await deleteIngredient(ingredient.id);
         if (result.error) {
             toast.error(result.error);
         } else {
-            toast.success('Ingredient deleted');
+            toast.success(t('ingredients.deleted'));
             onOpenChange(false);
         }
     }
@@ -371,18 +375,17 @@ export function DeleteIngredientDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Delete Ingredient</DialogTitle>
+                    <DialogTitle>{t('ingredients.deleteTitle')}</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete <strong>{ingredient.name}</strong>? This action cannot be
-                        undone.
+                        {t('ingredients.deleteDescription', { name: ingredient.name })}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button variant="destructive" onClick={onSubmit}>
-                        Delete
+                        {t('common.delete')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

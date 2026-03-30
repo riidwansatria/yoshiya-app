@@ -1,6 +1,7 @@
 'use client';
 
 import { Menu } from '@/lib/queries/menus';
+import { useTranslations } from 'next-intl';
 import {
     Table,
     TableBody,
@@ -32,6 +33,7 @@ export function MenusList({
     initialData: Menu[];
     restaurantId: string;
 }) {
+    const t = useTranslations('kitchen');
     const router = useRouter();
     const [deletingMenu, setDeletingMenu] = useState<Menu | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -68,7 +70,7 @@ export function MenusList({
             <div className="relative shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="Search menus..."
+                    placeholder={t('menus.searchPlaceholder')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9 h-9"
@@ -79,18 +81,20 @@ export function MenusList({
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[40px]"></TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Season</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
+                            <TableHead>{t('common.name')}</TableHead>
+                            <TableHead>{t('common.season')}</TableHead>
+                            <TableHead>{t('common.price')}</TableHead>
+                            <TableHead>{t('common.description')}</TableHead>
+                            <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-24 text-center">
-                                    {search ? `No menus matching "${search}".` : 'No menus found.'}
+                                    {search
+                                        ? t('menus.noResultsMatching', { query: search })
+                                        : t('menus.noResults')}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -126,18 +130,18 @@ export function MenusList({
                                                     </Link>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{menu.season || '-'}</TableCell>
+                                            <TableCell>{menu.season || t('common.none')}</TableCell>
                                             <TableCell>
-                                                {menu.price !== null ? `¥${menu.price.toLocaleString()}` : '-'}
+                                                {menu.price !== null ? `¥${menu.price.toLocaleString()}` : t('common.none')}
                                             </TableCell>
                                             <TableCell className="max-w-[300px] truncate text-muted-foreground">
-                                                {menu.description || '-'}
+                                                {menu.description || t('common.none')}
                                             </TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Open menu</span>
+                                                            <span className="sr-only">{t('common.openMenu')}</span>
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -147,7 +151,7 @@ export function MenusList({
                                                                 router.push(`/dashboard/${restaurantId}/menus/${menu.id}`)
                                                             }
                                                         >
-                                                            View / Edit
+                                                            {t('common.viewEdit')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             disabled={duplicatingId === menu.id}
@@ -160,14 +164,14 @@ export function MenusList({
                                                                 }
                                                             }}
                                                         >
-                                                            {duplicatingId === menu.id ? 'Duplicating...' : 'Duplicate'}
+                                                            {duplicatingId === menu.id ? t('common.duplicating') : t('common.duplicate')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             className="text-red-600 focus:text-red-600"
                                                             onClick={() => setDeletingMenu(menu)}
                                                         >
-                                                            Delete
+                                                            {t('common.delete')}
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -180,7 +184,7 @@ export function MenusList({
                                                     <div className="p-4 pl-14">
 
                                                         {(!menu.menu_components || menu.menu_components.length === 0) ? (
-                                                            <p className="text-sm text-muted-foreground italic">No components have been mapped to this menu yet.</p>
+                                                            <p className="text-sm text-muted-foreground italic">{t('menus.noComponentsMapped')}</p>
                                                         ) : (
                                                             <ul className="space-y-2">
                                                                 {menu.menu_components.map(mc => (
@@ -198,7 +202,7 @@ export function MenusList({
                                                                             </Link>
                                                                         ) : (
                                                                             <span className="text-foreground">
-                                                                                {mc.components?.name || 'Unknown Component'}
+                                                                                {mc.components?.name || t('components.unknownComponent')}
                                                                             </span>
                                                                         )}
                                                                     </li>

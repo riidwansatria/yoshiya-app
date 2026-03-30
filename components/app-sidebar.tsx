@@ -7,11 +7,9 @@ import {
     ClipboardList,
     CalendarCheck,
     UserCog,
-    Settings,
-    UtensilsCrossed,
     Leaf,
     BookOpen,
-    Menu as MenuIcon,
+    CookingPot,
     ClipboardPen,
     FilePieChart
 } from "lucide-react"
@@ -36,7 +34,8 @@ import { RestaurantSwitcher } from "@/components/restaurant-switcher"
 import { NavUser } from "@/components/nav-user"
 
 export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
-    const t = useTranslations('nav')
+    const tNav = useTranslations('nav')
+    const tKitchen = useTranslations('kitchen')
     const params = useParams()
     const pathname = usePathname()
 
@@ -45,25 +44,25 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
 
     const navItems = [
         {
-            title: t('schedule'),
+            title: tNav('schedule'),
             url: `/dashboard/${restaurantId}/schedule`,
             icon: CalendarDays,
             active: pathname.includes('/schedule'),
         },
         {
-            title: t('bookings'),
+            title: tNav('bookings'),
             url: `/dashboard/${restaurantId}/bookings`,
             icon: CalendarCheck,
             active: pathname.includes('/bookings'),
         },
         {
-            title: t('today'),
+            title: tNav('today'),
             url: `/dashboard/${restaurantId}/today`,
             icon: ClipboardList,
             active: pathname.includes('/today'),
         },
         {
-            title: t('customers'),
+            title: tNav('customers'),
             url: `/dashboard/customers`,
             icon: Users,
             active: pathname.includes('/customers'),
@@ -93,18 +92,18 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
 
                 {restaurantId !== 'kitchen' && userRole === 'manager' && (
                     <SidebarGroup>
-                        <SidebarGroupLabel>Settings</SidebarGroupLabel>
+                        <SidebarGroupLabel>{tNav('settings')}</SidebarGroupLabel>
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 <SidebarMenuItem>
                                     <SidebarMenuButton
                                         asChild
                                         isActive={pathname.includes('/settings/staff')}
-                                        tooltip="Staff Management"
+                                        tooltip={tNav('staffManagement')}
                                     >
                                         <Link href="/dashboard/settings/staff">
                                             <UserCog />
-                                            <span>Staff Management</span>
+                                            <span>{tNav('staffManagement')}</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
@@ -114,18 +113,18 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                 )}
 
                 <SidebarGroup>
-                    <SidebarGroupLabel>Kitchen</SidebarGroupLabel>
+                    <SidebarGroupLabel>{tNav('kitchen')}</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
                                     isActive={pathname.includes('/ingredients')}
-                                    tooltip="Ingredients"
+                                    tooltip={tKitchen('pages.ingredients')}
                                 >
                                     <Link href={`/dashboard/${restaurantId}/ingredients`}>
                                         <Leaf />
-                                        <span>Ingredients</span>
+                                        <span>{tKitchen('pages.ingredients')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -133,11 +132,11 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                 <SidebarMenuButton
                                     asChild
                                     isActive={pathname.includes('/components')}
-                                    tooltip="Components"
+                                    tooltip={tKitchen('pages.components')}
                                 >
                                     <Link href={`/dashboard/${restaurantId}/components`}>
-                                        <BookOpen />
-                                        <span>Components</span>
+                                        <CookingPot />
+                                        <span>{tKitchen('pages.components')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -145,11 +144,11 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                 <SidebarMenuButton
                                     asChild
                                     isActive={pathname.includes('/menus')}
-                                    tooltip="Menus"
+                                    tooltip={tKitchen('pages.menus')}
                                 >
                                     <Link href={`/dashboard/${restaurantId}/menus`}>
-                                        <MenuIcon />
-                                        <span>Menus</span>
+                                        <BookOpen />
+                                        <span>{tKitchen('pages.menus')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -157,11 +156,11 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                 <SidebarMenuButton
                                     asChild
                                     isActive={pathname.includes('/kitchen/orders')}
-                                    tooltip="Daily Orders"
+                                    tooltip={tNav('dailyOrders')}
                                 >
                                     <Link href={`/dashboard/${restaurantId}/kitchen/orders`}>
                                         <ClipboardPen />
-                                        <span>Daily Orders</span>
+                                        <span>{tNav('dailyOrders')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -169,11 +168,11 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                 <SidebarMenuButton
                                     asChild
                                     isActive={pathname.includes('/kitchen/summary')}
-                                    tooltip="Ingredients Summary"
+                                    tooltip={tNav('summary')}
                                 >
                                     <Link href={`/dashboard/${restaurantId}/kitchen/summary`}>
                                         <FilePieChart />
-                                        <span>Summary</span>
+                                        <span>{tNav('summary')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

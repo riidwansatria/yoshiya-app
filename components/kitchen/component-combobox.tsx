@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent, useCallback, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { cn } from '@/lib/utils';
 import { ComponentOption } from '@/lib/queries/components';
@@ -32,6 +33,7 @@ export function ComponentCombobox({
     usedIds = new Set(),
     onNewComponent,
 }: ComponentComboboxProps) {
+    const t = useTranslations('kitchen');
     const [showCreate, setShowCreate] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [pendingName, setPendingName] = useState('');
@@ -68,13 +70,13 @@ export function ComponentCombobox({
                 autoHighlight
             >
                 <ComboboxInput
-                    placeholder="Search component..."
+                    placeholder={t('componentCombobox.searchPlaceholder')}
                     showClear={!!value}
                     onInput={(e) => setInputValue((e.target as HTMLInputElement).value)}
                     onKeyDown={handleKeyDown}
                 />
                 <ComboboxContent>
-                    <ComboboxEmpty>No component found.</ComboboxEmpty>
+                    <ComboboxEmpty>{t('componentCombobox.empty')}</ComboboxEmpty>
                     <ComboboxList>
                         {(component) => {
                             const isUsed = usedIds.has(component.id) && component.id !== value;
@@ -87,7 +89,7 @@ export function ComponentCombobox({
                                     <span className="truncate">{component.name}</span>
                                     {isUsed ? (
                                         <span className="ml-auto text-xs text-muted-foreground">
-                                            used
+                                            {t('common.used')}
                                         </span>
                                     ) : null}
                                 </ComboboxItem>
@@ -105,8 +107,8 @@ export function ComponentCombobox({
                         >
                             <Plus className="h-4 w-4" />
                             {!hasMatches && inputValue.trim()
-                                ? `Create "${inputValue.trim()}"...`
-                                : 'Create new component...'}
+                                ? t('componentCombobox.createNamed', { name: inputValue.trim() })
+                                : t('componentCombobox.createNew')}
                         </button>
                     </div>
                 </ComboboxContent>

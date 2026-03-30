@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Control, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -57,6 +58,7 @@ type MenuComponentRowProps = {
     onMoveDown: (index: number) => void;
     onRemove: (index: number) => void;
     onQuantityCommit: (index: number, parsed: number | null, error: string | null) => void;
+    t: ReturnType<typeof useTranslations<'kitchen'>>;
 };
 
 const MenuComponentRow = memo(function MenuComponentRow({
@@ -71,6 +73,7 @@ const MenuComponentRow = memo(function MenuComponentRow({
     onMoveDown,
     onRemove,
     onQuantityCommit,
+    t,
 }: MenuComponentRowProps) {
     return (
         <div className="flex gap-4 items-start bg-background border rounded-md p-3">
@@ -79,7 +82,7 @@ const MenuComponentRow = memo(function MenuComponentRow({
                 name={`components.${index}.component_id`}
                 render={({ field }) => (
                     <FormItem className="flex-[2]">
-                        <FormLabel className="text-xs">Component</FormLabel>
+                        <FormLabel className="text-xs">{t('menus.form.component')}</FormLabel>
                         <FormControl>
                             <ComponentCombobox
                                 value={field.value}
@@ -100,13 +103,13 @@ const MenuComponentRow = memo(function MenuComponentRow({
                 name={`components.${index}.qty_per_order`}
                 render={({ field }) => (
                     <FormItem className="flex-[1]">
-                        <FormLabel className="text-xs">Qty / Order</FormLabel>
+                        <FormLabel className="text-xs">{t('menus.form.qtyPerOrder')}</FormLabel>
                         <FormControl>
                             <FractionalQuantityInput
                                 value={field.value || ''}
                                 onValueChange={field.onChange}
                                 onCommit={(parsed, error) => onQuantityCommit(index, parsed, error)}
-                                label="Qty / Order"
+                                label={t('menus.form.qtyPerOrder')}
                             />
                         </FormControl>
                         <FormMessage />
@@ -158,6 +161,7 @@ export function MenuForm({
     availableComponents: ComponentOption[];
     restaurantId: string;
 }) {
+    const t = useTranslations('kitchen');
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
@@ -259,7 +263,7 @@ export function MenuForm({
             });
 
             if (parsedComponents.some((component) => component === null)) {
-                toast.error('Please fix quantity errors before saving.');
+                toast.error(t('menus.form.fixQuantityErrors'));
                 return;
             }
 
@@ -275,15 +279,15 @@ export function MenuForm({
             toast.success(
                 data.price == null
                     ? initialData
-                        ? 'Menu updated. Price was left blank.'
-                        : 'Menu created. Price was left blank.'
+                        ? `${t('menus.form.updated')} ${t('menus.priceEmpty')}`
+                        : `${t('menus.form.created')} ${t('menus.priceEmpty')}`
                     : initialData
-                        ? 'Menu updated'
-                        : 'Menu created'
+                        ? t('menus.form.updated')
+                        : t('menus.form.created')
             );
             router.push(`/dashboard/${restaurantId}/menus`);
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Failed to save menu';
+            const message = error instanceof Error ? error.message : t('menus.form.saveFailed');
             toast.error(message);
         } finally {
             setIsSaving(false);
@@ -296,17 +300,17 @@ export function MenuForm({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1 min-h-0">
                     {/* Menu Details Column */}
                     <div className="space-y-4 rounded-md border p-6 h-fit overflow-y-auto">
-                        <h3 className="font-semibold text-lg">Menu Details</h3>
+                        <h3 className="font-semibold text-lg">{t('menus.form.details')}</h3>
 
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Spring Kaiseki" {...field} />
-                                    </FormControl>
+                                    <FormItem>
+                                        <FormLabel>{t('menus.form.name')}</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder={t('menus.placeholders.name')} {...field} />
+                                        </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -318,9 +322,9 @@ export function MenuForm({
                                 name="season"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Season</FormLabel>
+                                        <FormLabel>{t('menus.form.season')}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Spring 2026" {...field} />
+                                            <Input placeholder={t('menus.placeholders.season')} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -332,12 +336,13 @@ export function MenuForm({
                                 name="price"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Price (¥)</FormLabel>
+                                        <FormLabel>{t('menus.form.priceOptional')}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
                                                 {...field}
                                                 value={field.value ?? ''}
+                                                placeholder={t('menus.placeholders.price')}
                                                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                                             />
                                         </FormControl>
@@ -351,9 +356,9 @@ export function MenuForm({
                             control={form.control}
                             name="color"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Label Color</FormLabel>
-                                    <FormControl>
+                            <FormItem>
+                                <FormLabel>{t('menus.form.labelColor')}</FormLabel>
+                                <FormControl>
                                         <div className="flex items-center gap-2">
                                             <Input
                                                 type="color"
@@ -363,7 +368,7 @@ export function MenuForm({
                                             />
                                             <Input
                                                 type="text"
-                                                placeholder="#ffffff"
+                                                placeholder={t('menus.placeholders.color')}
                                                 {...field}
                                                 value={field.value || ''}
                                                 className="font-mono"
@@ -379,13 +384,13 @@ export function MenuForm({
                             control={form.control}
                             name="description"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="Optional details, e.g., 9-course meal featuring local bamboo shoots..."
-                                            className="min-h-[100px]"
-                                            {...field}
+                            <FormItem>
+                                <FormLabel>{t('menus.form.description')}</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                        placeholder={t('menus.placeholders.description')}
+                                        className="min-h-[100px]"
+                                        {...field}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -398,10 +403,10 @@ export function MenuForm({
                     <div className="col-span-2 flex flex-col space-y-4 rounded-md border p-6 min-h-0">
                         <div className="flex justify-between items-center shrink-0">
                             <div>
-                                <h3 className="font-semibold text-lg">Mapped Components</h3>
-                                <p className="text-sm text-muted-foreground">Build this menu by adding recipe components.</p>
+                                <h3 className="font-semibold text-lg">{t('menus.form.mappedComponents')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('menus.form.mappedComponentsHint')}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    Accepted: decimal (0.5), fraction (1/6), mixed (1 1/2).
+                                    {t('menus.form.quantityHint')}
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -412,15 +417,15 @@ export function MenuForm({
                                     onClick={() => append({ component_id: '', qty_per_order: '1' })}
                                 >
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Add Row
+                                    {t('menus.form.addRow')}
                                 </Button>
                             </div>
                         </div>
 
                         {fields.length === 0 ? (
                             <div className="rounded-md border border-dashed p-8 text-center bg-muted/50 shrink-0">
-                                <p className="text-sm text-muted-foreground">No components added yet.</p>
-                                <p className="text-xs text-muted-foreground mt-1">Components dictate the ingredients required for this menu.</p>
+                                <p className="text-sm text-muted-foreground">{t('menus.form.empty')}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{t('menus.form.emptyHint')}</p>
                             </div>
                         ) : (
                             <div className="flex-1 space-y-4 pr-2 overflow-y-auto min-h-0">
@@ -445,6 +450,7 @@ export function MenuForm({
                                             onMoveDown={handleMoveDown}
                                             onRemove={handleRemove}
                                             onQuantityCommit={handleQuantityCommit}
+                                            t={t}
                                         />
                                     );
                                 })}
@@ -459,10 +465,10 @@ export function MenuForm({
                         variant="outline"
                         onClick={() => router.push(`/dashboard/${restaurantId}/menus`)}
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button type="submit" disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Menu'}
+                        {isSaving ? t('common.saving') : t('menus.form.save')}
                     </Button>
                 </div>
             </form>

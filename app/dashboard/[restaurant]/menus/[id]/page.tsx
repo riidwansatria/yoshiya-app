@@ -2,6 +2,7 @@ import { getMenuById } from '@/lib/queries/menus';
 import { getComponentOptions } from '@/lib/queries/components';
 import { MenuForm } from '@/components/kitchen/menu-form';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 export default async function MenuDetailPage({
     params,
@@ -10,6 +11,7 @@ export default async function MenuDetailPage({
 }) {
     const { restaurant, id } = await params;
     const isNew = id === 'new';
+    const t = await getTranslations('kitchen');
 
     const [menu, components] = await Promise.all([
         isNew ? null : getMenuById(id),
@@ -24,7 +26,7 @@ export default async function MenuDetailPage({
         <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">
-                    {isNew ? 'New Menu' : 'Edit Menu'}
+                    {isNew ? t('pages.newMenu') : t('pages.editMenu')}
                 </h2>
             </div>
             <div className="flex-1 min-h-0">

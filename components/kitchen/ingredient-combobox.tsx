@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { cn } from '@/lib/utils';
 import { Ingredient } from '@/lib/queries/ingredients';
@@ -32,6 +33,7 @@ export function IngredientCombobox({
     usedIds = new Set(),
     onNewIngredient,
 }: IngredientComboboxProps) {
+    const t = useTranslations('kitchen');
     const [showCreate, setShowCreate] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [pendingName, setPendingName] = useState('');
@@ -70,13 +72,13 @@ export function IngredientCombobox({
                 autoHighlight
             >
                 <ComboboxInput
-                    placeholder="Search ingredient..."
+                    placeholder={t('ingredientCombobox.searchPlaceholder')}
                     showClear={!!value}
                     onInput={(e) => setInputValue((e.target as HTMLInputElement).value)}
                     onKeyDown={handleKeyDown}
                 />
                 <ComboboxContent>
-                    <ComboboxEmpty>No ingredient found.</ComboboxEmpty>
+                    <ComboboxEmpty>{t('ingredientCombobox.empty')}</ComboboxEmpty>
                     <ComboboxList>
                         {(ingredient) => {
                             const isUsed = usedIds.has(ingredient.id) && ingredient.id !== value;
@@ -91,7 +93,7 @@ export function IngredientCombobox({
                                     </span>
                                     {isUsed && (
                                         <span className="ml-auto text-xs text-muted-foreground">
-                                            used
+                                            {t('common.used')}
                                         </span>
                                     )}
                                 </ComboboxItem>
@@ -110,8 +112,8 @@ export function IngredientCombobox({
                         >
                             <Plus className="h-4 w-4" />
                             {!hasMatches && inputValue.trim()
-                                ? `Create "${inputValue.trim()}"...`
-                                : 'Create new ingredient...'}
+                                ? t('ingredientCombobox.createNamed', { name: inputValue.trim() })
+                                : t('ingredientCombobox.createNew')}
                         </button>
                     </div>
                 </ComboboxContent>

@@ -2,6 +2,7 @@
 
 import { RecipeComponent } from '@/lib/queries/components';
 import { deleteComponent } from '@/lib/actions/components';
+import { useTranslations } from 'next-intl';
 import {
     Dialog,
     DialogContent,
@@ -22,12 +23,13 @@ export function DeleteComponentDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const t = useTranslations('kitchen');
     async function onSubmit() {
         const result = await deleteComponent(component.id);
         if (result.error) {
             toast.error(result.error);
         } else {
-            toast.success('Component deleted');
+            toast.success(t('components.deleted'));
             onOpenChange(false);
         }
     }
@@ -36,18 +38,17 @@ export function DeleteComponentDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Delete Component</DialogTitle>
+                    <DialogTitle>{t('components.deleteTitle')}</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete <strong>{component.name}</strong>? This action cannot be
-                        undone.
+                        {t('components.deleteDescription', { name: component.name })}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button variant="destructive" onClick={onSubmit}>
-                        Delete
+                        {t('common.delete')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { type FormEvent, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,6 +34,7 @@ export function AddComponentDialogInline({
     initialName?: string;
     onSuccess: (newComponent: RecipeComponent) => void;
 }) {
+    const t = useTranslations('kitchen');
     const [name, setName] = useState(initialName);
     const [yieldServings, setYieldServings] = useState(1);
     const [isSaving, setIsSaving] = useState(false);
@@ -50,11 +52,11 @@ export function AddComponentDialogInline({
 
     async function handleSave() {
         if (!name.trim()) {
-            toast.error('Component name is required');
+            toast.error(t('components.quickCreate.nameRequired'));
             return;
         }
         if (yieldServings <= 0) {
-            toast.error('Yield servings must be greater than 0');
+            toast.error(t('components.quickCreate.yieldPositive'));
             return;
         }
 
@@ -68,7 +70,7 @@ export function AddComponentDialogInline({
 
             if (res.error) throw new Error(res.error);
 
-            toast.success('Component created successfully');
+            toast.success(t('components.quickCreate.created'));
 
             if (res.data) {
                 // Pass the new full component object back to the parent
@@ -77,7 +79,7 @@ export function AddComponentDialogInline({
 
             onOpenChange(false);
         } catch (error: unknown) {
-            toast.error(error instanceof Error ? error.message : 'Failed to create component');
+            toast.error(error instanceof Error ? error.message : t('components.quickCreate.createFailed'));
         } finally {
             setIsSaving(false);
         }
@@ -87,9 +89,9 @@ export function AddComponentDialogInline({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Quick Create Component</DialogTitle>
+                    <DialogTitle>{t('components.quickCreate.title')}</DialogTitle>
                     <DialogDescription>
-                        Create a new component here to assign to your menu. You can add the specific ingredients to this component later from the Components tab.
+                        {t('components.quickCreate.description')}
                     </DialogDescription>
                 </DialogHeader>
                 <form
@@ -101,16 +103,16 @@ export function AddComponentDialogInline({
                 >
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="component-name">Name</Label>
+                            <Label htmlFor="component-name">{t('common.name')}</Label>
                             <Input
                                 id="component-name"
-                                placeholder="e.g. Dashi"
+                                placeholder={t('components.placeholders.name')}
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="component-yield">Yield (Servings)</Label>
+                            <Label htmlFor="component-yield">{t('components.quickCreate.yield')}</Label>
                             <Input
                                 id="component-yield"
                                 type="number"
@@ -118,15 +120,15 @@ export function AddComponentDialogInline({
                                 value={yieldServings}
                                 onChange={(e) => setYieldServings(parseInt(e.target.value) || 1)}
                             />
-                            <p className="text-xs text-muted-foreground">Standard output of a single prep batch.</p>
+                            <p className="text-xs text-muted-foreground">{t('components.quickCreate.yieldHint')}</p>
                         </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button type="submit" disabled={isSaving}>
-                            {isSaving ? 'Creating...' : 'Create Component'}
+                            {isSaving ? t('components.quickCreate.creating') : t('components.quickCreate.create')}
                         </Button>
                     </DialogFooter>
                 </form>

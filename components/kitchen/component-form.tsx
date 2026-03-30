@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,6 +51,7 @@ export function ComponentForm({
     availableIngredients: Ingredient[];
     restaurantId: string;
 }) {
+    const t = useTranslations('kitchen');
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [localIngredients, setLocalIngredients] = useState(availableIngredients);
@@ -141,7 +143,7 @@ export function ComponentForm({
             });
 
             if (parsedIngredients.some((ingredient) => ingredient === null)) {
-                toast.error('Please fix quantity errors before saving.');
+                toast.error(t('components.form.fixQuantityErrors'));
                 return;
             }
 
@@ -154,10 +156,10 @@ export function ComponentForm({
                 if (mappingRes.error) throw new Error(mappingRes.error);
             }
 
-            toast.success(initialData ? 'Component updated' : 'Component created');
+            toast.success(initialData ? t('components.form.updated') : t('components.form.created'));
             router.push(`/dashboard/${restaurantId}/components`);
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Failed to save component';
+            const message = error instanceof Error ? error.message : t('components.form.saveFailed');
             toast.error(message);
         } finally {
             setIsSaving(false);
@@ -168,16 +170,16 @@ export function ComponentForm({
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="space-y-4 rounded-md border p-6">
-                    <h3 className="font-semibold text-lg">Component Details</h3>
+                    <h3 className="font-semibold text-lg">{t('components.form.details')}</h3>
 
                     <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Name</FormLabel>
+                                <FormLabel>{t('components.form.name')}</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. Sushi Rice Base" {...field} />
+                                    <Input placeholder={t('components.placeholders.name')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -189,9 +191,9 @@ export function ComponentForm({
                         name="description"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Description</FormLabel>
+                                <FormLabel>{t('components.form.description')}</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="Optional details..." {...field} />
+                                    <Textarea placeholder={t('components.placeholders.description')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -203,7 +205,7 @@ export function ComponentForm({
                         name="yield_servings"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Yield (Servings produced)</FormLabel>
+                                <FormLabel>{t('components.form.yield')}</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="number"
@@ -222,9 +224,9 @@ export function ComponentForm({
                 <div className="space-y-4 rounded-md border p-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h3 className="font-semibold text-lg">Ingredients</h3>
+                            <h3 className="font-semibold text-lg">{t('components.form.ingredients')}</h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Qty accepts: decimal (0.5), fraction (1/6), mixed (1 1/2).
+                                {t('components.form.quantityHint')}
                             </p>
                         </div>
                         <Button
@@ -234,12 +236,12 @@ export function ComponentForm({
                             onClick={safeAppend}
                         >
                             <Plus className="mr-2 h-4 w-4" />
-                            Add Row
+                            {t('components.form.addRow')}
                         </Button>
                     </div>
 
                     {fields.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No ingredients added yet.</p>
+                        <p className="text-sm text-muted-foreground">{t('components.form.empty')}</p>
                     ) : (
                         <div className="space-y-4">
                             {fields.map((field, index) => {
@@ -261,7 +263,7 @@ export function ComponentForm({
                                             name={`ingredients.${index}.ingredient_id`}
                                             render={({ field }) => (
                                                 <FormItem className="flex-[2]">
-                                                    <FormLabel className="text-xs">Ingredient</FormLabel>
+                                                    <FormLabel className="text-xs">{t('components.form.ingredient')}</FormLabel>
                                                     <FormControl>
                                                         <IngredientCombobox
                                                             value={field.value}
@@ -283,7 +285,7 @@ export function ComponentForm({
                                             name={`ingredients.${index}.qty_per_serving`}
                                             render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel className="text-xs">Qty / Serving ({unitLabel})</FormLabel>
+                                                    <FormLabel className="text-xs">{t('components.form.qtyPerServing', { unit: unitLabel })}</FormLabel>
                                                     <FormControl>
                                                         <FractionalQuantityInput
                                                             value={field.value || ''}
@@ -291,7 +293,7 @@ export function ComponentForm({
                                                             onCommit={(parsed, error) =>
                                                                 handleQuantityCommit(index, parsed, error)
                                                             }
-                                                            label={`Qty per serving`}
+                                                            label={t('components.form.qtyPerServingLabel')}
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
@@ -343,10 +345,10 @@ export function ComponentForm({
                         variant="outline"
                         onClick={() => router.push(`/dashboard/${restaurantId}/components`)}
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button type="submit" disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Component'}
+                        {isSaving ? t('common.saving') : t('components.form.save')}
                     </Button>
                 </div>
             </form>

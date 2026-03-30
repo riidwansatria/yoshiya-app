@@ -2,6 +2,7 @@
 
 import { Menu } from '@/lib/queries/menus';
 import { deleteMenu } from '@/lib/actions/menus';
+import { useTranslations } from 'next-intl';
 import {
     Dialog,
     DialogContent,
@@ -22,12 +23,13 @@ export function DeleteMenuDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const t = useTranslations('kitchen');
     async function onSubmit() {
         const result = await deleteMenu(menu.id);
         if (result.error) {
             toast.error(result.error);
         } else {
-            toast.success('Menu deleted');
+            toast.success(t('menus.deleted'));
             onOpenChange(false);
         }
     }
@@ -36,17 +38,17 @@ export function DeleteMenuDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Delete Menu</DialogTitle>
+                    <DialogTitle>{t('menus.deleteTitle')}</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete <strong>{menu.name}</strong>? This will remove the mapped components from this menu, but it will not delete the components themselves. This action cannot be undone.
+                        {t('menus.deleteDescription', { name: menu.name })}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button variant="destructive" onClick={onSubmit}>
-                        Delete
+                        {t('common.delete')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

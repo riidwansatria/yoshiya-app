@@ -3,7 +3,30 @@
         "schedule": "Schedule",
         "bookings": "Bookings",
         "today": "Today",
-        "customers": "Customers"
+        "customers": "Customers",
+        "settings": "Settings",
+        "staffManagement": "Staff Management",
+        "kitchen": "Kitchen",
+        "dailyOrders": "Daily Orders",
+        "summary": "Summary",
+        "dashboard": "Dashboard",
+        "appName": "Yoshiya App"
+    },
+    "userMenu": {
+        "settings": "Settings",
+        "language": "Language",
+        "logout": "Log out",
+        "defaultName": "User",
+        "japanese": "Japanese",
+        "english": "English"
+    },
+    "restaurantSwitcher": {
+        "banquet": "Banquet Hall",
+        "fineDining": "Fine Dining",
+        "local": "Local Specialty",
+        "skewers": "Skewers Shop",
+        "kitchen": "Kitchen",
+        "subtitle": "Yoshiya Arashiyama"
     },
     "booking": {
         "newBooking": "New Booking",
@@ -98,6 +121,178 @@
         "confirmDelete": "Are you sure you want to delete this booking? This action cannot be undone.",
         "errors": {
             "deleteFailed": "Failed to delete booking"
+        }
+    },
+    "kitchen": {
+        "pages": {
+            "ingredients": "Ingredients",
+            "components": "Components",
+            "menus": "Menus",
+            "newComponent": "New Component",
+            "editComponent": "Edit Component",
+            "newMenu": "New Menu",
+            "editMenu": "Edit Menu",
+            "matrixExport": "Matrix Export",
+            "newComponentButton": "New Component",
+            "newMenuButton": "New Menu"
+        },
+        "common": {
+            "actions": "Actions",
+            "name": "Name",
+            "description": "Description",
+            "category": "Category",
+            "unit": "Unit",
+            "package": "Package",
+            "season": "Season",
+            "price": "Price",
+            "cancel": "Cancel",
+            "save": "Save",
+            "saving": "Saving...",
+            "edit": "Edit",
+            "duplicate": "Duplicate",
+            "delete": "Delete",
+            "viewEdit": "View / Edit",
+            "duplicating": "Duplicating...",
+            "search": "Search",
+            "none": "-",
+            "used": "used",
+            "openMenu": "Open menu"
+        },
+        "ingredients": {
+            "searchPlaceholder": "Search ingredients...",
+            "addButton": "Add Ingredient",
+            "noResults": "No ingredients found.",
+            "noResultsMatching": "No ingredients matching \"{query}\".",
+            "usedInComponents": "Used In Components",
+            "notUsedInComponents": "This ingredient is not mapped to any components yet.",
+            "addTitle": "Add Ingredient",
+            "addDescription": "Add a new ingredient to the master list.",
+            "editTitle": "Edit Ingredient",
+            "deleteTitle": "Delete Ingredient",
+            "deleteDescription": "Are you sure you want to delete {name}? This action cannot be undone.",
+            "saveButton": "Save Ingredient",
+            "saveChanges": "Save Changes",
+            "added": "Ingredient added successfully",
+            "updated": "Ingredient updated successfully",
+            "deleted": "Ingredient deleted",
+            "unitOptional": "Unit (Optional)",
+            "categoryOptional": "Category (Optional)",
+            "packageSizeOptional": "Package Size (Optional)",
+            "packageLabelOptional": "Package Label (Optional)",
+            "packageSizeHint": "How many base units are in one pack.",
+            "packageLabelHint": "Display name for the package type.",
+            "packageDisplay": "1 {label} = {size} {unit}",
+            "defaultPackageLabel": "pack",
+            "validation": {
+                "nameRequired": "Name is required",
+                "packageSizePositive": "Package size must be greater than 0"
+            },
+            "placeholders": {
+                "name": "e.g. Tomato",
+                "unit": "e.g. g, ml, pcs",
+                "category": "e.g. Vegetables",
+                "packageSize": "e.g. 10, 500, 1000",
+                "packageLabel": "e.g. pack, bag, box"
+            }
+        },
+        "ingredientCombobox": {
+            "searchPlaceholder": "Search ingredient...",
+            "empty": "No ingredient found.",
+            "createNew": "Create new ingredient...",
+            "createNamed": "Create \"{name}\"..."
+        },
+        "components": {
+            "searchPlaceholder": "Search components...",
+            "noResults": "No components found.",
+            "noResultsMatching": "No components matching \"{query}\".",
+            "yieldServings": "Yield (Servings)",
+            "ingredientsCount": "Ingredients",
+            "noIngredientsMapped": "No ingredients have been mapped to this component yet.",
+            "usedInMenus": "Used In Menus",
+            "notUsedInMenus": "This component is not mapped to any menus yet.",
+            "unknownIngredient": "Unknown Ingredient",
+            "unknownComponent": "Unknown Component",
+            "deleteTitle": "Delete Component",
+            "deleteDescription": "Are you sure you want to delete {name}? This action cannot be undone.",
+            "deleted": "Component deleted",
+            "form": {
+                "details": "Component Details",
+                "name": "Name",
+                "description": "Description",
+                "yield": "Yield (Servings produced)",
+                "ingredients": "Ingredients",
+                "quantityHint": "Qty accepts: decimal (0.5), fraction (1/6), mixed (1 1/2).",
+                "addRow": "Add Row",
+                "empty": "No ingredients added yet.",
+                "ingredient": "Ingredient",
+                "qtyPerServing": "Qty / Serving ({unit})",
+                "qtyPerServingLabel": "Qty per serving",
+                "save": "Save Component",
+                "created": "Component created",
+                "updated": "Component updated",
+                "saveFailed": "Failed to save component",
+                "fixQuantityErrors": "Please fix quantity errors before saving."
+            },
+            "placeholders": {
+                "name": "e.g. Sushi Rice Base",
+                "description": "Optional details..."
+            },
+            "quickCreate": {
+                "title": "Quick Create Component",
+                "description": "Create a new component here to assign to your menu. You can add the specific ingredients to this component later from the Components tab.",
+                "yield": "Yield (Servings)",
+                "yieldHint": "Standard output of a single prep batch.",
+                "create": "Create Component",
+                "creating": "Creating...",
+                "created": "Component created successfully",
+                "nameRequired": "Component name is required",
+                "yieldPositive": "Yield servings must be greater than 0",
+                "createFailed": "Failed to create component"
+            }
+        },
+        "componentCombobox": {
+            "searchPlaceholder": "Search component...",
+            "empty": "No component found.",
+            "createNew": "Create new component...",
+            "createNamed": "Create \"{name}\"..."
+        },
+        "menus": {
+            "searchPlaceholder": "Search menus...",
+            "noResults": "No menus found.",
+            "noResultsMatching": "No menus matching \"{query}\".",
+            "priceEmpty": "Price was left blank.",
+            "deleteTitle": "Delete Menu",
+            "deleteDescription": "Are you sure you want to delete {name}? This will remove the mapped components from this menu, but it will not delete the components themselves. This action cannot be undone.",
+            "deleted": "Menu deleted",
+            "noComponentsMapped": "No components have been mapped to this menu yet.",
+            "form": {
+                "details": "Menu Details",
+                "name": "Name",
+                "season": "Season",
+                "priceOptional": "Price (¥, optional)",
+                "labelColor": "Label Color",
+                "description": "Description",
+                "mappedComponents": "Mapped Components",
+                "mappedComponentsHint": "Build this menu by adding recipe components.",
+                "quantityHint": "Accepted: decimal (0.5), fraction (1/6), mixed (1 1/2).",
+                "addRow": "Add Row",
+                "empty": "No components added yet.",
+                "emptyHint": "Components dictate the ingredients required for this menu.",
+                "component": "Component",
+                "qtyPerOrder": "Qty / Order",
+                "save": "Save Menu",
+                "created": "Menu created",
+                "updated": "Menu updated",
+                "saveFailed": "Failed to save menu",
+                "fixQuantityErrors": "Please fix quantity errors before saving."
+            },
+            "placeholders": {
+                "name": "e.g. Spring Kaiseki",
+                "season": "e.g. Spring 2026",
+                "price": "Leave blank if not needed",
+                "color": "#ffffff",
+                "description": "Optional details, e.g., 9-course meal featuring local bamboo shoots..."
+            }
         }
     }
 }

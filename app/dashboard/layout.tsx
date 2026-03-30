@@ -10,6 +10,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { getUserRole } from "@/lib/queries/users"
+import { getTranslations } from "next-intl/server"
 
 export default async function DashboardLayout({
     children,
@@ -17,6 +18,7 @@ export default async function DashboardLayout({
     children: React.ReactNode
 }) {
     const role = await getUserRole()
+    const t = await getTranslations('nav')
 
     return (
 
@@ -28,11 +30,11 @@ export default async function DashboardLayout({
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="#">Yoshiya App</BreadcrumbLink>
+                                <BreadcrumbLink href="#">{t('appName')}</BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator className="hidden md:block" />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                                <BreadcrumbPage>{t('dashboard')}</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>

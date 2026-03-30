@@ -2,6 +2,7 @@
 
 import { RecipeComponent } from '@/lib/queries/components';
 import { Menu } from '@/lib/queries/menus';
+import { useTranslations } from 'next-intl';
 import {
     Table,
     TableBody,
@@ -36,6 +37,7 @@ export function ComponentsList({
     menus: Menu[];
     restaurantId: string;
 }) {
+    const t = useTranslations('kitchen');
     const router = useRouter();
     const [deletingComponent, setDeletingComponent] = useState<RecipeComponent | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -92,7 +94,7 @@ export function ComponentsList({
             <div className="relative shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="Search components..."
+                    placeholder={t('components.searchPlaceholder')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9 h-9"
@@ -103,18 +105,20 @@ export function ComponentsList({
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[40px]"></TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Yield (Servings)</TableHead>
-                            <TableHead>Ingredients</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
+                            <TableHead>{t('common.name')}</TableHead>
+                            <TableHead>{t('common.description')}</TableHead>
+                            <TableHead>{t('components.yieldServings')}</TableHead>
+                            <TableHead>{t('components.ingredientsCount')}</TableHead>
+                            <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
-                                    {search ? `No components matching "${search}".` : 'No components found.'}
+                                    {search
+                                        ? t('components.noResultsMatching', { query: search })
+                                        : t('components.noResults')}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -144,7 +148,7 @@ export function ComponentsList({
                                                 </Link>
                                             </TableCell>
                                             <TableCell className="max-w-[300px] truncate text-muted-foreground">
-                                                {component.description || '-'}
+                                                {component.description || t('common.none')}
                                             </TableCell>
                                             <TableCell>{component.yield_servings}</TableCell>
                                             <TableCell>{component.component_ingredients?.length || 0}</TableCell>
@@ -152,7 +156,7 @@ export function ComponentsList({
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Open menu</span>
+                                                            <span className="sr-only">{t('common.openMenu')}</span>
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -162,7 +166,7 @@ export function ComponentsList({
                                                                 router.push(`/dashboard/${restaurantId}/components/${component.id}`)
                                                             }
                                                         >
-                                                            View / Edit
+                                                            {t('common.viewEdit')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             disabled={duplicatingId === component.id}
@@ -175,14 +179,14 @@ export function ComponentsList({
                                                                 }
                                                             }}
                                                         >
-                                                            {duplicatingId === component.id ? 'Duplicating...' : 'Duplicate'}
+                                                            {duplicatingId === component.id ? t('common.duplicating') : t('common.duplicate')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             className="text-red-600 focus:text-red-600"
                                                             onClick={() => setDeletingComponent(component)}
                                                         >
-                                                            Delete
+                                                            {t('common.delete')}
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -194,7 +198,7 @@ export function ComponentsList({
                                                 <TableCell colSpan={6} className="p-0 border-b">
                                                     <div className="p-4 pl-14">
                                                         {(!component.component_ingredients || component.component_ingredients.length === 0) ? (
-                                                            <p className="text-sm text-muted-foreground italic">No ingredients have been mapped to this component yet.</p>
+                                                            <p className="text-sm text-muted-foreground italic">{t('components.noIngredientsMapped')}</p>
                                                         ) : (
                                                             <ul className="space-y-2">
                                                                 {component.component_ingredients.map(ci => (
@@ -215,7 +219,7 @@ export function ComponentsList({
                                                                             </Link>
                                                                         ) : (
                                                                             <span className="text-foreground">
-                                                                                {ci.ingredients?.name || 'Unknown Ingredient'}
+                                                                                {ci.ingredients?.name || t('components.unknownIngredient')}
                                                                             </span>
                                                                         )}
                                                                     </li>
@@ -223,10 +227,10 @@ export function ComponentsList({
                                                             </ul>
                                                         )}
                                                         <div className="mt-4 border-t pt-4">
-                                                            <h4 className="text-sm font-medium">Used In Menus</h4>
+                                                            <h4 className="text-sm font-medium">{t('components.usedInMenus')}</h4>
                                                             {menuUsage.length === 0 ? (
                                                                 <p className="mt-2 text-sm text-muted-foreground italic">
-                                                                    This component is not mapped to any menus yet.
+                                                                    {t('components.notUsedInMenus')}
                                                                 </p>
                                                             ) : (
                                                                 <ul className="mt-2 space-y-2">

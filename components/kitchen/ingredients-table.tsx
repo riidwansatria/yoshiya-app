@@ -2,6 +2,7 @@
 
 import { Ingredient } from '@/lib/queries/ingredients';
 import { RecipeComponent } from '@/lib/queries/components';
+import { useTranslations } from 'next-intl';
 import {
     Table,
     TableBody,
@@ -29,13 +30,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 
-function formatPackageDisplay(ingredient: Ingredient) {
+function formatPackageDisplay(
+    ingredient: Ingredient,
+    t: ReturnType<typeof useTranslations<'kitchen'>>
+) {
     if (!ingredient.package_size) {
-        return '-';
+        return t('common.none');
     }
 
-    const packageLabel = ingredient.package_label?.trim() || 'pack';
-    return `1 ${packageLabel} = ${ingredient.package_size} ${ingredient.unit}`;
+    const packageLabel = ingredient.package_label?.trim() || t('ingredients.defaultPackageLabel');
+    return t('ingredients.packageDisplay', {
+        label: packageLabel,
+        size: ingredient.package_size,
+        unit: ingredient.unit,
+    });
 }
 
 export function IngredientsTable({
@@ -47,6 +55,7 @@ export function IngredientsTable({
     components: RecipeComponent[];
     restaurantId: string;
 }) {
+    const t = useTranslations('kitchen');
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
@@ -105,7 +114,7 @@ export function IngredientsTable({
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search ingredients..."
+                        placeholder={t('ingredients.searchPlaceholder')}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9 h-9"
@@ -113,7 +122,7 @@ export function IngredientsTable({
                 </div>
                 <Button onClick={() => setIsAddOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Ingredient
+                    {t('ingredients.addButton')}
                 </Button>
             </div>
 
@@ -122,18 +131,20 @@ export function IngredientsTable({
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[40px]"></TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Unit</TableHead>
-                            <TableHead>Package</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
+                            <TableHead>{t('common.name')}</TableHead>
+                            <TableHead>{t('common.unit')}</TableHead>
+                            <TableHead>{t('common.package')}</TableHead>
+                            <TableHead>{t('common.category')}</TableHead>
+                            <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
-                                    {search ? `No ingredients matching "${search}".` : 'No ingredients found.'}
+                                    {search
+                                        ? t('ingredients.noResultsMatching', { query: search })
+                                        : t('ingredients.noResults')}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -156,19 +167,19 @@ export function IngredientsTable({
                                             </TableCell>
                                             <TableCell className="font-medium">{ingredient.name}</TableCell>
                                             <TableCell>{ingredient.unit}</TableCell>
-                                            <TableCell>{formatPackageDisplay(ingredient)}</TableCell>
-                                            <TableCell>{ingredient.category || '-'}</TableCell>
+                                            <TableCell>{formatPackageDisplay(ingredient, t)}</TableCell>
+                                            <TableCell>{ingredient.category || t('common.none')}</TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Open menu</span>
+                                                            <span className="sr-only">{t('common.openMenu')}</span>
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem onClick={() => setEditingIngredient(ingredient)}>
-                                                            Edit
+                                                            {t('common.edit')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             disabled={duplicatingId === ingredient.id}
@@ -178,14 +189,14 @@ export function IngredientsTable({
                                                                 setDuplicatingId(null);
                                                             }}
                                                         >
-                                                            {duplicatingId === ingredient.id ? 'Duplicating...' : 'Duplicate'}
+                                                            {duplicatingId === ingredient.id ? t('common.duplicating') : t('common.duplicate')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             className="text-red-600 focus:text-red-600"
                                                             onClick={() => setDeletingIngredient(ingredient)}
                                                         >
-                                                            Delete
+                                                            {t('common.delete')}
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -197,10 +208,10 @@ export function IngredientsTable({
                                                 <TableCell colSpan={6} className="border-b p-0">
                                                     <div className="space-y-4 p-4 pl-14">
                                                         <div>
-                                                            <h4 className="text-sm font-medium">Used In Components</h4>
+                                                            <h4 className="text-sm font-medium">{t('ingredients.usedInComponents')}</h4>
                                                             {componentUsage.length === 0 ? (
                                                                 <p className="mt-2 text-sm text-muted-foreground italic">
-                                                                    This ingredient is not mapped to any components yet.
+                                                                    {t('ingredients.notUsedInComponents')}
                                                                 </p>
                                                             ) : (
                                                                 <ul className="mt-2 space-y-2">
