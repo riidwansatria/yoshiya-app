@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, Fragment } from 'react';
+
 import { Ingredient } from '@/lib/queries/ingredients';
 import { RecipeComponent } from '@/lib/queries/components';
 import { useTranslations } from 'next-intl';
@@ -20,7 +22,6 @@ import {
     EditIngredientDialog,
     DeleteIngredientDialog,
 } from './ingredient-dialogs';
-import { useState, useMemo, Fragment, useCallback } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,6 +30,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import { fetchIngredientsListData } from '@/lib/queries/kitchen';
+import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 
 function formatPackageDisplay(
     ingredient: Ingredient,
@@ -56,16 +60,88 @@ export function IngredientsTable({
     restaurantId: string;
 }) {
     const t = useTranslations('kitchen');
+    const [supabase] = useState(() => createClient());
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const [ingredients, setIngredients] = useState(initialData);
+    const [componentsState, setComponentsState] = useState(components);
+    const [, startTransition] = useTransition();
+    const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        setIngredients(initialData);
+    }, [initialData]);
+
+    useEffect(() => {
+        setComponentsState(components);
+    }, [components]);
+
+    useEffect(() => {
+        if (!editingIngredient) {
+            return;
+        }
+
+        const nextEditingIngredient = ingredients.find((ingredient) => ingredient.id === editingIngredient.id) ?? null;
+        if (nextEditingIngredient && nextEditingIngredient !== editingIngredient) {
+            setEditingIngredient(nextEditingIngredient);
+        }
+    }, [editingIngredient, ingredients]);
+
+    useEffect(() => {
+        if (!deletingIngredient) {
+            return;
+        }
+
+        const nextDeletingIngredient = ingredients.find((ingredient) => ingredient.id === deletingIngredient.id) ?? null;
+        if (nextDeletingIngredient && nextDeletingIngredient !== deletingIngredient) {
+            setDeletingIngredient(nextDeletingIngredient);
+        }
+    }, [deletingIngredient, ingredients]);
+
+    const refetchListData = useCallback(async () => {
+        const nextData = await fetchIngredientsListData(supabase, restaurantId);
+        startTransition(() => {
+            setIngredients(nextData.ingredients);
+            setComponentsState(nextData.components);
+        });
+    }, [restaurantId, supabase]);
+
+    const scheduleRefetch = useCallback(() => {
+        if (refetchTimerRef.current) {
+            clearTimeout(refetchTimerRef.current);
+        }
+
+        refetchTimerRef.current = setTimeout(() => {
+            void refetchListData();
+        }, 250);
+    }, [refetchListData]);
+
+    useEffect(() => {
+        const channel = subscribeToKitchenScope({
+            supabase,
+            scope: 'ingredients-list',
+            restaurantId,
+            onChange: () => {
+                scheduleRefetch();
+            },
+        });
+
+        return () => {
+            if (refetchTimerRef.current) {
+                clearTimeout(refetchTimerRef.current);
+            }
+            void supabase.removeChannel(channel);
+        };
+    }, [restaurantId, scheduleRefetch, supabase]);
+
     const componentUsageByIngredientId = useMemo(() => {
         const usage = new Map<string, { componentId: string; componentName: string; qtyPerServing: number; unit: string }[]>();
 
-        for (const component of components) {
+        for (const component of componentsState) {
             for (const componentIngredient of component.component_ingredients ?? []) {
                 const current = usage.get(componentIngredient.ingredient_id) ?? [];
                 current.push({
@@ -79,12 +155,12 @@ export function IngredientsTable({
         }
 
         return usage;
-    }, [components]);
+    }, [componentsState]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return initialData;
-        return initialData.filter((i) =>
+        if (!q) return ingredients;
+        return ingredients.filter((i) =>
             i.name.toLowerCase().includes(q) ||
             i.unit.toLowerCase().includes(q) ||
             (i.category ?? '').toLowerCase().includes(q) ||
@@ -94,7 +170,7 @@ export function IngredientsTable({
                 usage.componentName.toLowerCase().includes(q)
             )
         );
-    }, [componentUsageByIngredientId, initialData, search]);
+    }, [componentUsageByIngredientId, ingredients, search]);
 
     const toggleRow = useCallback((ingredientId: string) => {
         setExpandedRows((prev) => {

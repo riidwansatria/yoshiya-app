@@ -1,4 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
+import {
+    fetchMenuById as fetchKitchenMenuById,
+    fetchMenus as fetchKitchenMenus,
+} from './kitchen';
 
 export interface MenuComponentReference {
     id: string;
@@ -28,53 +32,15 @@ interface GetMenusOptions {
     includeComponentDetails?: boolean;
 }
 
-function buildMenusSelect({
-    includeMenuComponents = false,
-    includeComponentDetails = false,
-}: GetMenusOptions = {}) {
-    const baseSelect = 'id, restaurant_id, name, season, price, description, color';
-
-    if (!includeMenuComponents) {
-        return baseSelect;
-    }
-
-    const componentSelect = includeComponentDetails ? ', components (id, name)' : '';
-    return `${baseSelect}, menu_components (menu_id, component_id, qty_per_order${componentSelect})`;
-}
-
 export async function getMenus(
     restaurantId: string,
     options?: GetMenusOptions
 ): Promise<Menu[]> {
     const supabase = await createClient();
-
-    const { data, error } = await supabase
-        .from('menus')
-        .select(buildMenusSelect(options))
-        .eq('restaurant_id', restaurantId)
-        .order('name');
-
-    if (error) {
-        console.error('Error fetching menus:', error);
-        return [];
-    }
-
-    return (data ?? []) as unknown as Menu[];
+    return fetchKitchenMenus(supabase, restaurantId, options);
 }
 
 export async function getMenuById(id: string): Promise<Menu | null> {
     const supabase = await createClient();
-
-    const { data, error } = await supabase
-        .from('menus')
-        .select(buildMenusSelect({ includeMenuComponents: true }))
-        .eq('id', id)
-        .single();
-
-    if (error) {
-        console.error('Error fetching menu by ID:', error);
-        return null;
-    }
-
-    return data as unknown as Menu;
+    return fetchKitchenMenuById(supabase, id);
 }

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { fetchIngredientById as fetchKitchenIngredientById, fetchIngredients as fetchKitchenIngredients } from './kitchen';
 
 export interface Ingredient {
     id: string;
@@ -12,16 +13,10 @@ export interface Ingredient {
 
 export async function getIngredients(): Promise<Ingredient[]> {
     const supabase = await createClient();
+    return fetchKitchenIngredients(supabase);
+}
 
-    const { data, error } = await supabase
-        .from('ingredients')
-        .select('*')
-        .order('name', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching ingredients:', error);
-        return [];
-    }
-
-    return data;
+export async function getIngredientById(id: string): Promise<Ingredient | null> {
+    const supabase = await createClient();
+    return fetchKitchenIngredientById(supabase, id);
 }

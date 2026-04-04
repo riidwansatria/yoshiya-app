@@ -269,7 +269,7 @@
                 "details": "メニュー情報",
                 "name": "名称",
                 "season": "季節",
-                "priceOptional": "価格（¥・任意）",
+                "priceOptional": "単価（¥）",
                 "labelColor": "ラベルカラー",
                 "description": "説明",
                 "mappedComponents": "登録済み仕込み品",
@@ -293,6 +293,17 @@
                 "color": "#ffffff",
                 "description": "補足があれば入力..."
             }
+        },
+        "sync": {
+            "conflictTitle": "他の場所で新しい変更がありました",
+            "deletedTitle": "このデータは別の場所で削除されました",
+            "reviewLatest": "最新内容を確認",
+            "reloadFromLatest": "最新内容で再読込",
+            "recordDeleted": "このデータは別のセッションで削除されました。",
+            "ingredientConflictDescription": "入力中の内容は保持しています。保存前に最新の食材情報を確認してください。",
+            "ingredientDeletedDescription": "入力中の内容は表示されたままですが、食材が削除されたため保存できません。",
+            "componentConflictDescription": "入力中の内容は保持しています。保存前に最新の仕込み品情報を確認してください。",
+            "componentDeletedDescription": "入力中の内容は表示されたままですが、仕込み品が削除されたため保存できません。"
         }
     }
 }

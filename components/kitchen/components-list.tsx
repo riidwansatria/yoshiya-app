@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, Fragment } from 'react';
+
 import { RecipeComponent } from '@/lib/queries/components';
 import { Menu } from '@/lib/queries/menus';
 import { useTranslations } from 'next-intl';
@@ -12,7 +14,6 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useCallback, useState, useMemo, Fragment } from 'react';
 import { ChevronDown, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
@@ -27,6 +28,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteComponentDialog } from './component-dialogs';
 import { duplicateComponent } from '@/lib/actions/components';
+import { createClient } from '@/lib/supabase/client';
+import { fetchComponentsListData } from '@/lib/queries/kitchen';
+import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 
 export function ComponentsList({
     initialData,
@@ -39,14 +43,75 @@ export function ComponentsList({
 }) {
     const t = useTranslations('kitchen');
     const router = useRouter();
+    const [supabase] = useState(() => createClient());
     const [deletingComponent, setDeletingComponent] = useState<RecipeComponent | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [componentsState, setComponentsState] = useState(initialData);
+    const [menusState, setMenusState] = useState(menus);
+    const [, startTransition] = useTransition();
+    const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        setComponentsState(initialData);
+    }, [initialData]);
+
+    useEffect(() => {
+        setMenusState(menus);
+    }, [menus]);
+
+    useEffect(() => {
+        if (!deletingComponent) {
+            return;
+        }
+
+        const nextDeletingComponent = componentsState.find((component) => component.id === deletingComponent.id) ?? null;
+        if (nextDeletingComponent && nextDeletingComponent !== deletingComponent) {
+            setDeletingComponent(nextDeletingComponent);
+        }
+    }, [componentsState, deletingComponent]);
+
+    const refetchListData = useCallback(async () => {
+        const nextData = await fetchComponentsListData(supabase, restaurantId);
+        startTransition(() => {
+            setComponentsState(nextData.components);
+            setMenusState(nextData.menus);
+        });
+    }, [restaurantId, supabase]);
+
+    const scheduleRefetch = useCallback(() => {
+        if (refetchTimerRef.current) {
+            clearTimeout(refetchTimerRef.current);
+        }
+
+        refetchTimerRef.current = setTimeout(() => {
+            void refetchListData();
+        }, 250);
+    }, [refetchListData]);
+
+    useEffect(() => {
+        const channel = subscribeToKitchenScope({
+            supabase,
+            scope: 'components-list',
+            restaurantId,
+            onChange: () => {
+                scheduleRefetch();
+            },
+        });
+
+        return () => {
+            if (refetchTimerRef.current) {
+                clearTimeout(refetchTimerRef.current);
+            }
+            void supabase.removeChannel(channel);
+        };
+    }, [restaurantId, scheduleRefetch, supabase]);
+
     const menuUsageByComponentId = useMemo(() => {
         const usage = new Map<string, { menuId: string; menuName: string; qtyPerOrder: number }[]>();
 
-        for (const menu of menus) {
+        for (const menu of menusState) {
             for (const menuComponent of menu.menu_components ?? []) {
                 const current = usage.get(menuComponent.component_id) ?? [];
                 current.push({
@@ -59,12 +124,12 @@ export function ComponentsList({
         }
 
         return usage;
-    }, [menus]);
+    }, [menusState]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return initialData;
-        return initialData.filter((c) =>
+        if (!q) return componentsState;
+        return componentsState.filter((c) =>
             c.name.toLowerCase().includes(q) ||
             (c.description ?? '').toLowerCase().includes(q) ||
             (c.component_ingredients ?? []).some((componentIngredient) =>
@@ -75,7 +140,7 @@ export function ComponentsList({
                 usage.menuName.toLowerCase().includes(q)
             )
         );
-    }, [initialData, menuUsageByComponentId, search]);
+    }, [componentsState, menuUsageByComponentId, search]);
 
     const toggleRow = useCallback((componentId: string) => {
         setExpandedRows((prev) => {

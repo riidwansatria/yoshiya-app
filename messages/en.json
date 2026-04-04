@@ -269,7 +269,7 @@
                 "details": "Menu Details",
                 "name": "Name",
                 "season": "Season",
-                "priceOptional": "Price (¥, optional)",
+                "priceOptional": "Price (¥)",
                 "labelColor": "Label Color",
                 "description": "Description",
                 "mappedComponents": "Mapped Components",
@@ -293,6 +293,17 @@
                 "color": "#ffffff",
                 "description": "Optional details, e.g., 9-course meal featuring local bamboo shoots..."
             }
+        },
+        "sync": {
+            "conflictTitle": "Newer changes were found",
+            "deletedTitle": "This record was deleted elsewhere",
+            "reviewLatest": "Review latest",
+            "reloadFromLatest": "Reload from latest",
+            "recordDeleted": "This record was deleted in another session.",
+            "ingredientConflictDescription": "Your draft was kept, but some incoming ingredient fields need review before you save.",
+            "ingredientDeletedDescription": "Your local draft is still visible, but saving is disabled because the ingredient no longer exists.",
+            "componentConflictDescription": "Your draft was kept, but some incoming component changes need review before you save.",
+            "componentDeletedDescription": "Your local draft is still visible, but saving is disabled because the component no longer exists."
         }
     }
 }
