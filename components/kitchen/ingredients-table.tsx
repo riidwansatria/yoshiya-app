@@ -33,6 +33,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { fetchIngredientsListData } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
+import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 
 function formatPackageDisplay(
     ingredient: Ingredient,
@@ -358,7 +359,7 @@ export function IngredientsTable({
                                                                     {componentUsage.map((usage) => (
                                                                         <li key={`${ingredient.id}-${usage.componentId}`} className="text-sm flex items-center gap-3">
                                                                             <span className="inline-block min-w-[5em] text-right font-medium text-foreground tabular-nums">
-                                                                                {usage.qtyPerServing} {usage.unit}
+                                                                                {decimalToFraction(usage.qtyPerServing)} {usage.unit}
                                                                             </span>
                                                                             <Link
                                                                                 href={`/dashboard/${restaurantId}/components/${usage.componentId}`}
