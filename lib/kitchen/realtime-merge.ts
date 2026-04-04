@@ -8,7 +8,7 @@ type DirtyFieldMap<Field extends string> = Partial<Record<Field, boolean | undef
 
 export function mergeUntouchedFields<
     Field extends string,
-    Values extends Record<Field, string | number | null>
+    Values extends Record<Field, string | number | null | undefined>
 >({
     fields,
     currentValues,

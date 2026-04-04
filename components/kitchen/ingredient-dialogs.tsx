@@ -291,10 +291,24 @@ export function EditIngredientDialog({
             return;
         }
 
-        const remoteValues = toIngredientFormValues(remoteIngredient);
+        const remoteFormValues = toIngredientFormValues(remoteIngredient);
+        const currentValues = {
+            name: form.getValues('name'),
+            unit: form.getValues('unit'),
+            category: form.getValues('category'),
+            package_size: form.getValues('package_size'),
+            package_label: form.getValues('package_label'),
+        };
+        const remoteValues = {
+            name: remoteFormValues.name,
+            unit: remoteFormValues.unit,
+            category: remoteFormValues.category,
+            package_size: remoteFormValues.package_size,
+            package_label: remoteFormValues.package_label,
+        };
         const mergeResult = mergeUntouchedFields({
             fields: INGREDIENT_SYNC_FIELDS,
-            currentValues: form.getValues(),
+            currentValues,
             remoteValues,
             dirtyFields: {
                 name: !!dirtyFields.name,
