@@ -14,7 +14,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Search, ChevronDown, ChevronRight, ChevronsDown, ChevronsUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { duplicateIngredient } from '@/lib/actions/ingredients';
 import {
@@ -172,6 +172,11 @@ export function IngredientsTable({
         );
     }, [componentUsageByIngredientId, ingredients, search]);
 
+    const allFilteredExpanded = useMemo(
+        () => filtered.length > 0 && filtered.every((ingredient) => expandedRows.has(ingredient.id)),
+        [expandedRows, filtered]
+    );
+
     const toggleRow = useCallback((ingredientId: string) => {
         setExpandedRows((prev) => {
             const next = new Set(prev);
@@ -183,6 +188,28 @@ export function IngredientsTable({
             return next;
         });
     }, []);
+
+    const toggleAllRows = useCallback(() => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+
+            if (filtered.length === 0) {
+                return next;
+            }
+
+            if (allFilteredExpanded) {
+                filtered.forEach((ingredient) => {
+                    next.delete(ingredient.id);
+                });
+                return next;
+            }
+
+            filtered.forEach((ingredient) => {
+                next.add(ingredient.id);
+            });
+            return next;
+        });
+    }, [allFilteredExpanded, filtered]);
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
@@ -206,7 +233,29 @@ export function IngredientsTable({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[40px]"></TableHead>
+                            <TableHead className="w-[40px]">
+                                <div className="flex items-center">
+                                    <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-4 w-4 cursor-pointer p-0 text-muted-foreground hover:bg-transparent"
+                                    onClick={toggleAllRows}
+                                    disabled={filtered.length === 0}
+                                    title={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                        aria-label={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                    >
+                                        {allFilteredExpanded ? (
+                                            <ChevronsUp className="h-4 w-4" />
+                                        ) : (
+                                            <ChevronsDown className="h-4 w-4" />
+                                        )}
+                                        <span className="sr-only">
+                                            {allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                        </span>
+                                    </Button>
+                                </div>
+                            </TableHead>
                             <TableHead>{t('common.name')}</TableHead>
                             <TableHead>{t('common.unit')}</TableHead>
                             <TableHead>{t('common.package')}</TableHead>
@@ -235,13 +284,28 @@ export function IngredientsTable({
                                             onClick={() => toggleRow(ingredient.id)}
                                         >
                                             <TableCell>
-                                                {isExpanded ? (
-                                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                                ) : (
-                                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                                )}
+                                                <div className="flex items-center">
+                                                    <span className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground">
+                                                        {isExpanded ? (
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        ) : (
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        )}
+                                                    </span>
+                                                </div>
                                             </TableCell>
-                                            <TableCell className="font-medium">{ingredient.name}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <button
+                                                    type="button"
+                                                    className="cursor-pointer hover:underline"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingIngredient(ingredient);
+                                                    }}
+                                                >
+                                                    {ingredient.name}
+                                                </button>
+                                            </TableCell>
                                             <TableCell>{ingredient.unit}</TableCell>
                                             <TableCell>{formatPackageDisplay(ingredient, t)}</TableCell>
                                             <TableCell>{ingredient.category || t('common.none')}</TableCell>

@@ -154,6 +154,8 @@
             "viewEdit": "View / Edit",
             "duplicating": "Duplicating...",
             "search": "Search",
+            "expandAll": "Expand All",
+            "collapseAll": "Collapse All",
             "none": "-",
             "used": "used",
             "openMenu": "Open menu"

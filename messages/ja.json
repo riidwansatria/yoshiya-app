@@ -154,6 +154,8 @@
             "viewEdit": "表示 / 編集",
             "duplicating": "複製中...",
             "search": "検索",
+            "expandAll": "すべて展開",
+            "collapseAll": "すべて閉じる",
             "none": "-",
             "used": "使用中",
             "openMenu": "メニューを開く"

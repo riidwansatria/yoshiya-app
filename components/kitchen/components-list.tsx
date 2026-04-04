@@ -14,7 +14,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, MoreHorizontal, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, Search, ChevronsDown, ChevronsUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 import {
@@ -142,6 +142,11 @@ export function ComponentsList({
         );
     }, [componentsState, menuUsageByComponentId, search]);
 
+    const allFilteredExpanded = useMemo(
+        () => filtered.length > 0 && filtered.every((component) => expandedRows.has(component.id)),
+        [expandedRows, filtered]
+    );
+
     const toggleRow = useCallback((componentId: string) => {
         setExpandedRows((prev) => {
             const next = new Set(prev);
@@ -153,6 +158,28 @@ export function ComponentsList({
             return next;
         });
     }, []);
+
+    const toggleAllRows = useCallback(() => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+
+            if (filtered.length === 0) {
+                return next;
+            }
+
+            if (allFilteredExpanded) {
+                filtered.forEach((component) => {
+                    next.delete(component.id);
+                });
+                return next;
+            }
+
+            filtered.forEach((component) => {
+                next.add(component.id);
+            });
+            return next;
+        });
+    }, [allFilteredExpanded, filtered]);
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
@@ -169,7 +196,29 @@ export function ComponentsList({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[40px]"></TableHead>
+                            <TableHead className="w-[40px]">
+                                <div className="flex items-center">
+                                    <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-4 w-4 cursor-pointer p-0 text-muted-foreground hover:bg-transparent"
+                                    onClick={toggleAllRows}
+                                    disabled={filtered.length === 0}
+                                    title={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                        aria-label={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                    >
+                                        {allFilteredExpanded ? (
+                                            <ChevronsUp className="h-4 w-4" />
+                                        ) : (
+                                            <ChevronsDown className="h-4 w-4" />
+                                        )}
+                                        <span className="sr-only">
+                                            {allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                        </span>
+                                    </Button>
+                                </div>
+                            </TableHead>
                             <TableHead>{t('common.name')}</TableHead>
                             <TableHead>{t('common.description')}</TableHead>
                             <TableHead>{t('components.yieldServings')}</TableHead>
@@ -197,11 +246,15 @@ export function ComponentsList({
                                             onClick={() => toggleRow(component.id)}
                                         >
                                             <TableCell>
-                                                {isExpanded ? (
-                                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                                ) : (
-                                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                                )}
+                                                <div className="flex items-center">
+                                                    <span className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground">
+                                                        {isExpanded ? (
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        ) : (
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        )}
+                                                    </span>
+                                                </div>
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 <Link
