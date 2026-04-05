@@ -9,18 +9,20 @@ export default async function IngredientsSummaryPage({
     searchParams,
 }: {
     params: Promise<{ restaurant: string }>;
-    searchParams: Promise<{ date?: string }>;
+    searchParams: Promise<{ date?: string; from?: string; to?: string }>;
 }) {
     const { restaurant } = await params;
     const resolvedSearchParams = await searchParams;
     const t = await getTranslations('kitchen.summary');
 
-    // Default to today if no date provided
-    const targetDate = resolvedSearchParams.date || format(new Date(), 'yyyy-MM-dd');
+    // Default to today if no range provided. `date` is the legacy single-day param.
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const fromDate = resolvedSearchParams.from || resolvedSearchParams.date || today;
+    const toDate = resolvedSearchParams.to || resolvedSearchParams.date || fromDate;
 
     const [groupedIngredients, components] = await Promise.all([
-        getIngredientsSummary(restaurant, targetDate),
-        getComponentsSummary(restaurant, targetDate),
+        getIngredientsSummary(restaurant, fromDate, toDate),
+        getComponentsSummary(restaurant, fromDate, toDate),
     ]);
 
     return (
@@ -31,7 +33,8 @@ export default async function IngredientsSummaryPage({
             <div className="flex-1 min-h-0 print:h-auto print:overflow-visible print:block">
                 <SummaryPrintView
                     restaurantId={restaurant}
-                    targetDate={targetDate}
+                    fromDate={fromDate}
+                    toDate={toDate}
                     groupedIngredients={groupedIngredients}
                     components={components}
                 />

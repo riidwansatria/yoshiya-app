@@ -8,7 +8,7 @@ import { Printer } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Table,
@@ -23,12 +23,14 @@ import { AggregatedComponent } from '@/lib/queries/components-summary';
 
 export function SummaryPrintView({
     restaurantId,
-    targetDate,
+    fromDate,
+    toDate,
     groupedIngredients,
     components,
 }: {
     restaurantId: string;
-    targetDate: string;
+    fromDate: string;
+    toDate: string;
     groupedIngredients: Record<string, AggregatedIngredient[]>;
     components: AggregatedComponent[];
 }) {
@@ -38,13 +40,19 @@ export function SummaryPrintView({
     const dateLocale = locale === 'ja' ? ja : enUS;
     const longDateFormat = locale === 'ja' ? 'yyyy年M月d日 (EEE)' : 'EEEE, MMMM do, yyyy';
     const generatedFormat = locale === 'ja' ? 'yyyy/MM/dd HH:mm' : 'PPpp';
-    const [dateStr, setDateStr] = useState(targetDate);
+    const [rangeFrom, setRangeFrom] = useState(fromDate);
+    const [rangeTo, setRangeTo] = useState(toDate);
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newDate = e.target.value;
-        setDateStr(newDate);
-        router.push(`/dashboard/${restaurantId}/kitchen/summary?date=${newDate}`);
+    const handleRangeChange = (newFrom: string, newTo: string) => {
+        setRangeFrom(newFrom);
+        setRangeTo(newTo);
+        router.push(`/dashboard/${restaurantId}/kitchen/summary?from=${newFrom}&to=${newTo}`);
     };
+
+    const isSingleDay = rangeFrom === rangeTo;
+    const formattedRange = isSingleDay
+        ? format(parseISO(rangeFrom), longDateFormat, { locale: dateLocale })
+        : `${format(parseISO(rangeFrom), longDateFormat, { locale: dateLocale })} — ${format(parseISO(rangeTo), longDateFormat, { locale: dateLocale })}`;
 
     const handlePrint = () => window.print();
 
@@ -136,11 +144,11 @@ export function SummaryPrintView({
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center border-b pb-4 print:hidden shrink-0">
                 <div className="flex items-center gap-4">
                     <label className="font-semibold whitespace-nowrap">{t('targetDate')}:</label>
-                    <Input
-                        type="date"
-                        value={dateStr}
-                        onChange={handleDateChange}
-                        className="w-auto"
+                    <DateRangePicker
+                        from={rangeFrom}
+                        to={rangeTo}
+                        onChange={handleRangeChange}
+                        locale={locale === 'ja' ? 'ja' : 'en'}
                     />
                 </div>
                 <Button onClick={handlePrint} variant="outline" disabled={!hasIngredients && !hasComponents}>
@@ -151,7 +159,7 @@ export function SummaryPrintView({
             {/* Print header */}
             <div className="hidden print:block text-center mb-8 border-b pb-4">
                 <h1 className="text-2xl font-bold">{t('printHeader')}</h1>
-                <p className="text-lg text-muted-foreground">{format(parseISO(dateStr), longDateFormat, { locale: dateLocale })}</p>
+                <p className="text-lg text-muted-foreground">{formattedRange}</p>
                 <p className="text-sm text-muted-foreground mt-1">{t('generatedAt')}: {format(new Date(), generatedFormat, { locale: dateLocale })}</p>
             </div>
 

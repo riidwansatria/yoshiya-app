@@ -11,15 +11,20 @@ export interface AggregatedIngredient {
     packages_needed: number | null;
 }
 
-export async function getIngredientsSummary(restaurantId: string, targetDate: string): Promise<Record<string, AggregatedIngredient[]>> {
+export async function getIngredientsSummary(
+    restaurantId: string,
+    startDate: string,
+    endDate: string = startDate
+): Promise<Record<string, AggregatedIngredient[]>> {
     const supabase = await createClient();
 
-    // 1. Get daily orders for the date
+    // 1. Get daily orders across the date range (inclusive)
     const { data: orders, error: ordersError } = await supabase
         .from('daily_orders')
         .select('menu_id, quantity')
         .eq('restaurant_id', restaurantId)
-        .eq('target_date', targetDate);
+        .gte('target_date', startDate)
+        .lte('target_date', endDate);
 
     if (ordersError || !orders || orders.length === 0) {
         return {};

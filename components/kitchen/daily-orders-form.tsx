@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Trash, Plus, CopyPlus, Save } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Trash, Plus, CopyPlus, Save, AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { Menu } from '@/lib/queries/menus';
 import { DailyOrder } from '@/lib/queries/daily-orders';
@@ -13,26 +14,45 @@ import { saveDailyOrders } from '@/lib/actions/daily-orders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
+import { MenuCombobox } from './menu-combobox';
 
-// Very basic fuzzy search for demonstration purposes: case-insensitive substring match
+interface OrderLine {
+    id: string;
+    menu_id: string;
+    quantity: number;
+    notes: string;
+}
+
+function toOrderLines(orders: DailyOrder[]): OrderLine[] {
+    return orders.map((o) => ({
+        id: crypto.randomUUID(),
+        menu_id: o.menu_id,
+        quantity: o.quantity,
+        notes: o.notes || '',
+    }));
+}
+
+/** Produces a canonical string of lines to compare dirty state (id-independent). */
+function canonicalize(lines: { menu_id: string; quantity: number; notes: string | null }[]): string {
+    return JSON.stringify(
+        lines
+            .map((l) => ({ menu_id: l.menu_id, quantity: l.quantity, notes: (l.notes || '').trim() }))
+            .sort((a, b) => {
+                if (a.menu_id !== b.menu_id) return a.menu_id.localeCompare(b.menu_id);
+                if (a.quantity !== b.quantity) return a.quantity - b.quantity;
+                return a.notes.localeCompare(b.notes);
+            })
+    );
+}
+
+// Case-insensitive substring match
 function fuzzyMatchMenu(query: string, menus: Menu[]): Menu | null {
     const normalizedQuery = query.trim().toLowerCase();
-
-    // Exact match first
-    const exact = menus.find(m => m.name.toLowerCase() === normalizedQuery);
+    const exact = menus.find((m) => m.name.toLowerCase() === normalizedQuery);
     if (exact) return exact;
-
-    // Substring match
-    const substring = menus.find(m => m.name.toLowerCase().includes(normalizedQuery));
+    const substring = menus.find((m) => m.name.toLowerCase().includes(normalizedQuery));
     if (substring) return substring;
-
     return null;
 }
 
@@ -48,51 +68,92 @@ export function DailyOrdersForm({
     initialOrders: DailyOrder[];
 }) {
     const router = useRouter();
+    const t = useTranslations('kitchen.orders');
+    const locale = useLocale();
+
     const [isSaving, setIsSaving] = useState(false);
     const [dateStr, setDateStr] = useState(targetDate);
     const [pasteData, setPasteData] = useState('');
+    const [orderLines, setOrderLines] = useState<OrderLine[]>(() => toOrderLines(initialOrders));
+    const [savedAt, setSavedAt] = useState<Date | null>(null);
 
-    // Local state for the editable lines
-    const [orderLines, setOrderLines] = useState<{ id: string; menu_id: string; quantity: number; notes: string }[]>(
-        initialOrders.map(o => ({
-            id: crypto.randomUUID(),
-            menu_id: o.menu_id,
-            quantity: o.quantity,
-            notes: o.notes || ''
-        }))
+    // Baseline snapshot for dirty comparison. Updated on load and after successful save.
+    const baselineRef = useRef<string>(canonicalize(initialOrders));
+
+    // Reset local state when navigating to a different target date.
+    useEffect(() => {
+        setDateStr(targetDate);
+        setOrderLines(toOrderLines(initialOrders));
+        baselineRef.current = canonicalize(initialOrders);
+        setSavedAt(null);
+    }, [targetDate, initialOrders]);
+
+    const currentCanonical = useMemo(() => canonicalize(orderLines), [orderLines]);
+    const isDirty = currentCanonical !== baselineRef.current;
+
+    // Warn on tab close / navigation when there are unsaved changes.
+    useEffect(() => {
+        if (!isDirty) return;
+        const handler = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [isDirty]);
+
+    // Track duplicate menu selections for inline warnings.
+    const duplicateCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        for (const line of orderLines) {
+            if (!line.menu_id) continue;
+            counts.set(line.menu_id, (counts.get(line.menu_id) ?? 0) + 1);
+        }
+        return counts;
+    }, [orderLines]);
+
+    const usedMenuIds = useMemo(
+        () => new Set(orderLines.filter((l) => l.menu_id).map((l) => l.menu_id)),
+        [orderLines]
     );
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newDate = e.target.value;
+    const summary = useMemo(() => {
+        const validLines = orderLines.filter((l) => l.menu_id && l.quantity > 0);
+        const totalOrders = validLines.reduce((sum, l) => sum + l.quantity, 0);
+        const uniqueMenus = new Set(validLines.map((l) => l.menu_id)).size;
+        return { totalOrders, uniqueMenus };
+    }, [orderLines]);
+
+    const handleDateChange = (newDate: string) => {
+        if (newDate === dateStr) return;
+        if (isDirty && !window.confirm(t('unsavedWarning'))) {
+            return;
+        }
         setDateStr(newDate);
-        // Reload page with new date in search params
         router.push(`/dashboard/${restaurantId}/kitchen/orders?date=${newDate}`);
     };
 
-    const handleLineChange = (id: string, field: 'menu_id' | 'quantity' | 'notes', value: any) => {
-        setOrderLines(prev => prev.map(line =>
-            line.id === id ? { ...line, [field]: value } : line
-        ));
+    const handleLineChange = (id: string, field: 'menu_id' | 'quantity' | 'notes', value: string | number) => {
+        setOrderLines((prev) => prev.map((line) => (line.id === id ? { ...line, [field]: value } : line)));
     };
 
     const addLine = () => {
-        setOrderLines(prev => [...prev, { id: crypto.randomUUID(), menu_id: '', quantity: 1, notes: '' }]);
+        setOrderLines((prev) => [...prev, { id: crypto.randomUUID(), menu_id: '', quantity: 1, notes: '' }]);
     };
 
     const removeLine = (id: string) => {
-        setOrderLines(prev => prev.filter(line => line.id !== id));
+        setOrderLines((prev) => prev.filter((line) => line.id !== id));
     };
 
     const handlePasteProcess = () => {
         if (!pasteData.trim()) return;
 
         const lines = pasteData.split('\n');
-        const newLines: typeof orderLines = [];
+        const newLines: OrderLine[] = [];
         let unmappedCount = 0;
 
-        lines.forEach(lineText => {
+        lines.forEach((lineText) => {
             const parts = lineText.split('\t');
-            // Assume Format: [Menu Name] [Tab] [Quantity] [Tab] [Notes - Optional]
             if (parts.length >= 2) {
                 const menuNameRaw = parts[0];
                 const qtyRaw = parseInt(parts[1], 10);
@@ -106,17 +167,15 @@ export function DailyOrdersForm({
                             id: crypto.randomUUID(),
                             menu_id: matchedMenu.id,
                             quantity: qtyRaw,
-                            notes: notesRaw.trim()
+                            notes: notesRaw.trim(),
                         });
                     } else {
-                        console.warn(`Could not map menu name from paste: "${menuNameRaw}"`);
                         unmappedCount++;
-                        // Still add line, but leave menu_id blank for manual review
                         newLines.push({
                             id: crypto.randomUUID(),
-                            menu_id: '', // Requires manual selection
+                            menu_id: '',
                             quantity: qtyRaw,
-                            notes: `Pasted as: ${menuNameRaw} - ${notesRaw}`.trim()
+                            notes: `Pasted as: ${menuNameRaw} - ${notesRaw}`.trim(),
                         });
                     }
                 }
@@ -124,133 +183,176 @@ export function DailyOrdersForm({
         });
 
         if (newLines.length > 0) {
-            setOrderLines(prev => [...prev, ...newLines]);
+            setOrderLines((prev) => [...prev, ...newLines]);
             setPasteData('');
             if (unmappedCount > 0) {
-                toast.warning(`${unmappedCount} rows couldn't be automatically mapped to menus. Please review them.`);
+                toast.warning(t('parsedWithWarnings', { count: unmappedCount }));
             } else {
-                toast.success(`Successfully parsed ${newLines.length} rows.`);
+                toast.success(t('parsedSuccess', { count: newLines.length }));
             }
         } else {
-            toast.error("Could not parse data. Ensure it is Tab-separated (e.g. copied directly from Excel/Sheets).");
+            toast.error(t('parseError'));
         }
     };
 
-    const handleSave = async () => {
-        // Validation
-        const invalidLines = orderLines.filter(line => !line.menu_id || line.quantity <= 0);
+    const handleSave = useCallback(async () => {
+        const invalidLines = orderLines.filter((line) => !line.menu_id || line.quantity <= 0);
         if (invalidLines.length > 0) {
-            toast.error("Please ensure all rows have a menu selected and quantity > 0.");
+            toast.error(t('saveValidation'));
             return;
         }
 
         setIsSaving(true);
         try {
-            const result = await saveDailyOrders(restaurantId, dateStr, orderLines.map(line => ({
+            const payload = orderLines.map((line) => ({
                 menu_id: line.menu_id,
                 quantity: line.quantity,
-                notes: line.notes
-            })));
-
+                notes: line.notes,
+            }));
+            const result = await saveDailyOrders(restaurantId, dateStr, payload);
             if (result.error) throw new Error(result.error);
 
-            toast.success("Daily orders saved successfully.");
-        } catch (err: any) {
-            toast.error(err.message);
+            baselineRef.current = canonicalize(orderLines);
+            setSavedAt(new Date());
+            toast.success(t('saveSuccess'));
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            toast.error(message);
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [orderLines, restaurantId, dateStr, t]);
+
+    // Cmd/Ctrl + S to save.
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                if (!isSaving && isDirty) {
+                    void handleSave();
+                }
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [handleSave, isDirty, isSaving]);
+
+    const formattedSavedAt = savedAt ? format(savedAt, 'HH:mm') : null;
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4 border-b pb-4">
-                <label className="font-semibold whitespace-nowrap">Target Date:</label>
-                <Input
-                    type="date"
-                    value={dateStr}
-                    onChange={handleDateChange}
-                    className="w-auto"
-                />
-                <span className="text-sm text-muted-foreground ml-auto">
-                    Currently editing orders for {format(parseISO(dateStr), 'EEEE, MMMM do, yyyy')}
-                </span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b pb-4">
+                <div className="flex items-center gap-3">
+                    <label className="font-semibold whitespace-nowrap">{t('targetDate')}:</label>
+                    <DatePicker
+                        value={dateStr}
+                        onChange={handleDateChange}
+                        locale={locale === 'ja' ? 'ja' : 'en'}
+                    />
+                </div>
+                <div className="sm:ml-auto flex items-center gap-3 text-sm">
+                    <span className="text-muted-foreground tabular-nums">
+                        {t('summaryLabel', { orders: summary.totalOrders, menus: summary.uniqueMenus })}
+                    </span>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
                 {/* Editor Area */}
                 <div className="space-y-4 border rounded-md p-4">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold">Order Lines</h3>
+                        <h3 className="font-semibold">{t('orderLinesTitle')}</h3>
                         <Button variant="outline" size="sm" onClick={addLine}>
-                            <Plus className="h-4 w-4 mr-2" /> Add Line
+                            <Plus className="h-4 w-4 mr-2" /> {t('addLine')}
                         </Button>
                     </div>
 
                     {orderLines.length === 0 ? (
                         <div className="text-center p-8 border border-dashed rounded-md bg-muted/50">
-                            <p className="text-muted-foreground text-sm">No orders recorded for this date.</p>
+                            <p className="text-muted-foreground text-sm">{t('noOrders')}</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="flex gap-4 text-sm font-medium text-muted-foreground px-1 hidden md:flex">
-                                <div className="flex-[2]">Menu Item</div>
-                                <div className="w-[100px]">Qty</div>
-                                <div className="flex-[2]">Notes</div>
+                            <div className="gap-4 text-sm font-medium text-muted-foreground px-1 hidden md:flex">
+                                <div className="w-8">#</div>
+                                <div className="flex-[2]">{t('menuColumn')}</div>
+                                <div className="w-[100px]">{t('qtyColumn')}</div>
+                                <div className="flex-[2]">{t('notesColumn')}</div>
                                 <div className="w-10"></div>
                             </div>
 
-                            {orderLines.map((line, index) => (
-                                <div key={line.id} className="flex flex-col md:flex-row gap-4 items-start bg-background p-2 md:p-1 border md:border-transparent rounded-md">
-                                    <div className="flex-[2] w-full">
-                                        <Select
-                                            value={line.menu_id}
-                                            onValueChange={(val) => handleLineChange(line.id, 'menu_id', val)}
-                                        >
-                                            <SelectTrigger className={!line.menu_id ? 'border-red-500 bg-red-50' : ''}>
-                                                <SelectValue placeholder="Select menu..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {availableMenus.map(m => (
-                                                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                            {orderLines.map((line, index) => {
+                                const dupCount = line.menu_id ? duplicateCounts.get(line.menu_id) ?? 0 : 0;
+                                const isDuplicate = dupCount > 1;
+                                return (
+                                    <div
+                                        key={line.id}
+                                        className="flex flex-col md:flex-row gap-4 items-start bg-background p-2 md:p-1 border md:border-transparent rounded-md"
+                                    >
+                                        <div className="w-full md:w-8 text-sm text-muted-foreground tabular-nums md:pt-2">
+                                            {index + 1}
+                                        </div>
+                                        <div className="flex-[2] w-full">
+                                            <MenuCombobox
+                                                value={line.menu_id}
+                                                onValueChange={(val) => handleLineChange(line.id, 'menu_id', val)}
+                                                menus={availableMenus}
+                                                usedIds={usedMenuIds}
+                                                invalid={!line.menu_id}
+                                            />
+                                            {isDuplicate && (
+                                                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600">
+                                                    <AlertTriangle className="h-3 w-3" />
+                                                    {t('duplicateWarning', { count: dupCount })}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="w-full md:w-[100px]">
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={line.quantity}
+                                                onChange={(e) =>
+                                                    handleLineChange(line.id, 'quantity', parseInt(e.target.value) || 0)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="flex-[2] w-full">
+                                            <Input
+                                                placeholder={t('notesPlaceholder')}
+                                                value={line.notes}
+                                                onChange={(e) => handleLineChange(line.id, 'notes', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="w-full md:w-auto flex justify-end">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeLine(line.id)}
+                                                className="text-muted-foreground hover:text-red-600"
+                                            >
+                                                <Trash className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className="w-full md:w-[100px]">
-                                        <Input
-                                            type="number"
-                                            min="1"
-                                            value={line.quantity}
-                                            onChange={(e) => handleLineChange(line.id, 'quantity', parseInt(e.target.value) || 0)}
-                                        />
-                                    </div>
-                                    <div className="flex-[2] w-full">
-                                        <Input
-                                            placeholder="Optional notes"
-                                            value={line.notes}
-                                            onChange={(e) => handleLineChange(line.id, 'notes', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="w-full md:w-auto flex justify-end">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeLine(line.id)}
-                                            className="text-muted-foreground hover:text-red-600"
-                                        >
-                                            <Trash className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 
-                    <div className="flex justify-end pt-4 mt-6 border-t">
-                        <Button onClick={handleSave} disabled={isSaving || orderLines.length === 0}>
+                    <div className="flex justify-end items-center gap-3 pt-4 mt-6 border-t">
+                        {isDirty ? (
+                            <span className="flex items-center gap-1 text-xs text-amber-600">
+                                <AlertTriangle className="h-3 w-3" /> {t('unsavedChanges')}
+                            </span>
+                        ) : formattedSavedAt ? (
+                            <span className="text-xs text-muted-foreground">
+                                {t('savedAt', { time: formattedSavedAt })}
+                            </span>
+                        ) : null}
+                        <Button onClick={handleSave} disabled={isSaving || !isDirty}>
                             <Save className="h-4 w-4 mr-2" />
-                            {isSaving ? 'Saving...' : 'Save Orders'}
+                            {isSaving ? t('saving') : t('saveButton')}
                         </Button>
                     </div>
                 </div>
@@ -258,20 +360,19 @@ export function DailyOrdersForm({
                 {/* Bulk Paste Area */}
                 <div className="space-y-4 border rounded-md p-4 bg-muted/20 h-fit">
                     <h3 className="font-semibold flex items-center gap-2">
-                        <CopyPlus className="h-4 w-4" /> Bulk Paste
+                        <CopyPlus className="h-4 w-4" /> {t('bulkPasteTitle')}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                        Copy columns directly from Google Sheets or Excel and paste them here. <br />
-                        Expected format: <code>[Menu Name] [Tab] [Quantity]</code>.
+                        {t('bulkPasteFormat')}
                     </p>
                     <Textarea
-                        placeholder="Paste tab-separated data here..."
+                        placeholder={t('bulkPastePlaceholder')}
                         className="font-mono text-xs min-h-[200px]"
                         value={pasteData}
                         onChange={(e) => setPasteData(e.target.value)}
                     />
                     <Button className="w-full" variant="secondary" onClick={handlePasteProcess} disabled={!pasteData.trim()}>
-                        Process Paste
+                        {t('bulkPasteButton')}
                     </Button>
                 </div>
             </div>
