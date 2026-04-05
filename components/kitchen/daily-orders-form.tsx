@@ -102,16 +102,6 @@ export function DailyOrdersForm({
         return () => window.removeEventListener('beforeunload', handler);
     }, [isDirty]);
 
-    // Track duplicate menu selections for inline warnings.
-    const duplicateCounts = useMemo(() => {
-        const counts = new Map<string, number>();
-        for (const line of orderLines) {
-            if (!line.menu_id) continue;
-            counts.set(line.menu_id, (counts.get(line.menu_id) ?? 0) + 1);
-        }
-        return counts;
-    }, [orderLines]);
-
     const usedMenuIds = useMemo(
         () => new Set(orderLines.filter((l) => l.menu_id).map((l) => l.menu_id)),
         [orderLines]
@@ -282,8 +272,6 @@ export function DailyOrdersForm({
                             </div>
 
                             {orderLines.map((line, index) => {
-                                const dupCount = line.menu_id ? duplicateCounts.get(line.menu_id) ?? 0 : 0;
-                                const isDuplicate = dupCount > 1;
                                 return (
                                     <div
                                         key={line.id}
@@ -300,12 +288,6 @@ export function DailyOrdersForm({
                                                 usedIds={usedMenuIds}
                                                 invalid={!line.menu_id}
                                             />
-                                            {isDuplicate && (
-                                                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600">
-                                                    <AlertTriangle className="h-3 w-3" />
-                                                    {t('duplicateWarning', { count: dupCount })}
-                                                </p>
-                                            )}
                                         </div>
                                         <div className="w-full md:w-[100px]">
                                             <Input
