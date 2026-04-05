@@ -8,8 +8,8 @@ import {
     CalendarCheck,
     UserCog,
     Leaf,
+    Salad,
     BookOpen,
-    CookingPot,
     ClipboardPen,
     FilePieChart
 } from "lucide-react"
@@ -135,7 +135,7 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                                     tooltip={tKitchen('pages.components')}
                                 >
                                     <Link href={`/dashboard/${restaurantId}/components`}>
-                                        <CookingPot />
+                                        <Salad />
                                         <span>{tKitchen('pages.components')}</span>
                                     </Link>
                                 </SidebarMenuButton>

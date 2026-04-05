@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, Fragment } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { Ingredient } from '@/lib/queries/ingredients';
 import { RecipeComponent } from '@/lib/queries/components';
@@ -19,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import { duplicateIngredient } from '@/lib/actions/ingredients';
 import {
     AddIngredientDialog,
-    EditIngredientDialog,
     DeleteIngredientDialog,
 } from './ingredient-dialogs';
 import {
@@ -61,9 +61,9 @@ export function IngredientsTable({
     restaurantId: string;
 }) {
     const t = useTranslations('kitchen');
+    const router = useRouter();
     const [supabase] = useState(() => createClient());
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
     const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
@@ -80,17 +80,6 @@ export function IngredientsTable({
     useEffect(() => {
         setComponentsState(components);
     }, [components]);
-
-    useEffect(() => {
-        if (!editingIngredient) {
-            return;
-        }
-
-        const nextEditingIngredient = ingredients.find((ingredient) => ingredient.id === editingIngredient.id) ?? null;
-        if (nextEditingIngredient && nextEditingIngredient !== editingIngredient) {
-            setEditingIngredient(nextEditingIngredient);
-        }
-    }, [editingIngredient, ingredients]);
 
     useEffect(() => {
         if (!deletingIngredient) {
@@ -296,16 +285,13 @@ export function IngredientsTable({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                <button
-                                                    type="button"
-                                                    className="cursor-pointer hover:underline"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setEditingIngredient(ingredient);
-                                                    }}
+                                                <Link
+                                                    href={`/dashboard/${restaurantId}/ingredients/${ingredient.id}`}
+                                                    className="hover:underline"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
                                                     {ingredient.name}
-                                                </button>
+                                                </Link>
                                             </TableCell>
                                             <TableCell>{ingredient.unit}</TableCell>
                                             <TableCell>{formatPackageDisplay(ingredient, t)}</TableCell>
@@ -319,7 +305,9 @@ export function IngredientsTable({
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => setEditingIngredient(ingredient)}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => router.push(`/dashboard/${restaurantId}/ingredients/${ingredient.id}`)}
+                                                        >
                                                             {t('common.edit')}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
@@ -386,13 +374,6 @@ export function IngredientsTable({
             </div>
 
             <AddIngredientDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
-            {editingIngredient && (
-                <EditIngredientDialog
-                    ingredient={editingIngredient}
-                    open={!!editingIngredient}
-                    onOpenChange={(open: boolean) => !open && setEditingIngredient(null)}
-                />
-            )}
             {deletingIngredient && (
                 <DeleteIngredientDialog
                     ingredient={deletingIngredient}

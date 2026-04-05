@@ -329,7 +329,7 @@ export function ComponentsList({
                                                                         </span>
                                                                         {ci.ingredients?.id ? (
                                                                             <Link
-                                                                                href={`/dashboard/${restaurantId}/ingredients`}
+                                                                                href={`/dashboard/${restaurantId}/ingredients/${ci.ingredients.id}`}
                                                                                 className="text-foreground hover:underline"
                                                                                 onClick={(e) => e.stopPropagation()}
                                                                             >
