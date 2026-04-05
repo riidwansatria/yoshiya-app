@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { MenuTag } from './menu-tags';
 import {
     fetchMenuById as fetchKitchenMenuById,
     fetchMenus as fetchKitchenMenus,
@@ -18,6 +19,7 @@ export interface Menu {
     description: string | null;
     color: string | null;
     menu_components?: MenuComponent[];
+    tags?: MenuTag[];
 }
 
 export interface MenuComponent {
@@ -27,9 +29,10 @@ export interface MenuComponent {
     components?: MenuComponentReference | null;
 }
 
-interface GetMenusOptions {
+export interface GetMenusOptions {
     includeMenuComponents?: boolean;
     includeComponentDetails?: boolean;
+    includeTags?: boolean;
 }
 
 export async function getMenus(

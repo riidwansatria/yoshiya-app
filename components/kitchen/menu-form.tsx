@@ -10,11 +10,14 @@ import { toast } from 'sonner';
 import { Trash, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 
 import { ComponentCombobox } from './component-combobox';
+import { MenuTagSelector } from './menu-tag-selector';
 
-import { Menu } from '@/lib/queries/menus';
+import type { Menu } from '@/lib/queries/menus';
 import { ComponentOption } from '@/lib/queries/components';
+import type { MenuTag } from '@/lib/queries/menu-tags';
 import { createMenu, updateMenu } from '@/lib/actions/menus';
 import { updateMenuComponents } from '@/lib/actions/menu-components';
+import { updateMenuTags } from '@/lib/actions/menu-tags';
 import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +44,7 @@ const menuSchema = z.object({
     price: z.number().nullable(),
     description: z.string().optional(),
     color: z.string().optional(),
+    tag_ids: z.array(z.string()),
     components: z.array(menuComponentSchema),
 });
 
@@ -155,19 +159,26 @@ const MenuComponentRow = memo(function MenuComponentRow({
 export function MenuForm({
     initialData,
     availableComponents,
+    availableTags,
     restaurantId,
 }: {
     initialData: Menu | null;
     availableComponents: ComponentOption[];
+    availableTags: MenuTag[];
     restaurantId: string;
 }) {
     const t = useTranslations('kitchen');
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
+    const [localTagsList, setLocalTagsList] = useState(availableTags);
     const sortedComponentOptions = useMemo(
         () => [...localComponentsList].sort((a, b) => a.name.localeCompare(b.name)),
         [localComponentsList]
+    );
+    const sortedTags = useMemo(
+        () => [...localTagsList].sort((a, b) => a.label.localeCompare(b.label)),
+        [localTagsList]
     );
 
     // Map initial components if editing
@@ -175,6 +186,7 @@ export function MenuForm({
         component_id: mc.component_id,
         qty_per_order: mc.qty_per_order.toString(),
     })) || [];
+    const initialTagIds = initialData?.tags?.map((tag) => tag.id) ?? [];
 
     const form = useForm<FormValues>({
         resolver: zodResolver(menuSchema),
@@ -183,7 +195,8 @@ export function MenuForm({
             season: initialData?.season || '',
             price: initialData?.price ?? null,
             description: initialData?.description || '',
-            color: initialData?.color || '', // optional color
+            color: initialData?.color || '',
+            tag_ids: initialTagIds,
             components: initialComponents,
         },
     });
@@ -202,6 +215,15 @@ export function MenuForm({
             }
 
             return [...prev, newComponent];
+        });
+    }, []);
+    const handleNewTag = useCallback((newTag: MenuTag) => {
+        setLocalTagsList((prev) => {
+            if (prev.some((tag) => tag.id === newTag.id)) {
+                return prev;
+            }
+
+            return [...prev, newTag];
         });
     }, []);
     const handleQuantityCommit = useCallback(
@@ -274,6 +296,9 @@ export function MenuForm({
                     parsedComponents as { component_id: string; qty_per_order: number }[]
                 );
                 if (mappingRes.error) throw new Error(mappingRes.error);
+
+                const tagRes = await updateMenuTags(menuId, data.tag_ids);
+                if (tagRes.error) throw new Error(tagRes.error);
             }
 
             toast.success(
@@ -384,13 +409,33 @@ export function MenuForm({
                             control={form.control}
                             name="description"
                             render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t('menus.form.description')}</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        placeholder={t('menus.placeholders.description')}
-                                        className="min-h-[100px]"
-                                        {...field}
+                                <FormItem>
+                                    <FormLabel>{t('menus.form.description')}</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder={t('menus.placeholders.description')}
+                                            className="min-h-[100px]"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="tag_ids"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('menus.tags.label')}</FormLabel>
+                                    <FormControl>
+                                        <MenuTagSelector
+                                            restaurantId={restaurantId}
+                                            tags={sortedTags}
+                                            selectedTagIds={field.value ?? []}
+                                            onChange={field.onChange}
+                                            onNewTag={handleNewTag}
                                         />
                                     </FormControl>
                                     <FormMessage />

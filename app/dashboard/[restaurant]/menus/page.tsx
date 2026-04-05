@@ -1,4 +1,5 @@
 import { getMenus } from '@/lib/queries/menus';
+import { getMenuTags } from '@/lib/queries/menu-tags';
 import { MenusList } from '@/components/kitchen/menus-list';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
@@ -13,10 +14,14 @@ export default async function MenusPage({
 }) {
     const { restaurant } = await params;
     const t = await getTranslations('kitchen');
-    const menus = await getMenus(restaurant, {
-        includeMenuComponents: true,
-        includeComponentDetails: true,
-    });
+    const [menus, availableTags] = await Promise.all([
+        getMenus(restaurant, {
+            includeMenuComponents: true,
+            includeComponentDetails: true,
+            includeTags: true,
+        }),
+        getMenuTags(restaurant),
+    ]);
 
     return (
         <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
@@ -38,7 +43,11 @@ export default async function MenusPage({
                 </div>
             </div>
             <div className="flex-1 min-h-0">
-                <MenusList initialData={menus} restaurantId={restaurant} />
+                <MenusList
+                    initialData={menus}
+                    availableTags={availableTags}
+                    restaurantId={restaurant}
+                />
             </div>
         </div>
     );

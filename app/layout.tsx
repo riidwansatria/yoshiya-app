@@ -4,6 +4,7 @@ import "./globals.css";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { Toaster } from "@/components/ui/sonner";
+import { AgentationOverlay } from "@/components/dev/agentation-overlay";
 import { LocaleDefault } from "@/components/locale-default";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default async function RootLayout({
           <LocaleDefault />
           {children}
           <Toaster />
+          {process.env.NODE_ENV === 'development' ? <AgentationOverlay /> : null}
         </NextIntlClientProvider>
       </body>
     </html>

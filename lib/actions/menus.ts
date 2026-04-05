@@ -141,6 +141,32 @@ export async function duplicateMenu(id: string) {
         await supabase.from('menu_components').insert(newComponents);
     }
 
+    const { data: originalTagAssignments, error: tagFetchError } = await supabase
+        .from('menu_tag_assignments')
+        .select('tag_id')
+        .eq('menu_id', id);
+
+    if (tagFetchError) {
+        console.error('Error fetching menu tags for duplication:', tagFetchError);
+        return { error: 'Failed to duplicate menu tags' };
+    }
+
+    if ((originalTagAssignments ?? []).length > 0) {
+        const { error: tagInsertError } = await supabase
+            .from('menu_tag_assignments')
+            .insert(
+                (originalTagAssignments ?? []).map((assignment) => ({
+                    menu_id: newMenu.id,
+                    tag_id: assignment.tag_id,
+                }))
+            );
+
+        if (tagInsertError) {
+            console.error('Error duplicating menu tags:', tagInsertError);
+            return { error: 'Failed to duplicate menu tags' };
+        }
+    }
+
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     return { success: true, data: newMenu };
 }

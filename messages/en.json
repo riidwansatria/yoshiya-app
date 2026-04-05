@@ -262,11 +262,41 @@
             "searchPlaceholder": "Search menus...",
             "noResults": "No menus found.",
             "noResultsMatching": "No menus matching \"{query}\".",
+            "noResultsMatchingFilters": "No menus match the current search or tag filters.",
             "priceEmpty": "Price was left blank.",
             "deleteTitle": "Delete Menu",
             "deleteDescription": "Are you sure you want to delete {name}? This will remove the mapped components from this menu, but it will not delete the components themselves. This action cannot be undone.",
             "deleted": "Menu deleted",
             "noComponentsMapped": "No components have been mapped to this menu yet.",
+            "tags": {
+                "label": "Tags",
+                "hint": "Add reusable labels like Vegan, Halal, or dish type tags.",
+                "placeholder": "Search or create tags...",
+                "empty": "No tags found.",
+                "createNew": "Create new tag",
+                "createNamed": "Create \"{name}\"",
+                "createFailed": "Failed to create tag",
+                "alreadySelected": "That tag is already selected",
+                "remove": "Remove {name}",
+                "validation": {
+                    "required": "Tag name is required",
+                    "alreadySelected": "That tag is already selected"
+                }
+            },
+            "filters": {
+                "button": "Filter",
+                "title": "Tag Filters",
+                "tagsPlaceholder": "Filter by tags...",
+                "tagsEmpty": "No more tags to add.",
+                "emptyState": "No tag filters applied.",
+                "clearAll": "Clear all",
+                "includeChip": "+ {name}",
+                "excludeChip": "NOT {name}",
+                "includeMode": "include",
+                "excludeMode": "exclude",
+                "toggleMode": "Switch {name} to {mode}",
+                "removeTag": "Remove {name}"
+            },
             "form": {
                 "details": "Menu Details",
                 "name": "Name",

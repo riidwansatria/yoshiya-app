@@ -1,5 +1,6 @@
 import { getMenuById } from '@/lib/queries/menus';
 import { getComponentOptions } from '@/lib/queries/components';
+import { getMenuTags } from '@/lib/queries/menu-tags';
 import { MenuForm } from '@/components/kitchen/menu-form';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -13,9 +14,10 @@ export default async function MenuDetailPage({
     const isNew = id === 'new';
     const t = await getTranslations('kitchen');
 
-    const [menu, components] = await Promise.all([
+    const [menu, components, availableTags] = await Promise.all([
         isNew ? null : getMenuById(id),
         getComponentOptions(restaurant),
+        getMenuTags(restaurant),
     ]);
 
     if (!isNew && !menu) {
@@ -33,6 +35,7 @@ export default async function MenuDetailPage({
                 <MenuForm
                     initialData={menu}
                     availableComponents={components}
+                    availableTags={availableTags}
                     restaurantId={restaurant}
                 />
             </div>

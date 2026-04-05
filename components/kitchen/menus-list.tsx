@@ -1,6 +1,9 @@
 'use client';
 
-import { Menu } from '@/lib/queries/menus';
+import type { Menu } from '@/lib/queries/menus';
+import type { MenuTag } from '@/lib/queries/menu-tags';
+import type { MenuTagFilterSelection } from '@/lib/utils/menu-tags';
+import { menuMatchesTagFilters } from '@/lib/utils/menu-tags';
 import { useTranslations } from 'next-intl';
 import {
     Table,
@@ -11,6 +14,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useCallback, useState, useMemo, Fragment } from 'react';
 import { ChevronDown, ChevronRight, MoreHorizontal, Search, ChevronsDown, ChevronsUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -24,13 +28,16 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteMenuDialog } from './menu-dialogs';
+import { MenuTagFilter } from './menu-tag-filter';
 import { duplicateMenu } from '@/lib/actions/menus';
 
 export function MenusList({
     initialData,
+    availableTags,
     restaurantId,
 }: {
     initialData: Menu[];
+    availableTags: MenuTag[];
     restaurantId: string;
 }) {
     const t = useTranslations('kitchen');
@@ -39,19 +46,30 @@ export function MenusList({
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [tagFilters, setTagFilters] = useState<MenuTagFilterSelection[]>([]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return initialData;
-        return initialData.filter((m) =>
-            m.name.toLowerCase().includes(q) ||
-            (m.season ?? '').toLowerCase().includes(q) ||
-            (m.description ?? '').toLowerCase().includes(q) ||
-            (m.menu_components ?? []).some((menuComponent) =>
-                (menuComponent.components?.name ?? '').toLowerCase().includes(q)
-            )
-        );
-    }, [initialData, search]);
+        return initialData.filter((menu) => {
+            const matchesSearch = !q ||
+                menu.name.toLowerCase().includes(q) ||
+                (menu.season ?? '').toLowerCase().includes(q) ||
+                (menu.description ?? '').toLowerCase().includes(q) ||
+                (menu.tags ?? []).some((tag) => tag.label.toLowerCase().includes(q)) ||
+                (menu.menu_components ?? []).some((menuComponent) =>
+                    (menuComponent.components?.name ?? '').toLowerCase().includes(q)
+                );
+
+            if (!matchesSearch) {
+                return false;
+            }
+
+            return menuMatchesTagFilters(
+                (menu.tags ?? []).map((tag) => tag.id),
+                tagFilters
+            );
+        });
+    }, [initialData, search, tagFilters]);
 
     const allFilteredExpanded = useMemo(
         () => filtered.length > 0 && filtered.every((menu) => expandedRows.has(menu.id)),
@@ -94,29 +112,32 @@ export function MenusList({
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
-            <div className="relative shrink-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder={t('menus.searchPlaceholder')}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 h-9"
-                />
+            <div className="flex items-center gap-2 shrink-0">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder={t('menus.searchPlaceholder')}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-9"
+                    />
+                </div>
+                <MenuTagFilter tags={availableTags} value={tagFilters} onChange={setTagFilters} />
             </div>
-            <div className="rounded-md border flex-1 overflow-y-auto">
+            <div className="rounded-md border flex-1 overflow-y-auto min-h-0">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[40px]">
                                 <div className="flex items-center">
                                     <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-4 w-4 cursor-pointer p-0 text-muted-foreground hover:bg-transparent"
-                                    onClick={toggleAllRows}
-                                    disabled={filtered.length === 0}
-                                    title={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4 cursor-pointer p-0 text-muted-foreground hover:bg-transparent"
+                                        onClick={toggleAllRows}
+                                        disabled={filtered.length === 0}
+                                        title={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
                                         aria-label={allFilteredExpanded ? t('common.collapseAll') : t('common.expandAll')}
                                     >
                                         {allFilteredExpanded ? (
@@ -131,7 +152,6 @@ export function MenusList({
                                 </div>
                             </TableHead>
                             <TableHead>{t('common.name')}</TableHead>
-                            <TableHead>{t('common.season')}</TableHead>
                             <TableHead>{t('common.price')}</TableHead>
                             <TableHead>{t('common.description')}</TableHead>
                             <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
@@ -141,8 +161,8 @@ export function MenusList({
                         {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-24 text-center">
-                                    {search
-                                        ? t('menus.noResultsMatching', { query: search })
+                                    {search || tagFilters.length > 0
+                                        ? t('menus.noResultsMatchingFilters')
                                         : t('menus.noResults')}
                                 </TableCell>
                             </TableRow>
@@ -183,7 +203,6 @@ export function MenusList({
                                                     </Link>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{menu.season || t('common.none')}</TableCell>
                                             <TableCell>
                                                 {menu.price !== null ? `¥${menu.price.toLocaleString()}` : t('common.none')}
                                             </TableCell>
@@ -233,9 +252,17 @@ export function MenusList({
 
                                         {isExpanded && (
                                             <TableRow className="bg-muted/30 hover:bg-muted/30">
-                                                <TableCell colSpan={6} className="p-0 border-b">
+                                                <TableCell colSpan={5} className="p-0 border-b">
                                                     <div className="p-4 pl-14">
-
+                                                        {(menu.tags ?? []).length > 0 ? (
+                                                            <div className="mb-4 flex flex-wrap gap-2">
+                                                                {(menu.tags ?? []).map((tag) => (
+                                                                    <Badge key={tag.id} variant="secondary">
+                                                                        {tag.label}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                        ) : null}
                                                         {(!menu.menu_components || menu.menu_components.length === 0) ? (
                                                             <p className="text-sm text-muted-foreground italic">{t('menus.noComponentsMapped')}</p>
                                                         ) : (

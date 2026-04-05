@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { RecipeComponent } from './components';
 import type { Ingredient } from './ingredients';
+import type { MenuTag } from './menu-tags';
 import type { Menu } from './menus';
 
 export type KitchenClient = SupabaseClient;
@@ -19,6 +20,7 @@ const COMPONENTS_SELECT = `
 interface FetchMenusOptions {
     includeMenuComponents?: boolean;
     includeComponentDetails?: boolean;
+    includeTags?: boolean;
 }
 
 export function buildMenusSelect({
@@ -134,7 +136,13 @@ export async function fetchMenus(
         return [];
     }
 
-    return ((data ?? []) as unknown) as Menu[];
+    const menus = ((data ?? []) as unknown) as Menu[];
+
+    if (!options?.includeTags) {
+        return menus;
+    }
+
+    return attachTagsToMenus(client, menus);
 }
 
 export async function fetchMenuById(
@@ -152,7 +160,76 @@ export async function fetchMenuById(
         return null;
     }
 
-    return ((data ?? null) as unknown) as Menu | null;
+    const menu = ((data ?? null) as unknown) as Menu | null;
+
+    if (!menu) {
+        return null;
+    }
+
+    const [menuWithTags] = await attachTagsToMenus(client, [menu]);
+    return menuWithTags ?? null;
+}
+
+export async function fetchMenuTags(
+    client: KitchenClient,
+    restaurantId: string
+): Promise<MenuTag[]> {
+    const { data, error } = await client
+        .from('menu_tags')
+        .select('id, restaurant_id, label, created_at, updated_at')
+        .eq('restaurant_id', restaurantId)
+        .order('label', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching menu tags:', error);
+        return [];
+    }
+
+    return (data ?? []) as MenuTag[];
+}
+
+type MenuTagAssignmentRow = {
+    menu_id: string;
+    menu_tags: MenuTag[] | MenuTag | null;
+};
+
+async function attachTagsToMenus(client: KitchenClient, menus: Menu[]) {
+    if (menus.length === 0) {
+        return menus;
+    }
+
+    const { data, error } = await client
+        .from('menu_tag_assignments')
+        .select('menu_id, tag_id, menu_tags (id, restaurant_id, label, created_at, updated_at)')
+        .in('menu_id', menus.map((menu) => menu.id));
+
+    if (error) {
+        console.error('Error fetching menu tag assignments:', error);
+        return menus.map((menu) => ({ ...menu, tags: [] }));
+    }
+
+    const tagsByMenuId = new Map<string, MenuTag[]>();
+
+    for (const assignment of ((data ?? []) as unknown as MenuTagAssignmentRow[])) {
+        const relatedTags = Array.isArray(assignment.menu_tags)
+            ? assignment.menu_tags
+            : assignment.menu_tags
+                ? [assignment.menu_tags]
+                : [];
+
+        if (relatedTags.length === 0) {
+            continue;
+        }
+
+        const tags = tagsByMenuId.get(assignment.menu_id) ?? [];
+        tags.push(...relatedTags);
+        tagsByMenuId.set(assignment.menu_id, tags);
+    }
+
+    return menus.map((menu) => ({
+        ...menu,
+        tags: [...(tagsByMenuId.get(menu.id) ?? [])].sort((a, b) => a.label.localeCompare(b.label)),
+    }));
 }
 
 export async function fetchIngredientsListData(client: KitchenClient, restaurantId: string) {

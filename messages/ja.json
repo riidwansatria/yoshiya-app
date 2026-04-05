@@ -6,7 +6,7 @@
         "customers": "顧客",
         "settings": "設定",
         "staffManagement": "スタッフ管理",
-        "kitchen": "厨房",
+        "kitchen": "調理場",
         "dailyOrders": "日次発注",
         "summary": "集計",
         "dashboard": "ダッシュボード",
@@ -22,10 +22,10 @@
     },
     "restaurantSwitcher": {
         "banquet": "宴会場",
-        "fineDining": "高級料理",
-        "local": "ご当地料理",
-        "skewers": "串焼き店",
-        "kitchen": "厨房",
+        "fineDining": "嵐野亭",
+        "local": "奥の庭",
+        "skewers": "湯葉チーズ",
+        "kitchen": "調理場",
         "subtitle": "よしや嵐山"
     },
     "booking": {
@@ -126,14 +126,14 @@
     "kitchen": {
         "pages": {
             "ingredients": "食材",
-            "components": "仕込み品",
+            "components": "品目",
             "menus": "メニュー",
-            "newComponent": "仕込み品を新規作成",
-            "editComponent": "仕込み品を編集",
+            "newComponent": "品目を新規作成",
+            "editComponent": "品目を編集",
             "newMenu": "メニューを新規作成",
             "editMenu": "メニューを編集",
             "matrixExport": "マトリクス出力",
-            "newComponentButton": "新規仕込み品",
+            "newComponentButton": "新規品目",
             "newMenuButton": "新規メニュー"
         },
         "common": {
@@ -165,8 +165,8 @@
             "addButton": "食材を追加",
             "noResults": "食材がありません。",
             "noResultsMatching": "「{query}」に一致する食材はありません。",
-            "usedInComponents": "使用中の仕込み品",
-            "notUsedInComponents": "この食材はまだどの仕込み品にも登録されていません。",
+            "usedInComponents": "使用中の品目",
+            "notUsedInComponents": "この食材はまだどの品目にも登録されていません。",
             "addTitle": "食材を追加",
             "addDescription": "食材マスタに新しい食材を追加します。",
             "editTitle": "食材を編集",
@@ -204,21 +204,21 @@
             "createNamed": "「{name}」を作成..."
         },
         "components": {
-            "searchPlaceholder": "仕込み品を検索...",
-            "noResults": "仕込み品がありません。",
-            "noResultsMatching": "「{query}」に一致する仕込み品はありません。",
+            "searchPlaceholder": "品目を検索...",
+            "noResults": "品目がありません。",
+            "noResultsMatching": "「{query}」に一致する品目はありません。",
             "yieldServings": "出来高（人分）",
             "ingredientsCount": "食材数",
-            "noIngredientsMapped": "この仕込み品にはまだ食材が登録されていません。",
+            "noIngredientsMapped": "この品目にはまだ食材が登録されていません。",
             "usedInMenus": "使用中のメニュー",
-            "notUsedInMenus": "この仕込み品はまだどのメニューにも登録されていません。",
+            "notUsedInMenus": "この品目はまだどのメニューにも登録されていません。",
             "unknownIngredient": "不明な食材",
-            "unknownComponent": "不明な仕込み品",
-            "deleteTitle": "仕込み品を削除",
+            "unknownComponent": "不明な品目",
+            "deleteTitle": "品目を削除",
             "deleteDescription": "{name} を削除してもよろしいですか？この操作は元に戻せません。",
-            "deleted": "仕込み品を削除しました",
+            "deleted": "品目を削除しました",
             "form": {
-                "details": "仕込み品情報",
+                "details": "品目情報",
                 "name": "名称",
                 "description": "説明",
                 "yield": "出来高（人分）",
@@ -229,10 +229,10 @@
                 "ingredient": "食材",
                 "qtyPerServing": "1人前あたり数量（{unit}）",
                 "qtyPerServingLabel": "1人前あたり数量",
-                "save": "仕込み品を保存",
-                "created": "仕込み品を作成しました",
-                "updated": "仕込み品を更新しました",
-                "saveFailed": "仕込み品の保存に失敗しました",
+                "save": "品目を保存",
+                "created": "品目を作成しました",
+                "updated": "品目を更新しました",
+                "saveFailed": "品目の保存に失敗しました",
                 "fixQuantityErrors": "保存前に数量エラーを修正してください。"
             },
             "placeholders": {
@@ -240,33 +240,63 @@
                 "description": "補足があれば入力..."
             },
             "quickCreate": {
-                "title": "仕込み品を簡易作成",
-                "description": "ここで新しい仕込み品を作成してメニューに割り当てられます。詳細な食材は後から仕込み品タブで追加できます。",
+                "title": "品目を簡易作成",
+                "description": "ここで新しい品目を作成してメニューに割り当てられます。詳細な食材は後から品目タブで追加できます。",
                 "yield": "出来高（人分）",
                 "yieldHint": "1バッチあたりの標準出来高です。",
-                "create": "仕込み品を作成",
+                "create": "品目を作成",
                 "creating": "作成中...",
-                "created": "仕込み品を作成しました",
-                "nameRequired": "仕込み品名は必須です",
+                "created": "品目を作成しました",
+                "nameRequired": "品目名は必須です",
                 "yieldPositive": "出来高は 1 以上で入力してください",
-                "createFailed": "仕込み品の作成に失敗しました"
+                "createFailed": "品目の作成に失敗しました"
             }
         },
         "componentCombobox": {
-            "searchPlaceholder": "仕込み品を検索...",
-            "empty": "該当する仕込み品がありません。",
-            "createNew": "新しい仕込み品を作成...",
+            "searchPlaceholder": "品目を検索...",
+            "empty": "該当する品目がありません。",
+            "createNew": "新しい品目を作成...",
             "createNamed": "「{name}」を作成..."
         },
         "menus": {
             "searchPlaceholder": "メニューを検索...",
             "noResults": "メニューがありません。",
             "noResultsMatching": "「{query}」に一致するメニューはありません。",
+            "noResultsMatchingFilters": "現在の検索条件またはタグ条件に一致するメニューがありません。",
             "priceEmpty": "価格は未入力のまま保存しました。",
             "deleteTitle": "メニューを削除",
-            "deleteDescription": "{name} を削除してもよろしいですか？このメニューに紐づく仕込み品の割り当ては解除されますが、仕込み品自体は削除されません。この操作は元に戻せません。",
+            "deleteDescription": "{name} を削除してもよろしいですか？このメニューに紐づく品目の割り当ては解除されますが、品目自体は削除されません。この操作は元に戻せません。",
             "deleted": "メニューを削除しました",
-            "noComponentsMapped": "このメニューにはまだ仕込み品が登録されていません。",
+            "noComponentsMapped": "このメニューにはまだ品目が登録されていません。",
+            "tags": {
+                "label": "タグ",
+                "hint": "Vegan、Halal、料理ジャンルなどの再利用できるラベルを追加します。",
+                "placeholder": "タグを検索または新規作成...",
+                "empty": "タグが見つかりません。",
+                "createNew": "新しいタグを作成",
+                "createNamed": "「{name}」を作成",
+                "createFailed": "タグの作成に失敗しました",
+                "alreadySelected": "そのタグはすでに選択されています",
+                "remove": "{name} を削除",
+                "validation": {
+                    "required": "タグ名を入力してください",
+                    "alreadySelected": "そのタグはすでに選択されています"
+                }
+            },
+            "filters": {
+                "button": "フィルター",
+                "title": "タグフィルター",
+                "tagsPlaceholder": "タグでフィルター...",
+                "tagsEmpty": "追加できるタグはありません。",
+                "emptyState": "タグ条件はまだありません。",
+                "clearAll": "すべてクリア",
+                "includeChip": "含む: {name}",
+                "excludeChip": "除外: {name}",
+                "includeMode": "含める",
+                "excludeMode": "除外する",
+                "toggleMode": "{name} を {mode} に切り替え",
+                "removeTag": "{name} を削除"
+            },
             "form": {
                 "details": "メニュー情報",
                 "name": "名称",
@@ -274,13 +304,13 @@
                 "priceOptional": "単価（¥）",
                 "labelColor": "ラベルカラー",
                 "description": "説明",
-                "mappedComponents": "登録済み仕込み品",
-                "mappedComponentsHint": "このメニューに使用する仕込み品を追加します。",
+                "mappedComponents": "登録済み品目",
+                "mappedComponentsHint": "このメニューに使用する品目を追加します。",
                 "quantityHint": "数量は小数（0.5）、分数（1/6）、帯分数（1 1/2）で入力できます。",
                 "addRow": "行を追加",
-                "empty": "仕込み品がまだ追加されていません。",
-                "emptyHint": "仕込み品を登録すると、このメニューで必要な食材を集計できます。",
-                "component": "仕込み品",
+                "empty": "品目がまだ追加されていません。",
+                "emptyHint": "品目を登録すると、このメニューで必要な食材を集計できます。",
+                "component": "品目",
                 "qtyPerOrder": "1注文あたり数量",
                 "save": "メニューを保存",
                 "created": "メニューを作成しました",
@@ -304,8 +334,8 @@
             "recordDeleted": "このデータは別のセッションで削除されました。",
             "ingredientConflictDescription": "入力中の内容は保持しています。保存前に最新の食材情報を確認してください。",
             "ingredientDeletedDescription": "入力中の内容は表示されたままですが、食材が削除されたため保存できません。",
-            "componentConflictDescription": "入力中の内容は保持しています。保存前に最新の仕込み品情報を確認してください。",
-            "componentDeletedDescription": "入力中の内容は表示されたままですが、仕込み品が削除されたため保存できません。"
+            "componentConflictDescription": "入力中の内容は保持しています。保存前に最新の品目情報を確認してください。",
+            "componentDeletedDescription": "入力中の内容は表示されたままですが、品目が削除されたため保存できません。"
         }
     }
 }
