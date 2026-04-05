@@ -136,6 +136,26 @@
             "newComponentButton": "新規品目",
             "newMenuButton": "新規メニュー"
         },
+        "summary": {
+            "title": "調理集計",
+            "printHeader": "日次調理集計",
+            "targetDate": "対象日",
+            "printButton": "集計を印刷",
+            "generatedAt": "作成日時",
+            "ingredientsTab": "食材",
+            "componentsTab": "品目",
+            "noIngredients": "この日付に必要な食材はありません。",
+            "noIngredientsHint": "日次注文が入力され、食材のあるメニューに紐付けられているか確認してください。",
+            "noComponents": "この日付に必要な品目はありません。",
+            "noComponentsHint": "日次注文が入力され、メニューに品目が紐付けられているか確認してください。",
+            "ingredientColumn": "食材",
+            "needColumn": "必要量",
+            "orderColumn": "発注数",
+            "packColumn": "パック",
+            "componentColumn": "品目",
+            "totalQtyColumn": "合計数量",
+            "defaultPackLabel": "パック"
+        },
         "common": {
             "actions": "操作",
             "name": "名称",

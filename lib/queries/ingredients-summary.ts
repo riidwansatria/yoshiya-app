@@ -6,6 +6,9 @@ export interface AggregatedIngredient {
     unit: string;
     category: string;
     total_quantity: number;
+    package_size: number | null;
+    package_label: string | null;
+    packages_needed: number | null;
 }
 
 export async function getIngredientsSummary(restaurantId: string, targetDate: string): Promise<Record<string, AggregatedIngredient[]>> {
@@ -40,7 +43,9 @@ export async function getIngredientsSummary(restaurantId: string, targetDate: st
               id,
               name,
               unit,
-              category
+              category,
+              package_size,
+              package_label
             )
           )
         )
@@ -58,6 +63,8 @@ export async function getIngredientsSummary(restaurantId: string, targetDate: st
         name: string;
         unit: string;
         category: string | null;
+        package_size: number | null;
+        package_label: string | null;
     }
 
     const aggregatedMap = new Map<string, AggregatedIngredient>();
@@ -98,7 +105,10 @@ export async function getIngredientsSummary(restaurantId: string, targetDate: st
                         name: ingredient.name,
                         unit: ingredient.unit,
                         category: ingredient.category || 'Uncategorized',
-                        total_quantity: ingredientAmount
+                        total_quantity: ingredientAmount,
+                        package_size: ingredient.package_size,
+                        package_label: ingredient.package_label,
+                        packages_needed: null,
                     });
                 }
             }
@@ -111,6 +121,11 @@ export async function getIngredientsSummary(restaurantId: string, targetDate: st
     for (const item of aggregatedMap.values()) {
         // Round to 2 decimal places to avoid floating point weirdness
         item.total_quantity = Math.round(item.total_quantity * 100) / 100;
+
+        // Compute packages needed (ceil) when package_size is set and > 0
+        if (item.package_size && item.package_size > 0) {
+            item.packages_needed = Math.ceil(item.total_quantity / item.package_size);
+        }
 
         if (!grouped[item.category]) {
             grouped[item.category] = [];

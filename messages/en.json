@@ -136,6 +136,26 @@
             "newComponentButton": "New Component",
             "newMenuButton": "New Menu"
         },
+        "summary": {
+            "title": "Kitchen Summary",
+            "printHeader": "Daily Kitchen Summary",
+            "targetDate": "Target Date",
+            "printButton": "Print Summary",
+            "generatedAt": "Generated",
+            "ingredientsTab": "Ingredients",
+            "componentsTab": "Components",
+            "noIngredients": "No ingredients needed for this date.",
+            "noIngredientsHint": "Ensure daily orders are entered and mapped to menus with ingredients.",
+            "noComponents": "No components needed for this date.",
+            "noComponentsHint": "Ensure daily orders are entered and menus have components mapped.",
+            "ingredientColumn": "Ingredient",
+            "needColumn": "Need",
+            "orderColumn": "Order",
+            "packColumn": "Pack",
+            "componentColumn": "Component",
+            "totalQtyColumn": "Total Qty",
+            "defaultPackLabel": "pack"
+        },
         "common": {
             "actions": "Actions",
             "name": "Name",
