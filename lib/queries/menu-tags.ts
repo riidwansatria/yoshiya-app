@@ -36,11 +36,22 @@ export async function getMenuTagsWithCount(): Promise<MenuTagWithCount[]> {
         return [];
     }
 
-    type AssignmentRow = { menu_id: string; menus: TagMenu[] };
-    return ((data ?? []) as unknown as Array<MenuTag & { menu_tag_assignments: AssignmentRow[] }>).map(
-        ({ menu_tag_assignments, ...tag }) => {
-            const menus = menu_tag_assignments.flatMap((a) => a.menus);
-            return { ...tag, menu_count: menus.length, menus };
-        }
-    );
+    type AssignmentRow = { menu_id: string; menus: TagMenu[] | TagMenu | null };
+    type MenuTagWithAssignments = MenuTag & { menu_tag_assignments: AssignmentRow[] | null };
+
+    return ((data ?? []) as unknown as MenuTagWithAssignments[]).map(({ menu_tag_assignments, ...tag }) => {
+        const assignments = Array.isArray(menu_tag_assignments) ? menu_tag_assignments : [];
+
+        const menus = assignments.flatMap((assignment) => {
+            const relatedMenus = Array.isArray(assignment.menus)
+                ? assignment.menus
+                : assignment.menus
+                    ? [assignment.menus]
+                    : [];
+
+            return relatedMenus.filter((menu): menu is TagMenu => Boolean(menu));
+        });
+
+        return { ...tag, menu_count: menus.length, menus };
+    });
 }
