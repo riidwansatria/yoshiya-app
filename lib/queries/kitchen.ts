@@ -196,7 +196,7 @@ async function attachTagsToMenus(client: KitchenClient, menus: Menu[]) {
 
     const { data, error } = await client
         .from('menu_tag_assignments')
-        .select('menu_id, tag_id, menu_tags (id, restaurant_id, label, created_at, updated_at)')
+        .select('menu_id, tag_id, menu_tags (id, label, created_at, updated_at)')
         .in('menu_id', menus.map((menu) => menu.id));
 
     if (error) {
