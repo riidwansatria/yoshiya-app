@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/combobox';
 
 interface MenuTagSelectorProps {
-    restaurantId: string;
     tags: MenuTag[];
     selectedTagIds: string[];
     onChange: (nextTagIds: string[]) => void;
@@ -29,7 +28,6 @@ interface MenuTagSelectorProps {
 }
 
 export function MenuTagSelector({
-    restaurantId,
     tags,
     selectedTagIds,
     onChange,
@@ -88,10 +86,7 @@ export function MenuTagSelector({
         setIsCreating(true);
 
         try {
-            const result = await createMenuTag({
-                restaurant_id: restaurantId,
-                label: trimmedInput,
-            });
+            const result = await createMenuTag(trimmedInput);
 
             if (result.error || !result.data) {
                 throw new Error(result.error || t('menus.tags.createFailed'));
@@ -104,7 +99,7 @@ export function MenuTagSelector({
         } finally {
             setIsCreating(false);
         }
-    }, [addTag, matchingSelectedTag, onNewTag, restaurantId, t, trimmedInput]);
+    }, [addTag, matchingSelectedTag, onNewTag, t, trimmedInput]);
 
     const handleKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter' && canCreate) {

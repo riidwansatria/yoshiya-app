@@ -1,10 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Globe, UserCog, X } from "lucide-react"
+import { Globe, Tag, UserCog, X } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 
+import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
+import { MenuTagsTable } from "@/components/settings/menu-tags-table"
 import { StaffTable } from "@/components/settings/staff-table"
 import {
     Breadcrumb,
@@ -38,6 +40,7 @@ import type { SettingsSection, StaffRecord } from "./types"
 
 type SettingsShellProps = {
     initialSection: SettingsSection
+    menuTags: MenuTagWithCount[]
     staff: StaffRecord[]
     userRole?: string | null
 }
@@ -51,6 +54,7 @@ type SettingsNavItem = {
 
 export function SettingsShell({
     initialSection,
+    menuTags,
     staff,
     userRole,
 }: SettingsShellProps) {
@@ -71,6 +75,12 @@ export function SettingsShell({
             id: "language",
             label: t("sections.language"),
         },
+        {
+            description: t("menuTags.description"),
+            icon: Tag,
+            id: "menu-tags",
+            label: t("sections.menuTags"),
+        },
     ]
 
     if (userRole === "manager") {
@@ -86,23 +96,14 @@ export function SettingsShell({
         navigationItems.find((item) => item.id === activeSection) ?? navigationItems[0]
 
     const handleSectionChange = (nextSection: SettingsSection) => {
-        if (nextSection === activeSection) {
-            return
-        }
-
+        if (nextSection === activeSection) return
         setActiveSection(nextSection)
     }
 
     const handleLanguageChange = (nextLocale: "en" | "ja") => {
-        if (nextLocale === locale) {
-            return
-        }
-
+        if (nextLocale === locale) return
         document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`
-
-        startTransition(() => {
-            router.refresh()
-        })
+        startTransition(() => { router.refresh() })
     }
 
     return (
@@ -214,6 +215,10 @@ export function SettingsShell({
                                     </p>
                                 </CardContent>
                             </Card>
+                        ) : null}
+
+                        {activeSection === "menu-tags" ? (
+                            <MenuTagsTable data={menuTags} />
                         ) : null}
 
                         {activeSection === "staff" && userRole === "manager" ? (

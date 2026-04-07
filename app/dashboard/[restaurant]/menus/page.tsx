@@ -20,7 +20,7 @@ export default async function MenusPage({
             includeComponentDetails: true,
             includeTags: true,
         }),
-        getMenuTags(restaurant),
+        getMenuTags(),
     ]);
 
     return (

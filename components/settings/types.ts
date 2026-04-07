@@ -1,4 +1,4 @@
-export type SettingsSection = "language" | "staff"
+export type SettingsSection = "language" | "staff" | "menu-tags"
 
 export interface StaffRecord {
     id: string

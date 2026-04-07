@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SettingsProvider } from "@/components/settings/settings-context"
+import { getMenuTagsWithCount } from "@/lib/queries/menu-tags"
 import { getAllStaff, getUserRole } from "@/lib/queries/users"
 
 export default async function DashboardLayout({
@@ -11,10 +12,13 @@ export default async function DashboardLayout({
     modal: React.ReactNode
 }) {
     const role = await getUserRole()
-    const staff = role === "manager" ? await getAllStaff() : []
+    const [staff, menuTags] = await Promise.all([
+        role === "manager" ? getAllStaff() : Promise.resolve([]),
+        getMenuTagsWithCount(),
+    ])
 
     return (
-        <SettingsProvider staff={staff} userRole={role}>
+        <SettingsProvider menuTags={menuTags} staff={staff} userRole={role}>
             <SidebarProvider>
                 <AppSidebar userRole={role} className="print:hidden" />
                 <SidebarInset className="h-[calc(100svh-1rem)] overflow-hidden flex flex-col print:h-auto print:overflow-visible print:block">

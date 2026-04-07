@@ -26,6 +26,7 @@
         "mobileNavPlaceholder": "項目を選択",
         "sections": {
             "language": "言語",
+            "menuTags": "メニュータグ",
             "staff": "スタッフ管理"
         },
         "language": {
@@ -39,6 +40,27 @@
             "current": "現在",
             "hint": "言語を変更するとダッシュボードはすぐに再読み込みされます。",
             "updating": "言語を更新しています..."
+        },
+        "menuTags": {
+            "title": "メニュータグ",
+            "description": "メニューの分類に使うタグを管理します。",
+            "addPlaceholder": "新しいタグ名...",
+            "addButton": "追加",
+            "addSuccess": "タグを追加しました",
+            "addFailed": "タグの追加に失敗しました",
+            "renameAction": "名前を変更",
+            "renameSuccess": "タグ名を変更しました",
+            "renameFailed": "タグ名の変更に失敗しました",
+            "deleteAction": "削除",
+            "deleteSuccess": "タグを削除しました",
+            "deleteFailed": "タグの削除に失敗しました",
+            "deleteConfirmTitle": "タグを削除",
+            "deleteConfirmBody": "「{label}」を削除しますか？{count, plural, =0 {どのメニューでも使われていません} other {#件のメニューで使われています}}。",
+            "columnLabel": "ラベル",
+            "columnMenuCount": "メニュー数",
+            "menuUsageTitle": "このタグを使用するメニュー",
+            "emptyState": "タグはまだありません。",
+            "cancel": "キャンセル"
         },
         "staff": {
             "description": "アカウント作成、スタッフ情報の編集、配役表示の切り替えを行います。"

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
 import type { SettingsSection, StaffRecord } from "./types"
 
 type SettingsContextValue = {
@@ -19,11 +20,12 @@ export function useSettings() {
 
 type SettingsProviderProps = {
     children: React.ReactNode
+    menuTags: MenuTagWithCount[]
     staff: StaffRecord[]
     userRole?: string | null
 }
 
-export function SettingsProvider({ children, staff, userRole }: SettingsProviderProps) {
+export function SettingsProvider({ children, menuTags, staff, userRole }: SettingsProviderProps) {
     const [isOpen, setIsOpen] = React.useState(false)
     const [section, setSection] = React.useState<SettingsSection>("language")
 
@@ -40,6 +42,7 @@ export function SettingsProvider({ children, staff, userRole }: SettingsProvider
             {isOpen && (
                 <SettingsDialogLazy
                     initialSection={section}
+                    menuTags={menuTags}
                     staff={staff}
                     userRole={userRole}
                     onClose={() => setIsOpen(false)}

@@ -10,24 +10,18 @@ import {
     normalizeMenuTagLookupLabel,
 } from '@/lib/utils/menu-tags';
 
-type CreateMenuTagPayload = {
-    restaurant_id: string;
-    label: string;
-};
-
-export async function createMenuTag(data: CreateMenuTagPayload) {
+export async function createMenuTag(label: string) {
     const supabase = await createClient();
-    const label = normalizeMenuTagLabel(data.label);
+    const normalized = normalizeMenuTagLabel(label);
 
-    if (!label) {
+    if (!normalized) {
         return { error: 'Tag label is required' };
     }
 
-    const normalizedLabel = normalizeMenuTagLookupLabel(label);
+    const normalizedLookup = normalizeMenuTagLookupLabel(normalized);
     const { data: existingTags, error: existingError } = await supabase
         .from('menu_tags')
         .select('*')
-        .eq('restaurant_id', data.restaurant_id)
         .order('label', { ascending: true });
 
     if (existingError) {
@@ -36,7 +30,7 @@ export async function createMenuTag(data: CreateMenuTagPayload) {
     }
 
     const existingTag = ((existingTags ?? []) as MenuTag[]).find(
-        (tag) => normalizeMenuTagLookupLabel(tag.label) === normalizedLabel
+        (tag) => normalizeMenuTagLookupLabel(tag.label) === normalizedLookup
     );
 
     if (existingTag) {
@@ -45,12 +39,7 @@ export async function createMenuTag(data: CreateMenuTagPayload) {
 
     const { data: createdTag, error } = await supabase
         .from('menu_tags')
-        .insert([
-            {
-                restaurant_id: data.restaurant_id,
-                label,
-            },
-        ])
+        .insert([{ label: normalized }])
         .select()
         .single();
 
@@ -63,6 +52,70 @@ export async function createMenuTag(data: CreateMenuTagPayload) {
     revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
 
     return { success: true, data: createdTag as MenuTag };
+}
+
+export async function renameMenuTag(tagId: string, newLabel: string) {
+    const supabase = await createClient();
+    const normalized = normalizeMenuTagLabel(newLabel);
+
+    if (!normalized) {
+        return { error: 'Tag label is required' };
+    }
+
+    const normalizedLookup = normalizeMenuTagLookupLabel(normalized);
+    const { data: existingTags, error: existingError } = await supabase
+        .from('menu_tags')
+        .select('id, label')
+        .neq('id', tagId);
+
+    if (existingError) {
+        console.error('Error checking existing menu tags:', existingError);
+        return { error: 'Failed to rename tag' };
+    }
+
+    const conflict = ((existingTags ?? []) as MenuTag[]).find(
+        (tag) => normalizeMenuTagLookupLabel(tag.label) === normalizedLookup
+    );
+
+    if (conflict) {
+        return { error: 'A tag with this name already exists' };
+    }
+
+    const { data: updatedTag, error } = await supabase
+        .from('menu_tags')
+        .update({ label: normalized })
+        .eq('id', tagId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error renaming menu tag:', error);
+        return { error: 'Failed to rename tag' };
+    }
+
+    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
+    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+
+    return { success: true, data: updatedTag as MenuTag };
+}
+
+export async function deleteMenuTag(tagId: string) {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('menu_tags')
+        .delete()
+        .eq('id', tagId);
+
+    if (error) {
+        console.error('Error deleting menu tag:', error);
+        return { error: 'Failed to delete tag' };
+    }
+
+    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
+    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+
+    return { success: true };
 }
 
 export async function updateMenuTags(menuId: string, tagIds: string[]) {

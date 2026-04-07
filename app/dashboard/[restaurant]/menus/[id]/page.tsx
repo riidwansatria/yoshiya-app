@@ -17,7 +17,7 @@ export default async function MenuDetailPage({
     const [menu, components, availableTags] = await Promise.all([
         isNew ? null : getMenuById(id),
         getComponentOptions(restaurant),
-        getMenuTags(restaurant),
+        getMenuTags(),
     ]);
 
     if (!isNew && !menu) {

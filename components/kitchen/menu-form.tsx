@@ -431,7 +431,6 @@ export function MenuForm({
                                     <FormLabel>{t('menus.tags.label')}</FormLabel>
                                     <FormControl>
                                         <MenuTagSelector
-                                            restaurantId={restaurantId}
                                             tags={sortedTags}
                                             selectedTagIds={field.value ?? []}
                                             onChange={field.onChange}

@@ -26,6 +26,7 @@
         "mobileNavPlaceholder": "Choose a section",
         "sections": {
             "language": "Language",
+            "menuTags": "Menu Tags",
             "staff": "Staff Management"
         },
         "language": {
@@ -39,6 +40,27 @@
             "current": "Current",
             "hint": "The dashboard refreshes immediately after you change the language.",
             "updating": "Updating language..."
+        },
+        "menuTags": {
+            "title": "Menu Tags",
+            "description": "Manage tags used to categorize menus.",
+            "addPlaceholder": "New tag name...",
+            "addButton": "Add",
+            "addSuccess": "Tag added",
+            "addFailed": "Failed to add tag",
+            "renameAction": "Rename",
+            "renameSuccess": "Tag renamed",
+            "renameFailed": "Failed to rename tag",
+            "deleteAction": "Delete",
+            "deleteSuccess": "Tag deleted",
+            "deleteFailed": "Failed to delete tag",
+            "deleteConfirmTitle": "Delete tag",
+            "deleteConfirmBody": "Are you sure you want to delete \"{label}\"? It is used by {count, plural, =0 {no menus} one {1 menu} other {# menus}}.",
+            "columnLabel": "Label",
+            "columnMenuCount": "Menus",
+            "menuUsageTitle": "Menus using this tag",
+            "emptyState": "No tags yet.",
+            "cancel": "Cancel"
         },
         "staff": {
             "description": "Create accounts, edit staff details, and control assignment visibility."

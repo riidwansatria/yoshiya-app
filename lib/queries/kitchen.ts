@@ -170,14 +170,10 @@ export async function fetchMenuById(
     return menuWithTags ?? null;
 }
 
-export async function fetchMenuTags(
-    client: KitchenClient,
-    restaurantId: string
-): Promise<MenuTag[]> {
+export async function fetchMenuTags(client: KitchenClient): Promise<MenuTag[]> {
     const { data, error } = await client
         .from('menu_tags')
-        .select('id, restaurant_id, label, created_at, updated_at')
-        .eq('restaurant_id', restaurantId)
+        .select('id, label, created_at, updated_at')
         .order('label', { ascending: true });
 
     if (error) {

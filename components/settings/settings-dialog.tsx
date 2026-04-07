@@ -11,9 +11,11 @@ import {
 
 import { SettingsShell } from "./settings-shell"
 import type { SettingsSection, StaffRecord } from "./types"
+import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
 
 type SettingsDialogProps = {
     initialSection: SettingsSection
+    menuTags: MenuTagWithCount[]
     onClose: () => void
     staff: StaffRecord[]
     userRole?: string | null
@@ -21,6 +23,7 @@ type SettingsDialogProps = {
 
 export function SettingsDialog({
     initialSection,
+    menuTags,
     onClose,
     staff,
     userRole,
@@ -40,6 +43,7 @@ export function SettingsDialog({
                 </DialogDescription>
                 <SettingsShell
                     initialSection={initialSection}
+                    menuTags={menuTags}
                     staff={staff}
                     userRole={userRole}
                 />
