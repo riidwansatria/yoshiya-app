@@ -6,7 +6,6 @@ import {
     Users,
     ClipboardList,
     CalendarCheck,
-    UserCog,
     Leaf,
     Salad,
     BookOpen,
@@ -33,7 +32,8 @@ import {
 import { RestaurantSwitcher } from "@/components/restaurant-switcher"
 import { NavUser } from "@/components/nav-user"
 
-export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
+export function AppSidebar({ userRole: _userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
+    void _userRole
     const tNav = useTranslations('nav')
     const tKitchen = useTranslations('kitchen')
     const params = useParams()
@@ -88,28 +88,6 @@ export function AppSidebar({ userRole, ...props }: React.ComponentProps<typeof S
                             </SidebarMenuItem>
                         ))}
                     </SidebarMenu>
-                )}
-
-                {restaurantId !== 'kitchen' && userRole === 'manager' && (
-                    <SidebarGroup>
-                        <SidebarGroupLabel>{tNav('settings')}</SidebarGroupLabel>
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={pathname.includes('/settings/staff')}
-                                        tooltip={tNav('staffManagement')}
-                                    >
-                                        <Link href="/dashboard/settings/staff">
-                                            <UserCog />
-                                            <span>{tNav('staffManagement')}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
                 )}
 
                 <SidebarGroup>

@@ -1,6 +1,5 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 import { getUserRole } from "@/lib/queries/users"
@@ -29,7 +28,7 @@ export async function toggleAssignable(userId: string, isAssignable: boolean) {
         .eq('id', userId)
 
     if (error) throw error
-    revalidatePath('/dashboard/settings/staff')
+    revalidatePath('/dashboard/settings')
 }
 
 export async function removeStaff(userId: string) {
@@ -73,7 +72,7 @@ export async function removeStaff(userId: string) {
         // Ensure to handle partial failure if needed
     }
 
-    revalidatePath('/dashboard/settings/staff')
+    revalidatePath('/dashboard/settings')
 }
 
 export async function addStaff(data: { name: string, username: string, password: string }) {
@@ -112,7 +111,8 @@ export async function addStaff(data: { name: string, username: string, password:
             is_assignable: true
         })
 
-    revalidatePath('/dashboard/settings/staff')
+    if (dbError) throw dbError
+    revalidatePath('/dashboard/settings')
 }
 
 export async function updateStaff(userId: string, data: { name: string, password?: string }) {
@@ -138,5 +138,5 @@ export async function updateStaff(userId: string, data: { name: string, password
         if (authError) throw authError
     }
 
-    revalidatePath('/dashboard/settings/staff')
+    revalidatePath('/dashboard/settings')
 }

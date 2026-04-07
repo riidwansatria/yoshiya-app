@@ -2,9 +2,8 @@
 
 import {
     ChevronsUpDown,
-    Globe,
-    Settings,
     LogOut,
+    Settings,
 } from "lucide-react"
 
 import {
@@ -19,10 +18,6 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-    DropdownMenuSubContent,
-    DropdownMenuPortal
 } from "@/components/ui/dropdown-menu"
 import {
     SidebarMenu,
@@ -33,6 +28,7 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 
+import { useSettings } from "@/components/settings/settings-context"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -41,6 +37,7 @@ export function NavUser() {
     const t = useTranslations('userMenu')
     const { isMobile } = useSidebar()
     const router = useRouter()
+    const settings = useSettings()
     const [user, setUser] = useState<SupabaseUser | null>(null)
 
     useEffect(() => {
@@ -49,11 +46,6 @@ export function NavUser() {
             setUser(user)
         })
     }, [])
-
-    const handleLanguageChange = (locale: string) => {
-        document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
-        router.refresh();
-    }
 
     const handleLogout = async () => {
         const supabase = createClient()
@@ -104,26 +96,10 @@ export function NavUser() {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => settings.open()}>
                                 <Settings className="mr-2 h-4 w-4" />
                                 {t('settings')}
                             </DropdownMenuItem>
-                            <DropdownMenuSub>
-                                <DropdownMenuSubTrigger>
-                                    <Globe className="mr-2 h-4 w-4" />
-                                    {t('language')}
-                                </DropdownMenuSubTrigger>
-                                <DropdownMenuPortal>
-                                    <DropdownMenuSubContent>
-                                        <DropdownMenuItem onClick={() => handleLanguageChange('ja')}>
-                                            {t('japanese')}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
-                                            {t('english')}
-                                        </DropdownMenuItem>
-                                    </DropdownMenuSubContent>
-                                </DropdownMenuPortal>
-                            </DropdownMenuSub>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ const addStaffSchema = z.object({
 })
 
 export function AddStaffDialog() {
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -52,6 +54,7 @@ export function AddStaffDialog() {
         setIsLoading(true)
         try {
             await addStaff(values)
+            router.refresh()
             toast.success("Staff added successfully")
             setOpen(false)
             form.reset()
@@ -142,12 +145,14 @@ interface RemoveStaffDialogProps {
 }
 
 export function RemoveStaffDialog({ open, onOpenChange, staff }: RemoveStaffDialogProps) {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
     async function handleRemove() {
         setIsLoading(true)
         try {
             await removeStaff(staff.id)
+            router.refresh()
             toast.success("Staff removed successfully")
             onOpenChange(false)
         } catch (error) {
@@ -194,6 +199,7 @@ interface EditStaffDialogProps {
 }
 
 export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogProps) {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<z.infer<typeof editStaffSchema>>({
@@ -216,6 +222,7 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
                 name: values.name,
                 password: values.password || undefined
             })
+            router.refresh()
             toast.success("Staff updated successfully")
             onOpenChange(false)
             form.reset({ name: values.name, password: "" })

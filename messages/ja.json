@@ -20,6 +20,30 @@
         "japanese": "日本語",
         "english": "英語"
     },
+    "settings": {
+        "title": "設定",
+        "dialogDescription": "ダッシュボードの設定と言語、スタッフ管理を行います。",
+        "mobileNavPlaceholder": "項目を選択",
+        "sections": {
+            "language": "言語",
+            "staff": "スタッフ管理"
+        },
+        "language": {
+            "title": "言語",
+            "description": "ダッシュボード全体で使う言語を選択します。",
+            "body": "このワークスペースの表示言語を日本語と英語で切り替えられます。",
+            "japaneseLabel": "日本語",
+            "japaneseDescription": "ナビゲーションと画面を日本語で表示します。",
+            "englishLabel": "英語",
+            "englishDescription": "ナビゲーションと画面を英語で表示します。",
+            "current": "現在",
+            "hint": "言語を変更するとダッシュボードはすぐに再読み込みされます。",
+            "updating": "言語を更新しています..."
+        },
+        "staff": {
+            "description": "アカウント作成、スタッフ情報の編集、配役表示の切り替えを行います。"
+        }
+    },
     "restaurantSwitcher": {
         "banquet": "宴会場",
         "fineDining": "嵐野亭",

@@ -20,6 +20,30 @@
         "japanese": "Japanese",
         "english": "English"
     },
+    "settings": {
+        "title": "Settings",
+        "dialogDescription": "Manage your dashboard preferences and staff tools.",
+        "mobileNavPlaceholder": "Choose a section",
+        "sections": {
+            "language": "Language",
+            "staff": "Staff Management"
+        },
+        "language": {
+            "title": "Language",
+            "description": "Choose the language used across the dashboard.",
+            "body": "Switch between Japanese and English for the current workspace.",
+            "japaneseLabel": "Japanese",
+            "japaneseDescription": "Use Japanese across navigation and screens.",
+            "englishLabel": "English",
+            "englishDescription": "Use English across navigation and screens.",
+            "current": "Current",
+            "hint": "The dashboard refreshes immediately after you change the language.",
+            "updating": "Updating language..."
+        },
+        "staff": {
+            "description": "Create accounts, edit staff details, and control assignment visibility."
+        }
+    },
     "restaurantSwitcher": {
         "banquet": "Banquet Hall",
         "fineDining": "Fine Dining",

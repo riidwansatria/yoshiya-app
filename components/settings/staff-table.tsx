@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -23,46 +24,23 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { AddStaffDialog, EditStaffDialog, RemoveStaffDialog } from "./staff-dialogs"
+import type { StaffRecord } from "./types"
 import { toggleAssignable } from "@/lib/actions/staff"
-import { Badge } from "@/components/ui/badge"
-
-interface Staff {
-    id: string
-    name: string
-    role: string
-    email: string | null
-    is_assignable: boolean
-    deleted_at: string | null // Should be filtered out but good to have type
-}
 
 interface StaffTableProps {
-    data: Staff[]
+    data: StaffRecord[]
 }
 
 export function StaffTable({ data }: StaffTableProps) {
-    const [editStaff, setEditStaff] = useState<Staff | null>(null)
-    const [removeStaff, setRemoveStaff] = useState<Staff | null>(null)
-
-    const handleToggle = async (userId: string, currentState: boolean) => {
-        // Optimistic update could be handled here or via useOptimistic hook.
-        // For simplicity, rely on server action revalidation.
-        // We could assume success and not wait, but toggle usually expects feedback.
-        // But Switch component state is controlled or uncontrolled?
-        // If controlled by `is_assignable`, it will flick back until revalidation.
-        // Shadcn Switch is controlled if `checked` prop is passed.
-        // We rely on `data` prop which comes from server component.
-        // So we need `useOptimistic` to override it instantly.
-    }
-
-    // Since `useOptimistic` is tricky with complex objects array, I'll rely on fast server action 
-    // or just local state override if needed.
-    // For now simple await. The UI might lag slightly.
+    const router = useRouter()
+    const [editStaff, setEditStaff] = useState<StaffRecord | null>(null)
+    const [removeStaff, setRemoveStaff] = useState<StaffRecord | null>(null)
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-medium">スタッフー覧</h2>
+                    <h2 className="text-lg font-medium">スタッフ一覧</h2>
                     <p className="text-sm text-muted-foreground">
                         Manage staff accounts and assignment visibility.
                     </p>
@@ -105,8 +83,9 @@ export function StaffTable({ data }: StaffTableProps) {
                                                     // Or just accept simple implementation for now.
                                                     try {
                                                         await toggleAssignable(staff.id, checked)
+                                                        router.refresh()
                                                         toast.success(checked ? "Visible in assignments" : "Hidden from assignments")
-                                                    } catch (e) {
+                                                    } catch {
                                                         toast.error("Failed to update")
                                                     }
                                                 }}
