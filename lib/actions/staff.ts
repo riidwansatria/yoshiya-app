@@ -4,19 +4,28 @@ import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 import { getUserRole } from "@/lib/queries/users"
 
-// Admin client for auth management
-const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
+function getSupabaseAdminClient() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl) {
+        throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL")
+    }
+
+    if (!serviceRoleKey) {
+        throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
+    }
+
+    return createAdminClient(supabaseUrl, serviceRoleKey, {
         auth: {
             autoRefreshToken: false,
             persistSession: false
         }
-    }
-)
+    })
+}
 
 export async function toggleAssignable(userId: string, isAssignable: boolean) {
+    const supabaseAdmin = getSupabaseAdminClient()
     const role = await getUserRole()
     if (role !== 'manager') {
         throw new Error('Unauthorized')
@@ -32,6 +41,7 @@ export async function toggleAssignable(userId: string, isAssignable: boolean) {
 }
 
 export async function removeStaff(userId: string) {
+    const supabaseAdmin = getSupabaseAdminClient()
     const role = await getUserRole()
     if (role !== 'manager') {
         throw new Error('Unauthorized')
@@ -76,6 +86,7 @@ export async function removeStaff(userId: string) {
 }
 
 export async function addStaff(data: { name: string, username: string, password: string }) {
+    const supabaseAdmin = getSupabaseAdminClient()
     const role = await getUserRole()
     if (role !== 'manager') {
         throw new Error('Unauthorized')
@@ -116,6 +127,7 @@ export async function addStaff(data: { name: string, username: string, password:
 }
 
 export async function updateStaff(userId: string, data: { name: string, password?: string }) {
+    const supabaseAdmin = getSupabaseAdminClient()
     const role = await getUserRole()
     if (role !== 'manager') {
         throw new Error('Unauthorized')
