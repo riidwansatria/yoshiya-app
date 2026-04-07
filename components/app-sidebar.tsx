@@ -28,7 +28,7 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
-} from "@/components/ui/sidebar"
+} from "@/components/sidebar"
 import { RestaurantSwitcher } from "@/components/restaurant-switcher"
 import { NavUser } from "@/components/nav-user"
 

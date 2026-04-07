@@ -1,4 +1,4 @@
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SettingsProvider } from "@/components/settings/settings-context"
 import { getMenuTagsWithCount } from "@/lib/queries/menu-tags"
@@ -21,11 +21,11 @@ export default async function DashboardLayout({
         <SettingsProvider menuTags={menuTags} staff={staff} userRole={role}>
             <SidebarProvider>
                 <AppSidebar userRole={role} className="print:hidden" />
-                <SidebarInset className="h-[calc(100svh-1rem)] overflow-hidden flex flex-col print:h-auto print:overflow-visible print:block">
-                    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 z-50 relative print:hidden">
+                <SidebarInset className="h-[calc(100svh-1rem)] overflow-hidden flex flex-col">
+                    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 z-50 relative">
                         <SidebarTrigger className="-ml-1" />
                     </header>
-                    <div className="flex-1 flex flex-col overflow-y-auto print:overflow-visible print:h-auto print:block">
+                    <div className="flex-1 flex flex-col overflow-y-auto">
                         {children}
                     </div>
                 </SidebarInset>

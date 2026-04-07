@@ -54,7 +54,10 @@ export function SummaryPrintView({
         ? format(parseISO(rangeFrom), longDateFormat, { locale: dateLocale })
         : `${format(parseISO(rangeFrom), longDateFormat, { locale: dateLocale })} — ${format(parseISO(rangeTo), longDateFormat, { locale: dateLocale })}`;
 
-    const handlePrint = () => window.print();
+    const handlePrint = () => {
+        const printUrl = `/print/${restaurantId}/kitchen/summary?from=${rangeFrom}&to=${rangeTo}&locale=${locale}`;
+        window.open(printUrl, '_blank', 'noopener,noreferrer');
+    };
 
     const categories = Object.keys(groupedIngredients).sort();
     const hasIngredients = categories.length > 0;
@@ -70,7 +73,7 @@ export function SummaryPrintView({
                             {category}
                         </h3>
                     )}
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-hidden">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -109,7 +112,7 @@ export function SummaryPrintView({
     );
 
     const componentsTable = (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-hidden">
             <Table>
                 <TableHeader>
                     <TableRow>

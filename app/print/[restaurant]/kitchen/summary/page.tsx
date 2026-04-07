@@ -1,0 +1,159 @@
+import { format, parseISO } from "date-fns"
+import { enUS, ja } from "date-fns/locale"
+import { getTranslations } from "next-intl/server"
+
+import { AutoPrint } from "@/components/print/auto-print"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { getComponentsSummary } from "@/lib/queries/components-summary"
+import { getIngredientsSummary } from "@/lib/queries/ingredients-summary"
+
+export default async function KitchenSummaryPrintPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ restaurant: string }>
+  searchParams: Promise<{ from?: string; to?: string; locale?: string }>
+}) {
+  const { restaurant } = await params
+  const resolvedSearchParams = await searchParams
+
+  const today = format(new Date(), "yyyy-MM-dd")
+  const fromDate = resolvedSearchParams.from || today
+  const toDate = resolvedSearchParams.to || fromDate
+
+  const localeCode = resolvedSearchParams.locale === "ja" ? "ja" : "en"
+  const dateLocale = localeCode === "ja" ? ja : enUS
+
+  const t = await getTranslations("kitchen.summary")
+
+  const [groupedIngredients, components] = await Promise.all([
+    getIngredientsSummary(restaurant, fromDate, toDate),
+    getComponentsSummary(restaurant, fromDate, toDate),
+  ])
+
+  const categories = Object.keys(groupedIngredients).sort()
+  const hasIngredients = categories.length > 0
+  const hasComponents = components.length > 0
+  const isUncategorized = (category: string) =>
+    category.trim().toLowerCase() === "uncategorized"
+
+  const longDateFormat =
+    localeCode === "ja" ? "yyyy年M月d日 (EEE)" : "EEEE, MMMM do, yyyy"
+  const generatedFormat = localeCode === "ja" ? "yyyy/MM/dd HH:mm" : "PPpp"
+  const isSingleDay = fromDate === toDate
+  const formattedRange = isSingleDay
+    ? format(parseISO(fromDate), longDateFormat, { locale: dateLocale })
+    : `${format(parseISO(fromDate), longDateFormat, { locale: dateLocale })} — ${format(parseISO(toDate), longDateFormat, { locale: dateLocale })}`
+
+  return (
+    <div className="mx-auto w-full max-w-5xl p-6 print:max-w-none print:p-0">
+      <AutoPrint />
+
+      <div className="mb-8 border-b pb-4 text-center">
+        <h1 className="text-3xl font-bold">{t("printHeader")}</h1>
+        <p className="text-lg text-muted-foreground">{formattedRange}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("generatedAt")}: {format(new Date(), generatedFormat, { locale: dateLocale })}
+        </p>
+      </div>
+
+      {hasIngredients && (
+        <section className="mb-10">
+          <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("ingredientsTab")}</h2>
+          <div className="space-y-8">
+            {categories.map((category) => (
+              <div key={category} className="space-y-2 break-inside-avoid">
+                {!isUncategorized(category) && (
+                  <h3 className="px-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    {category}
+                  </h3>
+                )}
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("ingredientColumn")}</TableHead>
+                        <TableHead className="w-20 text-right">{t("needColumn")}</TableHead>
+                        <TableHead className="w-14 text-right">{t("orderColumn")}</TableHead>
+                        <TableHead className="pl-2">{t("packColumn")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {groupedIngredients[category].map((item) => {
+                        const hasPack =
+                          item.packages_needed !== null && item.package_size != null
+                        return (
+                          <TableRow key={item.ingredient_id}>
+                            <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell className="text-right tabular-nums text-muted-foreground">
+                              {item.total_quantity} {item.unit}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums font-bold">
+                              {hasPack ? item.packages_needed : "—"}
+                            </TableCell>
+                            <TableCell className="pl-2 text-xs text-muted-foreground">
+                              {hasPack
+                                ? `× ${item.package_size}${item.unit} ${item.package_label?.trim() || t("defaultPackLabel")}`
+                                : null}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hasComponents && (
+        <section>
+          <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("componentsTab")}</h2>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("componentColumn")}</TableHead>
+                  <TableHead className="w-32 text-right">{t("totalQtyColumn")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {components.map((comp) => (
+                  <TableRow key={comp.component_id}>
+                    <TableCell className="font-medium">
+                      {comp.name}
+                      {comp.description && (
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          {comp.description}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">
+                      {comp.total_quantity}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      )}
+
+      {!hasIngredients && !hasComponents && (
+        <div className="rounded-md border border-dashed bg-muted/20 p-12 text-center">
+          <p className="text-lg text-muted-foreground">{t("noIngredients")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("noIngredientsHint")}</p>
+        </div>
+      )}
+    </div>
+  )
+}
