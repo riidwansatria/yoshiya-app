@@ -1,18 +1,24 @@
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
 
-export async function getVenues(restaurantId: string) {
-    const supabase = await createClient();
+import { createCacheClient } from '@/lib/supabase/cache';
 
-    const { data, error } = await supabase
-        .from('venues')
-        .select('*')
-        .eq('restaurant_id', restaurantId)
-        .order('name');
+export const getVenues = unstable_cache(
+    async (restaurantId: string) => {
+        const supabase = createCacheClient();
 
-    if (error) {
-        console.error('Error fetching venues:', error);
-        return [];
-    }
+        const { data, error } = await supabase
+            .from('venues')
+            .select('*')
+            .eq('restaurant_id', restaurantId)
+            .order('name');
 
-    return data;
-}
+        if (error) {
+            console.error('Error fetching venues:', error);
+            return [];
+        }
+
+        return data;
+    },
+    ['venues'],
+    { tags: ['venues'], revalidate: 3600 }
+);

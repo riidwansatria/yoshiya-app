@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+
+import { createCacheClient } from '@/lib/supabase/cache';
 import { Ingredient } from './ingredients';
 import {
     fetchComponentById as fetchKitchenComponentById,
@@ -28,17 +30,29 @@ export interface ComponentIngredient {
     ingredients?: Ingredient;
 }
 
-export async function getComponents(restaurantId: string): Promise<RecipeComponent[]> {
-    const supabase = await createClient();
-    return fetchKitchenComponents(supabase, restaurantId);
-}
+export const getComponents = unstable_cache(
+    async (restaurantId: string): Promise<RecipeComponent[]> => {
+        const supabase = createCacheClient();
+        return fetchKitchenComponents(supabase, restaurantId);
+    },
+    ['components'],
+    { tags: ['components'], revalidate: 3600 }
+);
 
-export async function getComponentById(id: string): Promise<RecipeComponent | null> {
-    const supabase = await createClient();
-    return fetchKitchenComponentById(supabase, id);
-}
+export const getComponentById = unstable_cache(
+    async (id: string): Promise<RecipeComponent | null> => {
+        const supabase = createCacheClient();
+        return fetchKitchenComponentById(supabase, id);
+    },
+    ['component-by-id'],
+    { tags: ['components'], revalidate: 3600 }
+);
 
-export async function getComponentOptions(restaurantId: string): Promise<ComponentOption[]> {
-    const supabase = await createClient();
-    return fetchKitchenComponentOptions(supabase, restaurantId) as Promise<ComponentOption[]>;
-}
+export const getComponentOptions = unstable_cache(
+    async (restaurantId: string): Promise<ComponentOption[]> => {
+        const supabase = createCacheClient();
+        return fetchKitchenComponentOptions(supabase, restaurantId) as Promise<ComponentOption[]>;
+    },
+    ['component-options'],
+    { tags: ['components'], revalidate: 3600 }
+);

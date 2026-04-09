@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 
 type MenuFields = {
     name: string;
@@ -50,6 +50,7 @@ export async function createMenu(data: MenuCreatePayload) {
         return { error: 'Failed to create menu' };
     }
 
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     return { success: true, data: newMenu };
 }
@@ -75,6 +76,7 @@ export async function updateMenu(
         return { error: 'Failed to update menu' };
     }
 
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
     return { success: true };
@@ -92,6 +94,7 @@ export async function deleteMenu(id: string) {
         return { error: 'Failed to delete menu' };
     }
 
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     return { success: true };
 }
@@ -167,6 +170,7 @@ export async function duplicateMenu(id: string) {
         }
     }
 
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     return { success: true, data: newMenu };
 }

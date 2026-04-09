@@ -5,6 +5,11 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig = {
   devIndicators: false,
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+    },
+  },
 } satisfies NextConfig;
 
 export default withNextIntl(nextConfig);

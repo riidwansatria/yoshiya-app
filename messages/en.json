@@ -163,9 +163,17 @@
         "noMenu": "No menu",
         "standardCourse": "Standard course menu",
         "actions": "Actions",
+        "unassignedHall": "Unassigned",
         "delete": "Delete Booking",
         "confirmDelete": "Are you sure you want to delete this booking? This action cannot be undone.",
         "errors": {
+            "invalidDate": "Date must be in YYYY-MM-DD format",
+            "invalidPartySize": "Party size must be 0 or greater",
+            "invalidStartTime": "Start time must be in HH:mm format",
+            "updateDateFailed": "Failed to update booking date",
+            "updateTimeFailed": "Failed to update booking time",
+            "updateHallFailed": "Failed to update booking hall",
+            "updateFailed": "Failed to update booking",
             "deleteFailed": "Failed to delete booking"
         }
     },

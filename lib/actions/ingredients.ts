@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 
 type IngredientPayload = {
     name: string;
@@ -58,6 +58,8 @@ export async function createIngredient(data: IngredientPayload) {
         return { error: 'Failed to create ingredient' };
     }
 
+    updateTag('ingredients');
+    updateTag('components');
     revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
@@ -87,6 +89,8 @@ export async function updateIngredient(
         return { error: 'Failed to update ingredient' };
     }
 
+    updateTag('ingredients');
+    updateTag('components');
     revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
     return { success: true };
 }
@@ -101,6 +105,8 @@ export async function deleteIngredient(id: string) {
         return { error: 'Failed to delete ingredient' };
     }
 
+    updateTag('ingredients');
+    updateTag('components');
     revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
     return { success: true };
 }
@@ -130,6 +136,8 @@ export async function duplicateIngredient(id: string) {
         return { error: 'Failed to duplicate ingredient' };
     }
 
+    updateTag('ingredients');
+    updateTag('components');
     revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
     return { success: true };
 }

@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 
 type ComponentFields = {
     name: string;
@@ -46,6 +46,8 @@ export async function createComponent(data: ComponentCreatePayload) {
         return { error: 'Failed to create component' };
     }
 
+    updateTag('components');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     return { success: true, data: newComponent };
 }
@@ -71,6 +73,8 @@ export async function updateComponent(
         return { error: 'Failed to update component' };
     }
 
+    updateTag('components');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
     return { success: true };
@@ -86,6 +90,8 @@ export async function deleteComponent(id: string) {
         return { error: 'Failed to delete component' };
     }
 
+    updateTag('components');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     return { success: true };
 }
@@ -125,6 +131,8 @@ export async function updateComponentIngredients(
         }
     }
 
+    updateTag('components');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
     return { success: true };
@@ -173,6 +181,8 @@ export async function duplicateComponent(id: string) {
         await supabase.from('component_ingredients').insert(newIngredients);
     }
 
+    updateTag('components');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
     return { success: true, data: newComp };
 }

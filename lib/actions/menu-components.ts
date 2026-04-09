@@ -1,5 +1,7 @@
 'use server';
 
+import { updateTag } from 'next/cache';
+
 import { createClient } from '@/lib/supabase/server';
 export async function updateMenuComponents(
     menuId: string,
@@ -34,5 +36,6 @@ export async function updateMenuComponents(
         }
     }
 
+    updateTag('menus');
     return { success: true };
 }

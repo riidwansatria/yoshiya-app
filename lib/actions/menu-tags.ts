@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 import type { MenuTag } from '@/lib/queries/menu-tags';
@@ -48,6 +48,8 @@ export async function createMenuTag(label: string) {
         return { error: 'Failed to create tag' };
     }
 
+    updateTag('menu-tags');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
 
@@ -93,6 +95,8 @@ export async function renameMenuTag(tagId: string, newLabel: string) {
         return { error: 'Failed to rename tag' };
     }
 
+    updateTag('menu-tags');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
 
@@ -112,6 +116,8 @@ export async function deleteMenuTag(tagId: string) {
         return { error: 'Failed to delete tag' };
     }
 
+    updateTag('menu-tags');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
 
@@ -143,6 +149,8 @@ export async function updateMenuTags(menuId: string, tagIds: string[]) {
         }
     }
 
+    updateTag('menu-tags');
+    updateTag('menus');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
     revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
 

@@ -1,5 +1,6 @@
 import { ScheduleGrid } from "@/components/schedule/schedule-grid"
 import { getReservations } from "@/lib/queries/reservations"
+import { getUsers } from "@/lib/queries/users"
 import { getVenues } from "@/lib/queries/venues"
 import { format } from "date-fns"
 
@@ -16,9 +17,10 @@ export default async function SchedulePage({
     // Default to today if no date provided
     const currentDate = date || format(new Date(), 'yyyy-MM-dd')
 
-    const [venues, reservations] = await Promise.all([
+    const [venues, reservations, staff] = await Promise.all([
         getVenues(restaurant),
         getReservations(restaurant, { date: currentDate }),
+        getUsers(),
     ])
 
     return (
@@ -27,6 +29,7 @@ export default async function SchedulePage({
             dateStr={currentDate}
             initialVenues={venues || []}
             initialReservations={reservations || []}
+            initialStaff={staff || []}
         />
     )
 }

@@ -26,15 +26,21 @@ interface FetchMenusOptions {
 export function buildMenusSelect({
     includeMenuComponents = false,
     includeComponentDetails = false,
+    includeTags = false,
 }: FetchMenusOptions = {}) {
     const baseSelect = 'id, restaurant_id, name, season, price, description, color';
+    const parts = [baseSelect];
 
-    if (!includeMenuComponents) {
-        return baseSelect;
+    if (includeMenuComponents) {
+        const componentSelect = includeComponentDetails ? ', components (id, name)' : '';
+        parts.push(`menu_components (menu_id, component_id, qty_per_order${componentSelect})`);
     }
 
-    const componentSelect = includeComponentDetails ? ', components (id, name)' : '';
-    return `${baseSelect}, menu_components (menu_id, component_id, qty_per_order${componentSelect})`;
+    if (includeTags) {
+        parts.push('menu_tag_assignments (menu_tags (id, label, created_at, updated_at))');
+    }
+
+    return parts.join(', ');
 }
 
 export async function fetchIngredients(client: KitchenClient): Promise<Ingredient[]> {
@@ -136,13 +142,13 @@ export async function fetchMenus(
         return [];
     }
 
-    const menus = ((data ?? []) as unknown) as Menu[];
+    const menus = ((data ?? []) as unknown) as MenuWithNestedTags[];
 
     if (!options?.includeTags) {
         return menus;
     }
 
-    return attachTagsToMenus(client, menus);
+    return menus.map(normalizeNestedTags);
 }
 
 export async function fetchMenuById(
@@ -151,7 +157,7 @@ export async function fetchMenuById(
 ): Promise<Menu | null> {
     const { data, error } = await client
         .from('menus')
-        .select(buildMenusSelect({ includeMenuComponents: true }))
+        .select(buildMenusSelect({ includeMenuComponents: true, includeTags: true }))
         .eq('id', id)
         .maybeSingle();
 
@@ -160,14 +166,13 @@ export async function fetchMenuById(
         return null;
     }
 
-    const menu = ((data ?? null) as unknown) as Menu | null;
+    const menu = ((data ?? null) as unknown) as MenuWithNestedTags | null;
 
     if (!menu) {
         return null;
     }
 
-    const [menuWithTags] = await attachTagsToMenus(client, [menu]);
-    return menuWithTags ?? null;
+    return normalizeNestedTags(menu);
 }
 
 export async function fetchMenuTags(client: KitchenClient): Promise<MenuTag[]> {
@@ -184,48 +189,29 @@ export async function fetchMenuTags(client: KitchenClient): Promise<MenuTag[]> {
     return (data ?? []) as MenuTag[];
 }
 
-type MenuTagAssignmentRow = {
-    menu_id: string;
+type NestedTagAssignment = {
     menu_tags: MenuTag[] | MenuTag | null;
 };
 
-async function attachTagsToMenus(client: KitchenClient, menus: Menu[]) {
-    if (menus.length === 0) {
-        return menus;
-    }
+type MenuWithNestedTags = Menu & {
+    menu_tag_assignments?: NestedTagAssignment[] | null;
+};
 
-    const { data, error } = await client
-        .from('menu_tag_assignments')
-        .select('menu_id, tag_id, menu_tags (id, label, created_at, updated_at)')
-        .in('menu_id', menus.map((menu) => menu.id));
+function normalizeNestedTags(menu: MenuWithNestedTags): Menu {
+    const assignments = Array.isArray(menu.menu_tag_assignments) ? menu.menu_tag_assignments : [];
 
-    if (error) {
-        console.error('Error fetching menu tag assignments:', error);
-        return menus.map((menu) => ({ ...menu, tags: [] }));
-    }
+    const tags = assignments.flatMap((assignment) => {
+        if (Array.isArray(assignment.menu_tags)) return assignment.menu_tags;
+        return assignment.menu_tags ? [assignment.menu_tags] : [];
+    });
 
-    const tagsByMenuId = new Map<string, MenuTag[]>();
+    const { menu_tag_assignments: _unused, ...rest } = menu;
+    void _unused;
 
-    for (const assignment of ((data ?? []) as unknown as MenuTagAssignmentRow[])) {
-        const relatedTags = Array.isArray(assignment.menu_tags)
-            ? assignment.menu_tags
-            : assignment.menu_tags
-                ? [assignment.menu_tags]
-                : [];
-
-        if (relatedTags.length === 0) {
-            continue;
-        }
-
-        const tags = tagsByMenuId.get(assignment.menu_id) ?? [];
-        tags.push(...relatedTags);
-        tagsByMenuId.set(assignment.menu_id, tags);
-    }
-
-    return menus.map((menu) => ({
-        ...menu,
-        tags: [...(tagsByMenuId.get(menu.id) ?? [])].sort((a, b) => a.label.localeCompare(b.label)),
-    }));
+    return {
+        ...rest,
+        tags: tags.sort((a, b) => a.label.localeCompare(b.label)),
+    };
 }
 
 export async function fetchIngredientsListData(client: KitchenClient, restaurantId: string) {

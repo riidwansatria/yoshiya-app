@@ -24,9 +24,16 @@ interface ScheduleGridProps {
     dateStr: string
     initialVenues: any[]
     initialReservations: any[]
+    initialStaff: { id: string; name: string; role: string }[]
 }
 
-export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialReservations }: ScheduleGridProps) {
+export function ScheduleGrid({
+    restaurantId,
+    dateStr,
+    initialVenues,
+    initialReservations,
+    initialStaff,
+}: ScheduleGridProps) {
     const router = useRouter()
     // Parse the date string passed from server
     const date = new Date(dateStr)
@@ -50,11 +57,18 @@ export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialRese
         }
     }, [])
 
+    const [reservations, setReservations] = React.useState(initialReservations)
+
     // Filter reservations for this day and restaurant
-    const dailyReservations = initialReservations
+    const dailyReservations = reservations
 
     const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null)
     const [showStaffDetails, setShowStaffDetails] = React.useState(true)
+
+    const handleBookingDeleted = React.useCallback((bookingId: string) => {
+        setReservations((prev) => prev.filter((reservation) => reservation.id !== bookingId))
+        setSelectedBookingId((prev) => (prev === bookingId ? null : prev))
+    }, [])
 
     const handleDateChange = (newDate: Date | undefined) => {
         if (!newDate) return
@@ -131,7 +145,7 @@ export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialRese
                 ref={scrollContainerRef}
                 className="overflow-auto flex-1 bg-white relative min-h-0 no-scrollbar"
             >
-                <div className="min-w-[800px] relative">
+                <div className="min-w-200 relative">
 
                     {/* LAYER 1: Background Grid (Lines & Headers) */}
                     <div className="grid" style={{
@@ -150,7 +164,7 @@ export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialRese
                         {restaurantHalls.map(hall => (
                             <div
                                 key={hall.id}
-                                className="px-2 border-b border-r font-medium text-center bg-gray-50/95 backdrop-blur sticky top-0 z-40 min-w-[150px] overflow-hidden whitespace-nowrap flex flex-col justify-center"
+                                className="px-2 border-b border-r font-medium text-center bg-gray-50/95 backdrop-blur sticky top-0 z-40 min-w-37.5 overflow-hidden whitespace-nowrap flex flex-col justify-center"
                                 style={{ height: headerHeight }}
                             >
                                 <div className="text-sm font-semibold text-gray-700 truncate" title={hall.name}>{hall.name}</div>
@@ -199,7 +213,7 @@ export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialRese
                             // We need to check if r.venue_id matches hall.id
                             const hallBookings = dailyReservations.filter(r => r.venue_id === hall.id)
                             return (
-                                <div key={`events-${hall.id}`} className="relative h-full w-full pointer-events-auto min-w-[150px]">
+                                <div key={`events-${hall.id}`} className="relative h-full w-full pointer-events-auto min-w-37.5">
                                     {hallBookings.map(r => {
                                         // Supabase time format is HH:MM:SS usually
                                         const rStart = parseInt(r.start_time.split(':')[0])
@@ -375,6 +389,9 @@ export function ScheduleGrid({ restaurantId, dateStr, initialVenues, initialRese
                 open={!!selectedBookingId}
                 onOpenChange={(open) => !open && setSelectedBookingId(null)}
                 restaurantId={restaurantId}
+                initialStaff={initialStaff}
+                initialVenues={initialVenues}
+                onDeleted={handleBookingDeleted}
             />
         </div>
     )

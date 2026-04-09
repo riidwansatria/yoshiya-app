@@ -39,15 +39,30 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getBookingDetails, updateBooking, getStaffList, getVenueList, deleteBooking } from "@/lib/actions/bookings"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
+
+type StaffOption = { id: string; name: string; role: string }
+type VenueOption = { id: string; name: string; capacity: number }
 
 interface BookingDetailModalProps {
     bookingId: string | null
     open: boolean
     onOpenChange: (open: boolean) => void
     restaurantId: string
+    initialStaff?: StaffOption[]
+    initialVenues?: VenueOption[]
+    onDeleted?: (bookingId: string) => void
 }
 
-export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId }: BookingDetailModalProps) {
+export function BookingDetailModal({
+    bookingId,
+    open,
+    onOpenChange,
+    restaurantId,
+    initialStaff = [],
+    initialVenues = [],
+    onDeleted,
+}: BookingDetailModalProps) {
     const t = useTranslations()
     const router = useRouter()
     const [booking, setBooking] = React.useState<any>(null)
@@ -93,8 +108,10 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
     const [cleaningDuration, setCleaningDuration] = React.useState(30)
 
     const [saving, setSaving] = React.useState(false)
-    const [staffList, setStaffList] = React.useState<{ id: string, name: string, role: string }[]>([])
-    const [venueList, setVenueList] = React.useState<{ id: string, name: string, capacity: number }[]>([])
+    const [staffList, setStaffList] = React.useState<StaffOption[]>(initialStaff)
+    const [venueList, setVenueList] = React.useState<VenueOption[]>(initialVenues)
+    const [staffHydrated, setStaffHydrated] = React.useState(initialStaff.length > 0)
+    const [venuesHydrated, setVenuesHydrated] = React.useState(initialVenues.length > 0)
 
     // ... (Effect hooks remain, will update loadBooking in next step) ...
 
@@ -251,16 +268,18 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
             try {
                 const [bookingResult, staffResult, venueResult] = await Promise.all([
                     getBookingDetails(bookingId),
-                    getStaffList(),
-                    getVenueList(restaurantId)
+                    staffHydrated ? Promise.resolve(null) : getStaffList(),
+                    venuesHydrated ? Promise.resolve(null) : getVenueList(restaurantId)
                 ])
 
-                if (staffResult.success && staffResult.data) {
+                if (staffResult?.success && staffResult.data) {
                     setStaffList(staffResult.data)
+                    setStaffHydrated(true)
                 }
 
-                if (venueResult.success && venueResult.data) {
+                if (venueResult?.success && venueResult.data) {
                     setVenueList(venueResult.data)
+                    setVenuesHydrated(true)
                 }
 
                 if (bookingResult.success && bookingResult.data) {
@@ -314,7 +333,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
         }
 
         loadBooking()
-    }, [bookingId, open])
+    }, [bookingId, open, restaurantId])
 
     // Reset when closed
     React.useEffect(() => {
@@ -441,7 +460,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                             </div>
 
                             {/* Bottom: Notes + History */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[200px]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-50">
                                 <div className="border rounded-lg p-3 bg-white space-y-3 shadow-sm">
                                     <Skeleton className="h-3 w-24" />
                                     <Skeleton className="h-24 w-full rounded-md" />
@@ -495,7 +514,6 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
         if (!booking) return
         setSaving(true)
         try {
-            const { updateBooking } = await import('@/lib/actions/bookings')
             const result = await updateBooking(
                 booking.id,
                 {
@@ -529,15 +547,19 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                     cleaning: { ids: cleaningStaffIds, tempNames: cleaningTempNames, duration: cleaningDuration },
                 }
             )
+
             if (!result.success) {
-                console.error('Failed to save:', result.error)
+                toast.error(result.error ?? t('bookingModal.errors.updateFailed'))
+                return
             }
-        } catch (error) {
-            console.error('Failed to save booking:', error)
-        } finally {
-            setSaving(false)
+
             onOpenChange(false)
             router.refresh()
+        } catch (error) {
+            console.error('Failed to save booking:', error)
+            toast.error(t('bookingModal.errors.updateFailed'))
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -557,15 +579,16 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
         try {
             const result = await deleteBooking(booking.id)
             if (result.success) {
+                onDeleted?.(booking.id)
                 onOpenChange(false)
                 router.refresh()
             } else {
                 console.error('Failed to delete:', result.error)
-                alert(t('bookingModal.errors.deleteFailed'))
+                toast.error(t('bookingModal.errors.deleteFailed'))
             }
         } catch (error) {
             console.error('Failed to delete booking:', error)
-            alert(t('bookingModal.errors.deleteFailed'))
+            toast.error(t('bookingModal.errors.deleteFailed'))
         } finally {
             setSaving(false)
         }
@@ -889,7 +912,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                                     <div className="font-mono text-sm text-muted-foreground">¥{unitPrice.toLocaleString()}</div>
                                                 </td>
                                                 <td className="py-4 px-4 text-center align-top">
-                                                    <div className="inline-flex items-center justify-center bg-muted/60 text-foreground text-sm font-medium px-2.5 py-0.5 rounded-md min-w-[2rem]">
+                                                    <div className="inline-flex items-center justify-center bg-muted/60 text-foreground text-sm font-medium px-2.5 py-0.5 rounded-md min-w-8">
                                                         {booking.party_size}
                                                     </div>
                                                 </td>
@@ -910,7 +933,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
 
                             {/* Bottom Section: Contact */}
                             {/* Bottom Section: Contact */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[200px]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-50">
                                 {/* Left Col: Notes */}
                                 <div className="border rounded-lg p-3 bg-white space-y-3 flex flex-col shadow-sm">
                                     <div className="flex items-center gap-2 text-muted-foreground shrink-0">
@@ -934,7 +957,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                     <div className="space-y-4 flex-1 overflow-y-auto">
                                         {/* Created At */}
                                         <div className="flex gap-3 relative pb-4">
-                                            <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
+                                            <div className="absolute left-1.25 top-2 h-full w-px bg-border/50 last:hidden"></div>
                                             <div className="h-2.5 w-2.5 rounded-full bg-blue-100 border border-blue-200 shrink-0 relative z-10 mt-0.5"></div>
                                             <div className="space-y-0.5">
                                                 <div className="text-xs font-medium">{t('bookingModal.history.created')}</div>
@@ -945,7 +968,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                         {/* Confirmed */}
                                         {booking.confirmed_at && (
                                             <div className="flex gap-3 relative pb-4">
-                                                <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
+                                                <div className="absolute left-1.25 top-2 h-full w-px bg-border/50 last:hidden"></div>
                                                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-100 border border-emerald-200 shrink-0 relative z-10 mt-0.5"></div>
                                                 <div className="space-y-0.5">
                                                     <div className="text-xs font-medium flex items-center gap-1.5">
@@ -959,7 +982,7 @@ export function BookingDetailModal({ bookingId, open, onOpenChange, restaurantId
                                         {/* Cancelled */}
                                         {(booking.status === 'cancelled' || booking.cancelled_at) && (
                                             <div className="flex gap-3 relative pb-4">
-                                                <div className="absolute left-[5px] top-2 h-full w-[1px] bg-border/50 last:hidden"></div>
+                                                <div className="absolute left-1.25 top-2 h-full w-px bg-border/50 last:hidden"></div>
                                                 <div className="h-2.5 w-2.5 rounded-full bg-red-100 border border-red-200 shrink-0 relative z-10 mt-0.5"></div>
                                                 <div className="space-y-0.5">
                                                     <div className="text-xs font-medium flex items-center gap-1.5 text-red-600">

@@ -128,7 +128,7 @@ export function MenusList({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[40px]">
+                            <TableHead className="w-10">
                                 <div className="flex items-center">
                                     <Button
                                         type="button"
@@ -154,7 +154,7 @@ export function MenusList({
                             <TableHead>{t('common.name')}</TableHead>
                             <TableHead>{t('common.price')}</TableHead>
                             <TableHead>{t('common.description')}</TableHead>
-                            <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
+                            <TableHead className="w-25">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -206,7 +206,7 @@ export function MenusList({
                                             <TableCell>
                                                 {menu.price !== null ? `¥${menu.price.toLocaleString()}` : t('common.none')}
                                             </TableCell>
-                                            <TableCell className="max-w-[300px] truncate text-muted-foreground">
+                                            <TableCell className="max-w-75 truncate text-muted-foreground">
                                                 {menu.description || t('common.none')}
                                             </TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>

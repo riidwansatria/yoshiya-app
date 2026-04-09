@@ -1,6 +1,8 @@
+import { cache } from 'react';
+
 import { createClient } from '@/lib/supabase/server';
 
-export async function getUsers() {
+export const getUsers = cache(async () => {
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -16,9 +18,9 @@ export async function getUsers() {
     }
 
     return data;
-}
+});
 
-export async function getUserRole() {
+export const getUserRole = cache(async () => {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
@@ -31,9 +33,9 @@ export async function getUserRole() {
 
     if (error) return null;
     return data.role;
-}
+});
 
-export async function getAllStaff() {
+export const getAllStaff = cache(async () => {
     const supabase = await createClient();
 
     // Fetch all users including soft-deleted ones? 
@@ -52,4 +54,4 @@ export async function getAllStaff() {
     }
 
     return data;
-}
+});

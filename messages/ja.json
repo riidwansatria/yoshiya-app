@@ -163,9 +163,17 @@
         "noMenu": "メニューなし",
         "standardCourse": "標準コースメニュー",
         "actions": "操作",
+        "unassignedHall": "未設定",
         "delete": "予約を削除",
         "confirmDelete": "この予約を削除してもよろしいですか？この操作は取り消せません。",
         "errors": {
+            "invalidDate": "日付はYYYY-MM-DD形式で入力してください",
+            "invalidPartySize": "人数は0以上で入力してください",
+            "invalidStartTime": "開始時刻はHH:mm形式で入力してください",
+            "updateDateFailed": "予約日の更新に失敗しました",
+            "updateTimeFailed": "予約時間の更新に失敗しました",
+            "updateHallFailed": "会場の更新に失敗しました",
+            "updateFailed": "予約の更新に失敗しました",
             "deleteFailed": "予約の削除に失敗しました"
         }
     },

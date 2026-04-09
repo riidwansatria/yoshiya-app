@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+
+import { createCacheClient } from '@/lib/supabase/cache';
 import { fetchIngredientById as fetchKitchenIngredientById, fetchIngredients as fetchKitchenIngredients } from './kitchen';
 
 export interface Ingredient {
@@ -11,12 +13,20 @@ export interface Ingredient {
     created_at: string;
 }
 
-export async function getIngredients(): Promise<Ingredient[]> {
-    const supabase = await createClient();
-    return fetchKitchenIngredients(supabase);
-}
+export const getIngredients = unstable_cache(
+    async (): Promise<Ingredient[]> => {
+        const supabase = createCacheClient();
+        return fetchKitchenIngredients(supabase);
+    },
+    ['ingredients'],
+    { tags: ['ingredients'], revalidate: 3600 }
+);
 
-export async function getIngredientById(id: string): Promise<Ingredient | null> {
-    const supabase = await createClient();
-    return fetchKitchenIngredientById(supabase, id);
-}
+export const getIngredientById = unstable_cache(
+    async (id: string): Promise<Ingredient | null> => {
+        const supabase = createCacheClient();
+        return fetchKitchenIngredientById(supabase, id);
+    },
+    ['ingredient-by-id'],
+    { tags: ['ingredients'], revalidate: 3600 }
+);
