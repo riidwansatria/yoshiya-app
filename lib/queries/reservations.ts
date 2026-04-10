@@ -8,7 +8,7 @@ export async function getReservations(restaurantId: string, options?: { date?: s
         .select(`
       *,
       venues ( name, capacity ),
-      reservation_menus ( id, menu_name, quantity, unit_price, notes ),
+      reservation_menus ( id, menu_name, quantity, unit_price, tax_rate, notes ),
       reservation_staff ( id, user_id, temp_name, role, duration_minutes, users ( name ) ),
       customers ( name )
     `)
@@ -42,7 +42,7 @@ export async function getReservationById(id: string) {
         .select(`
       *,
       venues ( name, capacity ),
-      reservation_menus ( id, menu_name, quantity, unit_price, notes ),
+      reservation_menus ( id, menu_name, quantity, unit_price, tax_rate, notes ),
       reservation_staff ( id, user_id, temp_name, role, duration_minutes, users ( name ) ),
       customers ( name )
     `)
