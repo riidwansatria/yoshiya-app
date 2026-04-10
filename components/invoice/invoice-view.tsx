@@ -3,37 +3,54 @@
 import * as React from "react"
 import { Printer, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { reservations, customers, menus, halls } from "@/lib/mock-data"
 import { Separator } from "@/components/ui/separator"
 import { useTranslations } from "next-intl"
 
 interface InvoiceViewProps {
     restaurantId: string
     bookingId: string
+    initialBooking?: any
 }
 
-
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
-
-// ...
-
-export function InvoiceView({ restaurantId, bookingId }: InvoiceViewProps) {
+export function InvoiceView({ restaurantId, bookingId, initialBooking }: InvoiceViewProps) {
     const t = useTranslations('invoice')
 
-    const booking = reservations.find(r => r.id === bookingId)
+    const booking = initialBooking;
     if (!booking) return <div>Booking not found</div>
 
-    const customer = customers.find(c => c.id === booking.customerId)
-    const menu = menus.find(m => m.id === booking.menuId)
+    const items: any[] = [];
+    let index = 1;
+    const menuItems = booking.reservation_menus || [];
+    
+    menuItems.forEach((menuItem: any) => {
+       items.push({
+           id: index++,
+           description: menuItem.menu_name || "Menu",
+           quantity: menuItem.quantity || booking.party_size,
+           price: menuItem.unit_price || 0,
+           amount: (menuItem.quantity || booking.party_size) * (menuItem.unit_price || 0)
+       });
+    });
 
-    const [items, setItems] = React.useState([
-        { id: 1, description: menu?.name || 'Menu', quantity: booking.partySize, price: menu?.price || 0 },
-        { id: 2, description: 'Service Charge', quantity: 1, price: 5000 },
-    ])
+    if (items.length > 0) {
+        items.push({
+          id: index++,
+          description: "Service Charge",
+          quantity: 1,
+          price: 5000,
+          amount: 5000,
+        });
+    } else {
+        items.push({
+            id: 1,
+            description: "Banquet Booking",
+            quantity: booking.party_size || 1,
+            price: 0,
+            amount: 0
+        })
+    }
 
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    const subtotal = items.reduce((sum: number, item: any) => sum + item.amount, 0)
     const tax = subtotal * 0.1
     const total = subtotal + tax
     const deposit = booking.status === 'deposit_paid' ? 10000 : 0
@@ -41,23 +58,12 @@ export function InvoiceView({ restaurantId, bookingId }: InvoiceViewProps) {
 
     const handlePrint = () => window.print()
 
-    const handleDownloadPDF = async () => {
-        const element = document.getElementById('invoice-content')
-        if (!element) return
-
-        try {
-            const canvas = await html2canvas(element, { scale: 2 })
-            const imgData = canvas.toDataURL('image/png')
-            const pdf = new jsPDF('p', 'mm', 'a4')
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-            pdf.save(`invoice-${booking.id}.pdf`)
-        } catch (error) {
-            console.error('PDF generation failed', error)
-        }
+    const handleDownloadExcel = () => {
+        // The browser will automatically download the file stream
+        window.open(`/api/invoice/generate?bookingId=${booking.id}&restaurantId=${restaurantId}`, '_blank')
     }
+
+    const billedToName = booking.customers?.name || booking.rep_name || booking.group_name || "Guest";
 
     return (
         <div className="max-w-3xl mx-auto bg-white p-8 min-h-screen">
@@ -66,8 +72,8 @@ export function InvoiceView({ restaurantId, bookingId }: InvoiceViewProps) {
                 <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" /> Print
                 </Button>
-                <Button onClick={handleDownloadPDF}>
-                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                <Button onClick={handleDownloadExcel}>
+                    <Download className="mr-2 h-4 w-4" /> Download .xlsx
                 </Button>
             </div>
 
@@ -75,26 +81,24 @@ export function InvoiceView({ restaurantId, bookingId }: InvoiceViewProps) {
             <div id="invoice-content" className="invoice-content bg-white p-8">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold tracking-widest mb-1">{t('title')}</h1>
-                    <div className="text-sm text-muted-foreground">Invoice #INV-{booking.id.padStart(6, '0')}</div>
+                    <div className="text-sm text-muted-foreground">Invoice #INV-{booking.id.substring(0, 6)}</div>
                 </div>
 
                 <div className="flex justify-between mb-8">
                     <div>
                         <div className="font-bold text-lg mb-2">Billed To:</div>
-                        <div>{customer?.name} 様</div>
-                        <div>{customer?.email}</div>
-                        <div>{customer?.phone}</div>
+                        <div>{billedToName} 様</div>
+                        {booking.customers?.email && <div>{booking.customers.email}</div>}
+                        {booking.agency_tel && <div>{booking.agency_tel}</div>}
                     </div>
                     <div className="text-right">
                         <div className="font-bold text-lg mb-2">Merchant:</div>
                         <div>Yoshiya - {restaurantId.toUpperCase()}</div>
-                        <div>123 Restaurant St.</div>
-                        <div>Tokyo, Japan</div>
                     </div>
                 </div>
 
                 <div className="mb-4 font-medium">
-                    Booking Date: {booking.date} {booking.startTime} ({booking.partySize} Pax)
+                    Booking Date: {booking.date} {booking.start_time} ({booking.party_size} Pax)
                 </div>
 
                 <table className="w-full mb-8">
@@ -112,7 +116,7 @@ export function InvoiceView({ restaurantId, bookingId }: InvoiceViewProps) {
                                 <td className="py-2">{item.description}</td>
                                 <td className="text-center py-2">{item.quantity}</td>
                                 <td className="text-right py-2">¥{item.price.toLocaleString()}</td>
-                                <td className="text-right py-2">¥{(item.quantity * item.price).toLocaleString()}</td>
+                                <td className="text-right py-2">¥{item.amount.toLocaleString()}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -163,4 +167,3 @@ export function InvoiceView({ restaurantId, bookingId }: InvoiceViewProps) {
         </div>
     )
 }
-
