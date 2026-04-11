@@ -27,11 +27,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
+import { StoreCombobox } from './store-combobox';
 
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     unit: z.string(),
     category: z.string().optional(),
+    store: z.string().optional(),
     package_size: z.string().optional().refine((value) => {
         const trimmed = (value ?? '').trim();
 
@@ -50,11 +52,13 @@ export function AddIngredientDialog({
     open,
     onOpenChange,
     initialName = '',
+    stores = [],
     onSuccess,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initialName?: string;
+    stores?: string[];
     onSuccess?: (ingredient: Ingredient) => void;
 }) {
     const t = useTranslations('kitchen');
@@ -65,6 +69,7 @@ export function AddIngredientDialog({
             name: initialName,
             unit: '',
             category: '',
+            store: '',
             package_size: '',
             package_label: '',
         },
@@ -76,6 +81,7 @@ export function AddIngredientDialog({
                 name: initialName,
                 unit: '',
                 category: '',
+                store: '',
                 package_size: '',
                 package_label: '',
             });
@@ -91,6 +97,7 @@ export function AddIngredientDialog({
                 name: data.name,
                 unit: data.unit,
                 category: data.category,
+                store: data.store,
                 package_size: trimmedPackageSize ? Number(trimmedPackageSize) : null,
                 package_label: data.package_label,
             });
@@ -159,6 +166,26 @@ export function AddIngredientDialog({
                                     <FormControl>
                                         <Input placeholder={t('ingredients.placeholders.category')} {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="store"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('ingredients.storeOptional')}</FormLabel>
+                                    <FormControl>
+                                        <StoreCombobox
+                                            value={field.value || ''}
+                                            onValueChange={(val) => field.onChange(val)}
+                                            stores={stores}
+                                        />
+                                    </FormControl>
+                                    <p className="text-xs text-muted-foreground">
+                                        {t('ingredients.storeHint')}
+                                    </p>
                                     <FormMessage />
                                 </FormItem>
                             )}

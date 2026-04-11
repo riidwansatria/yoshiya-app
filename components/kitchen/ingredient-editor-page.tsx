@@ -8,9 +8,11 @@ import { IngredientEditor } from './ingredient-editor';
 
 export function IngredientEditorPage({
     ingredient,
+    stores,
     restaurantId,
 }: {
     ingredient: Ingredient;
+    stores: string[];
     restaurantId: string;
 }) {
     const t = useTranslations('kitchen');
@@ -30,6 +32,7 @@ export function IngredientEditorPage({
                 <div className="rounded-md border p-6">
                     <IngredientEditor
                         ingredient={ingredient}
+                        stores={stores}
                         presentation="page"
                         onCancel={handleClose}
                         onSaved={handleClose}

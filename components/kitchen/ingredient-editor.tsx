@@ -15,6 +15,7 @@ import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 import { mergeUntouchedFields } from '@/lib/kitchen/realtime-merge';
 
 import { RealtimeSyncBanner } from './realtime-sync-banner';
+import { StoreCombobox } from './store-combobox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,6 +31,7 @@ const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     unit: z.string(),
     category: z.string().optional(),
+    store: z.string().optional(),
     package_size: z.string().optional().refine((value) => {
         const trimmed = (value ?? '').trim();
 
@@ -39,7 +41,7 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-const INGREDIENT_SYNC_FIELDS = ['name', 'unit', 'category', 'package_size', 'package_label'] as const;
+const INGREDIENT_SYNC_FIELDS = ['name', 'unit', 'category', 'store', 'package_size', 'package_label'] as const;
 type IngredientSyncField = (typeof INGREDIENT_SYNC_FIELDS)[number];
 
 function toIngredientFormValues(ingredient: Ingredient): FormValues {
@@ -47,6 +49,7 @@ function toIngredientFormValues(ingredient: Ingredient): FormValues {
         name: ingredient.name,
         unit: ingredient.unit,
         category: ingredient.category || '',
+        store: ingredient.store || '',
         package_size: ingredient.package_size?.toString() || '',
         package_label: ingredient.package_label || '',
     };
@@ -54,11 +57,13 @@ function toIngredientFormValues(ingredient: Ingredient): FormValues {
 
 export function IngredientEditor({
     ingredient,
+    stores,
     presentation,
     onCancel,
     onSaved,
 }: {
     ingredient: Ingredient;
+    stores: string[];
     presentation: 'page' | 'modal';
     onCancel: () => void;
     onSaved: () => void;
@@ -82,6 +87,7 @@ export function IngredientEditor({
         name: t('common.name'),
         unit: t('common.unit'),
         category: t('common.category'),
+        store: t('ingredients.storeOptional'),
         package_size: t('ingredients.packageSizeOptional'),
         package_label: t('ingredients.packageLabelOptional'),
     } satisfies Record<IngredientSyncField, string>;
@@ -113,6 +119,7 @@ export function IngredientEditor({
             name: form.getValues('name'),
             unit: form.getValues('unit'),
             category: form.getValues('category'),
+            store: form.getValues('store'),
             package_size: form.getValues('package_size'),
             package_label: form.getValues('package_label'),
         };
@@ -120,6 +127,7 @@ export function IngredientEditor({
             name: remoteFormValues.name,
             unit: remoteFormValues.unit,
             category: remoteFormValues.category,
+            store: remoteFormValues.store,
             package_size: remoteFormValues.package_size,
             package_label: remoteFormValues.package_label,
         };
@@ -131,6 +139,7 @@ export function IngredientEditor({
                 name: !!dirtyFields.name,
                 unit: !!dirtyFields.unit,
                 category: !!dirtyFields.category,
+                store: !!dirtyFields.store,
                 package_size: !!dirtyFields.package_size,
                 package_label: !!dirtyFields.package_label,
             },
@@ -155,6 +164,7 @@ export function IngredientEditor({
         dirtyFields.name,
         dirtyFields.package_label,
         dirtyFields.package_size,
+        dirtyFields.store,
         dirtyFields.unit,
         form,
         ingredient.id,
@@ -208,6 +218,7 @@ export function IngredientEditor({
                 name: data.name,
                 unit: data.unit,
                 category: data.category,
+                store: data.store,
                 package_size: trimmedPackageSize ? Number(trimmedPackageSize) : null,
                 package_label: data.package_label,
             });
@@ -267,6 +278,10 @@ export function IngredientEditor({
                                     <span>{latestRemoteIngredient.category || t('common.none')}</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
+                                    <span className="font-medium">{t('ingredients.storeOptional')}</span>
+                                    <span>{latestRemoteIngredient.store || t('common.none')}</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
                                     <span className="font-medium">{t('ingredients.packageSizeOptional')}</span>
                                     <span>{latestRemoteIngredient.package_size?.toString() || t('common.none')}</span>
                                 </div>
@@ -313,6 +328,26 @@ export function IngredientEditor({
                             <FormControl>
                                 <Input {...field} />
                             </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="store"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{t('ingredients.storeOptional')}</FormLabel>
+                            <FormControl>
+                                <StoreCombobox
+                                    value={field.value || ''}
+                                    onValueChange={(val) => field.onChange(val)}
+                                    stores={stores}
+                                />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">
+                                {t('ingredients.storeHint')}
+                            </p>
                             <FormMessage />
                         </FormItem>
                     )}

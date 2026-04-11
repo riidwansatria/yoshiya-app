@@ -1,4 +1,4 @@
-import { getIngredients } from '@/lib/queries/ingredients';
+import { getIngredients, getDistinctStores } from '@/lib/queries/ingredients';
 import { getComponents } from '@/lib/queries/components';
 import { IngredientsTable } from '@/components/kitchen/ingredients-table';
 import { getTranslations } from 'next-intl/server';
@@ -10,8 +10,9 @@ export default async function IngredientsPage({
 }) {
     const { restaurant } = await params;
     const t = await getTranslations('kitchen');
-    const [ingredients, components] = await Promise.all([
+    const [ingredients, stores, components] = await Promise.all([
         getIngredients(),
+        getDistinctStores(),
         getComponents(restaurant),
     ]);
 
@@ -23,6 +24,7 @@ export default async function IngredientsPage({
             <div className="flex-1 min-h-0">
                 <IngredientsTable
                     initialData={ingredients}
+                    initialStores={stores}
                     components={components}
                     restaurantId={restaurant}
                 />

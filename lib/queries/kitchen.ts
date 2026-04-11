@@ -57,6 +57,22 @@ export async function fetchIngredients(client: KitchenClient): Promise<Ingredien
     return (data ?? []) as Ingredient[];
 }
 
+export async function fetchDistinctStores(client: KitchenClient): Promise<string[]> {
+    const { data, error } = await client
+        .from('ingredients')
+        .select('store')
+        .not('store', 'is', null)
+        .order('store', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching distinct stores:', error);
+        return [];
+    }
+
+    const unique = [...new Set((data ?? []).map((row: { store: string }) => row.store))];
+    return unique;
+}
+
 export async function fetchIngredientById(client: KitchenClient, id: string): Promise<Ingredient | null> {
     const { data, error } = await client
         .from('ingredients')

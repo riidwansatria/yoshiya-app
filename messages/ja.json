@@ -298,7 +298,15 @@
                 "category": "例: 野菜",
                 "packageSize": "例: 10、500、1000",
                 "packageLabel": "例: パック、袋、箱"
-            }
+            },
+            "storeOptional": "購入先（任意）",
+            "storeLabel": "購入先",
+            "storeHint": "この食材の購入先です。"
+        },
+        "storeCombobox": {
+            "searchPlaceholder": "購入先を検索または追加...",
+            "empty": "該当する購入先がありません。",
+            "createNamed": "「{name}」を追加"
         },
         "ingredientCombobox": {
             "searchPlaceholder": "食材を検索...",

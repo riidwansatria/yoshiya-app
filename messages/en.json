@@ -298,7 +298,15 @@
                 "category": "e.g. Vegetables",
                 "packageSize": "e.g. 10, 500, 1000",
                 "packageLabel": "e.g. pack, bag, box"
-            }
+            },
+            "storeOptional": "Store (Optional)",
+            "storeLabel": "Store",
+            "storeHint": "Where to buy this ingredient."
+        },
+        "storeCombobox": {
+            "searchPlaceholder": "Search or add store...",
+            "empty": "No stores found.",
+            "createNamed": "Add \"{name}\""
         },
         "ingredientCombobox": {
             "searchPlaceholder": "Search ingredient...",

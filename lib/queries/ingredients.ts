@@ -1,13 +1,14 @@
 import { unstable_cache } from 'next/cache';
 
 import { createCacheClient } from '@/lib/supabase/cache';
-import { fetchIngredientById as fetchKitchenIngredientById, fetchIngredients as fetchKitchenIngredients } from './kitchen';
+import { fetchIngredientById as fetchKitchenIngredientById, fetchIngredients as fetchKitchenIngredients, fetchDistinctStores as fetchKitchenDistinctStores } from './kitchen';
 
 export interface Ingredient {
     id: string;
     name: string;
     unit: string;
     category: string | null;
+    store: string | null;
     package_size: number | null;
     package_label: string | null;
     created_at: string;
@@ -28,5 +29,14 @@ export const getIngredientById = unstable_cache(
         return fetchKitchenIngredientById(supabase, id);
     },
     ['ingredient-by-id'],
+    { tags: ['ingredients'], revalidate: 3600 }
+);
+
+export const getDistinctStores = unstable_cache(
+    async (): Promise<string[]> => {
+        const supabase = createCacheClient();
+        return fetchKitchenDistinctStores(supabase);
+    },
+    ['distinct-stores'],
     { tags: ['ingredients'], revalidate: 3600 }
 );

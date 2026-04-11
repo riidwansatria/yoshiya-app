@@ -7,6 +7,7 @@ type IngredientPayload = {
     name: string;
     unit: string;
     category?: string | null;
+    store?: string | null;
     package_size?: number | null;
     package_label?: string | null;
 };
@@ -18,6 +19,7 @@ function normalizeIngredientPayload(data: IngredientPayload) {
         name: data.name.trim(),
         unit: data.unit.trim(),
         category: data.category?.trim() ? data.category.trim() : null,
+        store: data.store?.trim() ? data.store.trim() : null,
         package_size: packageSize,
         package_label: data.package_label?.trim() ? data.package_label.trim() : null,
     };

@@ -14,8 +14,10 @@ import {
 
 export function IngredientEditorModal({
     ingredient,
+    stores,
 }: {
     ingredient: Ingredient;
+    stores: string[];
 }) {
     const t = useTranslations('kitchen');
     const router = useRouter();
@@ -32,6 +34,7 @@ export function IngredientEditorModal({
                 </DialogHeader>
                 <IngredientEditor
                     ingredient={ingredient}
+                    stores={stores}
                     presentation="modal"
                     onCancel={handleClose}
                     onSaved={handleClose}

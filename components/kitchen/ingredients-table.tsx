@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { fetchIngredientsListData } from '@/lib/queries/kitchen';
+import { fetchIngredientsListData, fetchDistinctStores } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 
@@ -53,10 +53,12 @@ function formatPackageDisplay(
 
 export function IngredientsTable({
     initialData,
+    initialStores,
     components,
     restaurantId,
 }: {
     initialData: Ingredient[];
+    initialStores: string[];
     components: RecipeComponent[];
     restaurantId: string;
 }) {
@@ -69,6 +71,7 @@ export function IngredientsTable({
     const [search, setSearch] = useState('');
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [ingredients, setIngredients] = useState(initialData);
+    const [stores, setStores] = useState(initialStores);
     const [componentsState, setComponentsState] = useState(components);
     const [, startTransition] = useTransition();
     const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,10 +96,14 @@ export function IngredientsTable({
     }, [deletingIngredient, ingredients]);
 
     const refetchListData = useCallback(async () => {
-        const nextData = await fetchIngredientsListData(supabase, restaurantId);
+        const [nextData, nextStores] = await Promise.all([
+            fetchIngredientsListData(supabase, restaurantId),
+            fetchDistinctStores(supabase),
+        ]);
         startTransition(() => {
             setIngredients(nextData.ingredients);
             setComponentsState(nextData.components);
+            setStores(nextStores);
         });
     }, [restaurantId, supabase]);
 
@@ -154,6 +161,7 @@ export function IngredientsTable({
             i.name.toLowerCase().includes(q) ||
             i.unit.toLowerCase().includes(q) ||
             (i.category ?? '').toLowerCase().includes(q) ||
+            (i.store ?? '').toLowerCase().includes(q) ||
             (i.package_label ?? '').toLowerCase().includes(q) ||
             (i.package_size?.toString() ?? '').includes(q) ||
             (componentUsageByIngredientId.get(i.id) ?? []).some((usage) =>
@@ -250,13 +258,14 @@ export function IngredientsTable({
                             <TableHead>{t('common.unit')}</TableHead>
                             <TableHead>{t('common.package')}</TableHead>
                             <TableHead>{t('common.category')}</TableHead>
+                            <TableHead>{t('ingredients.storeLabel')}</TableHead>
                             <TableHead className="w-[100px]">{t('common.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     {search
                                         ? t('ingredients.noResultsMatching', { query: search })
                                         : t('ingredients.noResults')}
@@ -296,6 +305,7 @@ export function IngredientsTable({
                                             <TableCell>{ingredient.unit}</TableCell>
                                             <TableCell>{formatPackageDisplay(ingredient, t)}</TableCell>
                                             <TableCell>{ingredient.category || t('common.none')}</TableCell>
+                                            <TableCell>{ingredient.store || t('common.none')}</TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -334,7 +344,7 @@ export function IngredientsTable({
 
                                         {isExpanded && (
                                             <TableRow className="bg-muted/30 hover:bg-muted/30">
-                                                <TableCell colSpan={6} className="border-b p-0">
+                                                <TableCell colSpan={7} className="border-b p-0">
                                                     <div className="space-y-4 p-4 pl-14">
                                                         <div>
                                                             <h4 className="text-sm font-medium">{t('ingredients.usedInComponents')}</h4>
@@ -373,7 +383,7 @@ export function IngredientsTable({
                 </Table>
             </div>
 
-            <AddIngredientDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
+            <AddIngredientDialog open={isAddOpen} onOpenChange={setIsAddOpen} stores={stores} />
             {deletingIngredient && (
                 <DeleteIngredientDialog
                     ingredient={deletingIngredient}
