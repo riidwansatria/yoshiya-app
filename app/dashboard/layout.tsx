@@ -19,7 +19,7 @@ export default async function DashboardLayout({
 
     return (
         <SettingsProvider menuTags={menuTags} staff={staff} userRole={role}>
-            <SidebarProvider>
+            <SidebarProvider style={{ "--sidebar-width": "12rem" } as React.CSSProperties}>
                 <AppSidebar userRole={role} className="print:hidden" />
                 <SidebarInset className="h-[calc(100svh-1rem)] overflow-hidden flex flex-col">
                     <div className="flex-1 flex flex-col overflow-hidden">
