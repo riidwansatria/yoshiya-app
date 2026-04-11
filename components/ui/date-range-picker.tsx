@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { ja, enUS, type Locale } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
@@ -25,6 +25,19 @@ export interface DateRangePickerProps {
 }
 
 const LOCALES: Record<'en' | 'ja', Locale> = { en: enUS, ja };
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
+function parseIsoDateOrUndefined(value: string | undefined, field: 'from' | 'to') {
+    if (!value) return undefined;
+    const parsed = parseISO(value);
+    if (!isValid(parsed)) {
+        if (IS_DEV) {
+            console.error('[DateRangePicker] Invalid ISO date received', { field, value });
+        }
+        return undefined;
+    }
+    return parsed;
+}
 
 export function DateRangePicker({
     from,
@@ -38,22 +51,26 @@ export function DateRangePicker({
     const [open, setOpen] = React.useState(false);
     const dateLocale = LOCALES[locale];
     const displayFormat = locale === 'ja' ? 'yyyy年M月d日' : 'PPP';
+    const parsedFrom = React.useMemo(() => parseIsoDateOrUndefined(from, 'from'), [from]);
+    const parsedTo = React.useMemo(() => parseIsoDateOrUndefined(to, 'to'), [to]);
 
     const selectedRange: DateRange | undefined =
-        from || to
+        parsedFrom || parsedTo
             ? {
-                  from: from ? parseISO(from) : undefined,
-                  to: to ? parseISO(to) : undefined,
+                  from: parsedFrom,
+                  to: parsedTo,
               }
             : undefined;
 
     const label = React.useMemo(() => {
         if (!from) return placeholder ?? '';
-        const fromLabel = format(parseISO(from), displayFormat, { locale: dateLocale });
+        if (!parsedFrom) return from;
+        const fromLabel = format(parsedFrom, displayFormat, { locale: dateLocale });
         if (!to || to === from) return fromLabel;
-        const toLabel = format(parseISO(to), displayFormat, { locale: dateLocale });
+        if (!parsedTo) return `${fromLabel} — ${to}`;
+        const toLabel = format(parsedTo, displayFormat, { locale: dateLocale });
         return `${fromLabel} — ${toLabel}`;
-    }, [from, to, displayFormat, dateLocale, placeholder]);
+    }, [from, to, parsedFrom, parsedTo, displayFormat, dateLocale, placeholder]);
 
     const handleSelect = (range: DateRange | undefined) => {
         if (!range?.from) return;
