@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, LayoutList } from 'lucide-react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page';
 
 export default async function ComponentsPage({
     params,
@@ -19,10 +20,12 @@ export default async function ComponentsPage({
     ]);
 
     return (
-        <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">{t('pages.components')}</h2>
-                <div className="flex items-center space-x-2">
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>{t('pages.components')}</PageTitle>
+                </PageHeaderHeading>
+                <PageActions>
                     <Button variant="outline" asChild>
                         <Link href={`/dashboard/${restaurant}/components/matrix`}>
                             <LayoutList className="mr-2 h-4 w-4" />
@@ -35,11 +38,11 @@ export default async function ComponentsPage({
                             {t('pages.newComponentButton')}
                         </Link>
                     </Button>
-                </div>
-            </div>
-            <div className="flex-1 min-h-0">
+                </PageActions>
+            </PageHeader>
+            <PageContent>
                 <ComponentsList initialData={components} menus={menus} restaurantId={restaurant} />
-            </div>
-        </div>
+            </PageContent>
+        </Page>
     );
 }

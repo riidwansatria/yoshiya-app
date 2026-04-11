@@ -34,7 +34,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
-} from "@/components/layout/sidebar"
+} from "@/components/ui/sidebar"
 
 import type { SettingsSection, StaffRecord } from "./types"
 

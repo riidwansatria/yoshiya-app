@@ -96,12 +96,12 @@ export function ScheduleGrid({
                         </Button>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" className="font-bold text-lg h-8 px-2 hover:bg-muted">
-                                    <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
-                                    <span className="text-left w-24">
+                                <Button variant="ghost" className="font-semibold text-lg tracking-tight h-8 px-2 hover:bg-muted">
+                                    <CalendarIcon className="h-5 w-5 opacity-50" />
+                                    <span className="text-left w-26 mt-0.5">
                                         {format(date, 'yyyy/MM/dd', { locale: ja })}
                                     </span>
-                                    <span className="text-right">
+                                    <span className="text-right mt-0.5">
                                         {format(date, '(E)', { locale: ja })}
                                     </span>
                                 </Button>
@@ -164,10 +164,10 @@ export function ScheduleGrid({
                         {restaurantHalls.map(hall => (
                             <div
                                 key={hall.id}
-                                className="px-2 border-b border-r font-medium text-center bg-gray-50/95 backdrop-blur sticky top-0 z-40 min-w-37.5 overflow-hidden whitespace-nowrap flex flex-col justify-center"
+                                className="px-2 border-b border-r font-medium text-center text-xs text-muted-foreground bg-gray-50/95 backdrop-blur sticky top-0 z-40 min-w-37.5 overflow-hidden whitespace-nowrap flex flex-col justify-center"
                                 style={{ height: headerHeight }}
                             >
-                                <div className="text-sm font-semibold text-gray-700 truncate" title={hall.name}>{hall.name}</div>
+                                <div className="truncate" title={hall.name}>{hall.name}</div>
                             </div>
                         ))}
 
@@ -199,7 +199,7 @@ export function ScheduleGrid({
                     <div
                         className="absolute inset-x-0 bottom-0 pointer-events-none grid"
                         style={{
-                            gridTemplateColumns: `80px repeat(${restaurantHalls.length}, 1fr)`,
+                            gridTemplateColumns: `60px repeat(${restaurantHalls.length}, 1fr)`,
                             top: `${headerHeight}px`
                         }}
                     >

@@ -24,7 +24,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from "@/components/layout/sidebar"
+} from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 

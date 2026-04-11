@@ -1,4 +1,4 @@
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/layout/sidebar"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SettingsProvider } from "@/components/settings/settings-context"
 import { getMenuTagsWithCount } from "@/lib/queries/menu-tags"

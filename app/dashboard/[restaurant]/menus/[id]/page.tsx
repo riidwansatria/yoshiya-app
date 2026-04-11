@@ -4,6 +4,7 @@ import { getMenuTags } from '@/lib/queries/menu-tags';
 import { MenuForm } from '@/components/kitchen/menu-form';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
 
 export default async function MenuDetailPage({
     params,
@@ -25,20 +26,22 @@ export default async function MenuDetailPage({
     }
 
     return (
-        <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">
-                    {isNew ? t('pages.newMenu') : t('pages.editMenu')}
-                </h2>
-            </div>
-            <div className="flex-1 min-h-0">
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>
+                        {isNew ? t('pages.newMenu') : t('pages.editMenu')}
+                    </PageTitle>
+                </PageHeaderHeading>
+            </PageHeader>
+            <PageContent>
                 <MenuForm
                     initialData={menu}
                     availableComponents={components}
                     availableTags={availableTags}
                     restaurantId={restaurant}
                 />
-            </div>
-        </div>
+            </PageContent>
+        </Page>
     );
 }

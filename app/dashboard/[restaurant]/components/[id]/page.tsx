@@ -3,6 +3,7 @@ import { getIngredients } from '@/lib/queries/ingredients';
 import { ComponentForm } from '@/components/kitchen/component-form';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
 
 export default async function ComponentDetailPage({
     params,
@@ -23,19 +24,21 @@ export default async function ComponentDetailPage({
     }
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 pb-16">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">
-                    {isNew ? t('pages.newComponent') : t('pages.editComponent')}
-                </h2>
-            </div>
-            <div className="flex-1 flex-col space-y-8 flex max-w-2xl">
+        <Page className="pb-16">
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>
+                        {isNew ? t('pages.newComponent') : t('pages.editComponent')}
+                    </PageTitle>
+                </PageHeaderHeading>
+            </PageHeader>
+            <PageContent className="max-w-2xl">
                 <ComponentForm
                     initialData={component}
                     availableIngredients={ingredients}
                     restaurantId={restaurant}
                 />
-            </div>
-        </div>
+            </PageContent>
+        </Page>
     );
 }

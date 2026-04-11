@@ -1,4 +1,5 @@
 import { ScheduleGrid } from "@/components/schedule/schedule-grid"
+import { PageFull } from "@/components/layout/page"
 import { getReservations } from "@/lib/queries/reservations"
 import { getUsers } from "@/lib/queries/users"
 import { getVenues } from "@/lib/queries/venues"
@@ -24,12 +25,14 @@ export default async function SchedulePage({
     ])
 
     return (
-        <ScheduleGrid
-            restaurantId={restaurant}
-            dateStr={currentDate}
-            initialVenues={venues || []}
-            initialReservations={reservations || []}
-            initialStaff={staff || []}
-        />
+        <PageFull>
+            <ScheduleGrid
+                restaurantId={restaurant}
+                dateStr={currentDate}
+                initialVenues={venues || []}
+                initialReservations={reservations || []}
+                initialStaff={staff || []}
+            />
+        </PageFull>
     )
 }

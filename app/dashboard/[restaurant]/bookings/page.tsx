@@ -3,6 +3,7 @@ import { NewBookingForm } from "@/components/bookings/new-booking-form"
 import { getReservations } from "@/lib/queries/reservations"
 import { getUsers } from "@/lib/queries/users"
 import { getVenues } from "@/lib/queries/venues"
+import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page'
 
 export default async function BookingsPage({ params }: { params: Promise<{ restaurant: string }> }) {
     const { restaurant } = await params
@@ -25,17 +26,23 @@ export default async function BookingsPage({ params }: { params: Promise<{ resta
     }))
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Bookings</h1>
-                <NewBookingForm restaurantId={restaurant} />
-            </div>
-            <BookingsTable
-                data={data}
-                restaurantId={restaurant}
-                initialStaff={staff ?? []}
-                initialVenues={venues ?? []}
-            />
-        </div>
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>Bookings</PageTitle>
+                </PageHeaderHeading>
+                <PageActions>
+                    <NewBookingForm restaurantId={restaurant} />
+                </PageActions>
+            </PageHeader>
+            <PageContent>
+                <BookingsTable
+                    data={data}
+                    restaurantId={restaurant}
+                    initialStaff={staff ?? []}
+                    initialVenues={venues ?? []}
+                />
+            </PageContent>
+        </Page>
     )
 }

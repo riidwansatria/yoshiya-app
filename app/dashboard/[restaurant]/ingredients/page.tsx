@@ -2,6 +2,7 @@ import { getIngredients, getDistinctStores } from '@/lib/queries/ingredients';
 import { getComponents } from '@/lib/queries/components';
 import { IngredientsTable } from '@/components/kitchen/ingredients-table';
 import { getTranslations } from 'next-intl/server';
+import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
 
 export default async function IngredientsPage({
     params,
@@ -17,18 +18,20 @@ export default async function IngredientsPage({
     ]);
 
     return (
-        <div className="flex flex-col h-full space-y-4 p-4 md:p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">{t('pages.ingredients')}</h2>
-            </div>
-            <div className="flex-1 min-h-0">
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>{t('pages.ingredients')}</PageTitle>
+                </PageHeaderHeading>
+            </PageHeader>
+            <PageContent>
                 <IngredientsTable
                     initialData={ingredients}
                     initialStores={stores}
                     components={components}
                     restaurantId={restaurant}
                 />
-            </div>
-        </div>
+            </PageContent>
+        </Page>
     );
 }
