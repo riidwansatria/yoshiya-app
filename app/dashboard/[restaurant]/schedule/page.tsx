@@ -1,9 +1,12 @@
 import { ScheduleGrid } from "@/components/schedule/schedule-grid"
-import { PageFull } from "@/components/layout/page"
+import { NewReservationButton } from "@/components/schedule/new-reservation-button"
+import { Page, PageActions, PageContent, PageHeader, PageHeaderHeading, PageTitle } from "@/components/layout/page"
 import { getReservations } from "@/lib/queries/reservations"
 import { getUsers } from "@/lib/queries/users"
 import { getVenues } from "@/lib/queries/venues"
 import { format } from "date-fns"
+import { getTranslations } from "next-intl/server"
+import { redirect } from "next/navigation"
 
 export default async function SchedulePage({
     params,
@@ -15,8 +18,14 @@ export default async function SchedulePage({
     const { restaurant } = await params
     const { date } = await searchParams
 
-    // Default to today if no date provided
-    const currentDate = date || format(new Date(), 'yyyy-MM-dd')
+    if (!date) {
+        const today = format(new Date(), 'yyyy-MM-dd')
+        redirect(`/dashboard/${restaurant}/schedule?date=${today}`)
+    }
+
+    const t = await getTranslations('nav')
+
+    const currentDate = date
 
     const [venues, reservations, staff] = await Promise.all([
         getVenues(restaurant),
@@ -25,14 +34,29 @@ export default async function SchedulePage({
     ])
 
     return (
-        <PageFull>
-            <ScheduleGrid
-                restaurantId={restaurant}
-                dateStr={currentDate}
-                initialVenues={venues || []}
-                initialReservations={reservations || []}
-                initialStaff={staff || []}
-            />
-        </PageFull>
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>{t('schedule')}</PageTitle>
+                </PageHeaderHeading>
+                <PageActions>
+                    <NewReservationButton
+                        restaurantId={restaurant}
+                        defaultDate={currentDate}
+                        initialStaff={staff || []}
+                        initialVenues={venues || []}
+                    />
+                </PageActions>
+            </PageHeader>
+            <PageContent className="p-0 md:p-0">
+                <ScheduleGrid
+                    restaurantId={restaurant}
+                    dateStr={currentDate}
+                    initialVenues={venues || []}
+                    initialReservations={reservations || []}
+                    initialStaff={staff || []}
+                />
+            </PageContent>
+        </Page>
     )
 }

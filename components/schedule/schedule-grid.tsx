@@ -4,7 +4,6 @@
 import * as React from "react"
 import { format, addDays, subDays } from "date-fns"
 import { ja } from "date-fns/locale"
-import { useRouter } from "next/navigation"
 
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/popover"
 import { TimeIndicator } from "./time-indicator"
 import { Separator } from "@/components/ui/separator"
+import { fetchScheduleReservations } from "@/lib/actions/schedule"
 
 interface ScheduleGridProps {
     restaurantId: string
@@ -34,9 +34,12 @@ export function ScheduleGrid({
     initialReservations,
     initialStaff,
 }: ScheduleGridProps) {
-    const router = useRouter()
-    // Parse the date string passed from server
-    const date = new Date(dateStr)
+    // Internal date state — navigation never goes through the router
+    const [currentDateStr, setCurrentDateStr] = React.useState(dateStr)
+    const date = new Date(currentDateStr + 'T00:00:00')
+
+    // Per-date reservations cache, seeded from SSR data
+    const cacheRef = React.useRef<Map<string, any[]>>(new Map([[dateStr, initialReservations]]))
 
     const restaurantHalls = initialVenues
 
@@ -58,23 +61,72 @@ export function ScheduleGrid({
     }, [])
 
     const [reservations, setReservations] = React.useState(initialReservations)
-
-    // Filter reservations for this day and restaurant
-    const dailyReservations = reservations
-
     const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null)
     const [showStaffDetails, setShowStaffDetails] = React.useState(true)
 
+    // Sync when server refreshes initialReservations (e.g. after router.refresh())
+    React.useEffect(() => {
+        cacheRef.current.set(dateStr, initialReservations)
+        if (dateStr === currentDateStr) setReservations(initialReservations)
+    }, [dateStr, initialReservations, currentDateStr])
+
+    // Prefetch ±3 adjacent days into the client cache via server action
+    React.useEffect(() => {
+        const prefetch = async (offset: number) => {
+            const adjacent = format(addDays(date, offset), 'yyyy-MM-dd')
+            if (cacheRef.current.has(adjacent)) return
+            const data = await fetchScheduleReservations(restaurantId, adjacent)
+            if (data) cacheRef.current.set(adjacent, data)
+        }
+        for (const offset of [-3, -2, -1, 1, 2, 3]) prefetch(offset)
+    }, [currentDateStr, restaurantId])
+
+    // Sync URL → state when user navigates with browser back/forward
+    React.useEffect(() => {
+        const onPopState = () => {
+            const params = new URLSearchParams(window.location.search)
+            const d = params.get('date') || format(new Date(), 'yyyy-MM-dd')
+            const cached = cacheRef.current.get(d)
+            setCurrentDateStr(d)
+            if (cached) {
+                setReservations(cached)
+            } else {
+                fetchScheduleReservations(restaurantId, d).then(data => {
+                    if (data) { cacheRef.current.set(d, data); setReservations(data) }
+                })
+            }
+        }
+        window.addEventListener('popstate', onPopState)
+        return () => window.removeEventListener('popstate', onPopState)
+    }, [restaurantId])
+
     const handleBookingDeleted = React.useCallback((bookingId: string) => {
-        setReservations((prev) => prev.filter((reservation) => reservation.id !== bookingId))
-        setSelectedBookingId((prev) => (prev === bookingId ? null : prev))
-    }, [])
+        setReservations(prev => {
+            const next = prev.filter(r => r.id !== bookingId)
+            cacheRef.current.set(currentDateStr, next)
+            return next
+        })
+        setSelectedBookingId(prev => (prev === bookingId ? null : prev))
+    }, [currentDateStr])
 
     const handleDateChange = (newDate: Date | undefined) => {
         if (!newDate) return
         const formatted = format(newDate, 'yyyy-MM-dd')
-        router.push(`/dashboard/${restaurantId}/schedule?date=${formatted}`)
+        const cached = cacheRef.current.get(formatted)
+        setCurrentDateStr(formatted)
+        if (cached) {
+            setReservations(cached)
+        } else {
+            setReservations([])
+            fetchScheduleReservations(restaurantId, formatted).then(data => {
+                if (data) { cacheRef.current.set(formatted, data); setReservations(data) }
+            })
+        }
+        window.history.pushState({}, '', `/dashboard/${restaurantId}/schedule?date=${formatted}`)
     }
+
+    // dailyReservations alias kept for readability in JSX below
+    const dailyReservations = reservations
 
     const handlePrevDay = () => handleDateChange(subDays(date, 1))
     const handleNextDay = () => handleDateChange(addDays(date, 1))
@@ -88,7 +140,7 @@ export function ScheduleGrid({
     return (
         <div className="flex flex-col h-full bg-gray-50/50">
             {/* Header / Date Navigator */}
-            <div className="flex items-center justify-between bg-white p-2 shadow-sm shrink-0">
+            <div className="flex items-center justify-between bg-white px-3 py-2 shadow-sm shrink-0">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                         <Button variant="outline" size="icon" onClick={handlePrevDay} className="h-8 w-8">
@@ -133,7 +185,6 @@ export function ScheduleGrid({
                     >
                         {showStaffDetails ? "担当表示中" : "担当非表示"}
                     </Button>
-                    <Button variant="secondary" size="sm" className="bg-slate-100 hover:bg-slate-200 text-slate-700">Day View</Button>
                 </div>
             </div>
 
@@ -199,7 +250,7 @@ export function ScheduleGrid({
                     <div
                         className="absolute inset-x-0 bottom-0 pointer-events-none grid"
                         style={{
-                            gridTemplateColumns: `60px repeat(${restaurantHalls.length}, 1fr)`,
+                            gridTemplateColumns: `80px repeat(${restaurantHalls.length}, 1fr)`,
                             top: `${headerHeight}px`
                         }}
                     >

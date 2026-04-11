@@ -163,6 +163,103 @@ export async function updateBooking(
 }
 
 
+export async function createBooking(
+    restaurantId: string,
+    data: {
+        status?: string
+        notes?: string
+        date?: string
+        start_time?: string
+        end_time?: string
+        venue_id?: string
+        group_name?: string
+        party_size?: number
+        rep_name?: string
+        arranger_name?: string
+        conductor_count?: number
+        crew_count?: number
+        agency_name?: string
+        agency_branch?: string
+        agency_tel?: string
+        agency_fax?: string
+        agency_address?: string
+    },
+    staffAssignments?: {
+        prep: { ids: string[], tempNames: string[], duration: number }
+        service: { ids: string[], tempNames: string[], duration: number }
+        cleaning: { ids: string[], tempNames: string[], duration: number }
+    }
+) {
+    try {
+        const supabase = await createClient()
+
+        const insertPayload: Record<string, unknown> = {
+            restaurant_id: restaurantId,
+            status: data.status ?? 'pending',
+        }
+        if (data.notes) insertPayload.notes = data.notes
+        if (data.date) insertPayload.date = data.date
+        if (data.start_time) insertPayload.start_time = data.start_time
+        if (data.end_time) insertPayload.end_time = data.end_time
+        if (data.venue_id) insertPayload.venue_id = data.venue_id
+        if (data.group_name) insertPayload.group_name = data.group_name
+        if (data.party_size !== undefined) insertPayload.party_size = data.party_size
+        if (data.rep_name) insertPayload.rep_name = data.rep_name
+        if (data.arranger_name) insertPayload.arranger_name = data.arranger_name
+        if (data.conductor_count !== undefined) insertPayload.conductor_count = data.conductor_count
+        if (data.crew_count !== undefined) insertPayload.crew_count = data.crew_count
+        if (data.agency_name) insertPayload.agency_name = data.agency_name
+        if (data.agency_branch) insertPayload.agency_branch = data.agency_branch
+        if (data.agency_tel) insertPayload.agency_tel = data.agency_tel
+        if (data.agency_fax) insertPayload.agency_fax = data.agency_fax
+        if (data.agency_address) insertPayload.agency_address = data.agency_address
+
+        const { data: created, error: insertError } = await supabase
+            .from('reservations')
+            .insert(insertPayload)
+            .select('id')
+            .single()
+
+        if (insertError) {
+            console.error('Error creating reservation:', insertError)
+            return { success: false, error: insertError.message }
+        }
+
+        if (staffAssignments && created) {
+            const staffRows: Array<{
+                reservation_id: string
+                user_id: string | null
+                temp_name?: string
+                role: string
+                duration_minutes: number
+            }> = []
+
+            const addRows = (role: string, ids: string[], tempNames: string[], duration: number) => {
+                ids.forEach(userId => staffRows.push({ reservation_id: created.id, user_id: userId, role, duration_minutes: duration }))
+                tempNames.forEach(name => staffRows.push({ reservation_id: created.id, user_id: null, temp_name: name, role, duration_minutes: duration }))
+            }
+
+            addRows('prep', staffAssignments.prep.ids, staffAssignments.prep.tempNames, staffAssignments.prep.duration)
+            addRows('service', staffAssignments.service.ids, staffAssignments.service.tempNames, staffAssignments.service.duration)
+            addRows('cleaning', staffAssignments.cleaning.ids, staffAssignments.cleaning.tempNames, staffAssignments.cleaning.duration)
+
+            if (staffRows.length > 0) {
+                const { error: staffError } = await supabase.from('reservation_staff').insert(staffRows)
+                if (staffError) {
+                    console.error('Error inserting staff assignments:', staffError)
+                    return { success: false, error: staffError.message }
+                }
+            }
+        }
+
+        revalidatePath(REVALIDATE_PATHS.DASHBOARD_PAGE)
+        return { success: true, data: { id: created.id } }
+    } catch (error) {
+        console.error('Failed to create booking:', error)
+        return { success: false, error: 'Failed to create booking' }
+    }
+}
+
 export async function getVenueList(restaurantId: string) {
     try {
         const venues = await getVenues(restaurantId)

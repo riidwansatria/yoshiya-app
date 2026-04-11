@@ -121,6 +121,9 @@
         "cancel": "キャンセル",
         "save": "変更を保存",
         "saving": "保存中...",
+        "create": "予約を作成",
+        "creating": "作成中...",
+        "newTitle": "新規予約",
         "arrival": "到着日時",
         "clientDetails": "顧客詳細",
         "agencyName": "旅行会社名",
@@ -144,7 +147,8 @@
             "confirmed": "確定",
             "cancelled": "キャンセル",
             "lastEdited": "最終更新",
-            "by": "{name}"
+            "by": "{name}",
+            "noHistory": "予約を作成すると履歴が表示されます。"
         },
         "placeholders": {
             "selectAgency": "会社を選択",
@@ -173,6 +177,8 @@
             "updateDateFailed": "予約日の更新に失敗しました",
             "updateTimeFailed": "予約時間の更新に失敗しました",
             "updateHallFailed": "会場の更新に失敗しました",
+            "startTimeRequired": "開始時刻を入力してください",
+            "endTimeRequired": "終了時刻を入力してください",
             "updateFailed": "予約の更新に失敗しました",
             "deleteFailed": "予約の削除に失敗しました"
         }

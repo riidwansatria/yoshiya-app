@@ -121,6 +121,9 @@
         "cancel": "Cancel",
         "save": "Save Changes",
         "saving": "Saving...",
+        "create": "Create Reservation",
+        "creating": "Creating...",
+        "newTitle": "New Reservation",
         "arrival": "Arrival Date",
         "clientDetails": "Client Details",
         "agencyName": "Travel Agency",
@@ -144,7 +147,8 @@
             "confirmed": "Confirmed",
             "cancelled": "Cancelled",
             "lastEdited": "Last Edited",
-            "by": "by {name}"
+            "by": "by {name}",
+            "noHistory": "History will appear after the reservation is created."
         },
         "placeholders": {
             "selectAgency": "Select Agency",
@@ -173,6 +177,8 @@
             "updateDateFailed": "Failed to update booking date",
             "updateTimeFailed": "Failed to update booking time",
             "updateHallFailed": "Failed to update booking hall",
+            "startTimeRequired": "Please enter a start time",
+            "endTimeRequired": "Please enter an end time",
             "updateFailed": "Failed to update booking",
             "deleteFailed": "Failed to delete booking"
         }

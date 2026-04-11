@@ -37,7 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getBookingDetails, updateBooking, getStaffList, getVenueList, deleteBooking } from "@/lib/actions/bookings"
+import { getBookingDetails, updateBooking, createBooking, getStaffList, getVenueList, deleteBooking } from "@/lib/actions/bookings"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -49,6 +49,7 @@ interface BookingDetailModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     restaurantId: string
+    defaultDate?: string
     initialStaff?: StaffOption[]
     initialVenues?: VenueOption[]
     onDeleted?: (bookingId: string) => void
@@ -59,6 +60,7 @@ export function BookingDetailModal({
     open,
     onOpenChange,
     restaurantId,
+    defaultDate,
     initialStaff = [],
     initialVenues = [],
     onDeleted,
@@ -84,7 +86,9 @@ export function BookingDetailModal({
     const [cleaningTempNames, setCleaningTempNames] = React.useState<string[]>([])
 
     // Booking Details State
-    const [date, setDate] = React.useState<Date | undefined>(undefined)
+    const [date, setDate] = React.useState<Date | undefined>(
+        defaultDate && !bookingId ? new Date(defaultDate + 'T00:00:00') : undefined
+    )
     const [startTime, setStartTime] = React.useState('')
     const [endTime, setEndTime] = React.useState('')
     const [venueId, setVenueId] = React.useState('')
@@ -259,15 +263,17 @@ export function BookingDetailModal({
         )
     }
 
-    // Load booking data
+    const isNew = !bookingId
+
+    // Load booking data / hydrate form defaults on open
     React.useEffect(() => {
         async function loadBooking() {
-            if (!bookingId || !open) return
+            if (!open) return
 
             setLoading(true)
             try {
                 const [bookingResult, staffResult, venueResult] = await Promise.all([
-                    getBookingDetails(bookingId),
+                    bookingId ? getBookingDetails(bookingId) : Promise.resolve({ success: true, data: null }),
                     staffHydrated ? Promise.resolve(null) : getStaffList(),
                     venuesHydrated ? Promise.resolve(null) : getVenueList(restaurantId)
                 ])
@@ -324,6 +330,9 @@ export function BookingDetailModal({
 
                     if (prepStaff.length > 0) setPrepDuration(prepStaff[0].duration_minutes || 30)
                     if (cleaningStaff.length > 0) setCleaningDuration(cleaningStaff[0].duration_minutes || 30)
+                } else if (!bookingId) {
+                    // Always re-seed new reservation date from latest header action context.
+                    setDate(defaultDate ? new Date(defaultDate + 'T00:00:00') : undefined)
                 }
             } catch (error) {
                 console.error('Failed to load booking:', error)
@@ -333,7 +342,7 @@ export function BookingDetailModal({
         }
 
         loadBooking()
-    }, [bookingId, open, restaurantId])
+    }, [bookingId, open, restaurantId, defaultDate])
 
     // Reset when closed
     React.useEffect(() => {
@@ -343,7 +352,7 @@ export function BookingDetailModal({
             // Reset form state
             setStatus('pending')
             setNotes('')
-            setDate(undefined)
+            setDate(isNew && defaultDate ? new Date(defaultDate + 'T00:00:00') : undefined)
             setStartTime('')
             setEndTime('')
             setVenueId('')
@@ -367,7 +376,7 @@ export function BookingDetailModal({
             setPrepDuration(30)
             setCleaningDuration(30)
         }
-    }, [open])
+    }, [open, defaultDate])
 
     if (!open) return null
     if (loading) return (
@@ -488,20 +497,20 @@ export function BookingDetailModal({
             </DialogContent>
         </Dialog>
     )
-    if (!booking) return null
+    if (!isNew && !booking) return null
 
-    const customerName = booking.customers?.name || 'Unknown'
-    const hallName = booking.venues?.name || 'Unknown'
-    const hallCapacity = booking.venues?.capacity || 0
+    const customerName = booking?.customers?.name || ''
+    const hallName = booking?.venues?.name || ''
+    const hallCapacity = booking?.venues?.capacity || 0
 
     // We assume mostly one menu per booking for now in the main view, 
     // but the DB supports multiple. We'll take the first one for the summary.
-    const primaryMenu = booking.reservation_menus?.[0]
+    const primaryMenu = booking?.reservation_menus?.[0]
     const menuName = primaryMenu?.menu_name
     const unitPrice = primaryMenu?.unit_price || 0
 
     // Calculate total from all menu items
-    const totalAmount = booking.reservation_menus?.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0) || 0
+    const totalAmount = booking?.reservation_menus?.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0) || 0
 
     // Format dates
     const formattedDate = date ? format(date, 'yyyy年M月d日 (EEE)', { locale: ja }) : ''
@@ -511,42 +520,49 @@ export function BookingDetailModal({
     }
 
     const handleSave = async () => {
-        if (!booking) return
+        if (!startTime) {
+            toast.error(t('bookingModal.errors.startTimeRequired'))
+            return
+        }
+        if (!endTime) {
+            toast.error(t('bookingModal.errors.endTimeRequired'))
+            return
+        }
         setSaving(true)
+        const bookingData = {
+            status,
+            notes,
+            date: date ? format(date, 'yyyy-MM-dd') : undefined,
+            start_time: startTime,
+            end_time: endTime,
+            venue_id: venueId,
+            group_name: groupName,
+            party_size: partySize,
+            rep_name: repName,
+            arranger_name: arrangerName,
+            conductor_count: conductorCount,
+            crew_count: crewCount,
+            agency_name: agencyName,
+            agency_branch: branchName,
+            agency_tel: agencyTel,
+            agency_fax: agencyFax,
+            agency_address: agencyAddress,
+        }
+        const staffData = {
+            prep: { ids: prepStaffIds, tempNames: prepTempNames, duration: prepDuration },
+            service: {
+                ids: serviceStaffIds,
+                tempNames: serviceTempNames,
+                duration: (startTime && endTime)
+                    ? differenceInMinutes(parse(endTime, 'HH:mm', new Date()), parse(startTime, 'HH:mm', new Date()))
+                    : 0
+            },
+            cleaning: { ids: cleaningStaffIds, tempNames: cleaningTempNames, duration: cleaningDuration },
+        }
         try {
-            const result = await updateBooking(
-                booking.id,
-                {
-                    status,
-                    notes,
-                    date: date ? format(date, 'yyyy-MM-dd') : undefined,
-                    start_time: startTime,
-                    end_time: endTime,
-                    venue_id: venueId,
-                    group_name: groupName,
-                    party_size: partySize,
-                    rep_name: repName,
-                    arranger_name: arrangerName,
-                    conductor_count: conductorCount,
-                    crew_count: crewCount,
-                    agency_name: agencyName,
-                    agency_branch: branchName,
-                    agency_tel: agencyTel,
-                    agency_fax: agencyFax,
-                    agency_address: agencyAddress,
-                },
-                {
-                    prep: { ids: prepStaffIds, tempNames: prepTempNames, duration: prepDuration },
-                    service: {
-                        ids: serviceStaffIds,
-                        tempNames: serviceTempNames,
-                        duration: (startTime && endTime)
-                            ? differenceInMinutes(parse(endTime, 'HH:mm', new Date()), parse(startTime, 'HH:mm', new Date()))
-                            : 0
-                    },
-                    cleaning: { ids: cleaningStaffIds, tempNames: cleaningTempNames, duration: cleaningDuration },
-                }
-            )
+            const result = isNew
+                ? await createBooking(restaurantId, bookingData, staffData)
+                : await updateBooking(booking!.id, bookingData, staffData)
 
             if (!result.success) {
                 toast.error(result.error ?? t('bookingModal.errors.updateFailed'))
@@ -573,6 +589,7 @@ export function BookingDetailModal({
     }
 
     const handleDelete = async () => {
+        if (!booking) return
         if (!confirm(t('bookingModal.confirmDelete'))) return
 
         setSaving(true)
@@ -605,8 +622,10 @@ export function BookingDetailModal({
                 {/* Header */}
                 <header className="px-4 py-3 border-b flex justify-between items-center bg-white z-10">
                     <div>
-                        <DialogTitle className="text-xl font-semibold">{t('bookingModal.title')}</DialogTitle>
-                        <p className="text-xs text-muted-foreground mt-0.5">#{booking.display_id}</p>
+                        <DialogTitle className="text-xl font-semibold">
+                            {isNew ? t('bookingModal.newTitle') : t('bookingModal.title')}
+                        </DialogTitle>
+                        {!isNew && <p className="text-xs text-muted-foreground mt-0.5">#{booking?.display_id}</p>}
                     </div>
                     <div className="flex items-center gap-2">
                         <Select value={status} onValueChange={setStatus}>
@@ -913,7 +932,7 @@ export function BookingDetailModal({
                                                 </td>
                                                 <td className="py-4 px-4 text-center align-top">
                                                     <div className="inline-flex items-center justify-center bg-muted/60 text-foreground text-sm font-medium px-2.5 py-0.5 rounded-md min-w-8">
-                                                        {booking.party_size}
+                                                        {partySize}
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-4 text-right align-top">
@@ -953,6 +972,9 @@ export function BookingDetailModal({
                                         <FileClock className="w-3 h-3" />
                                         <h2 className="text-[10px] font-semibold uppercase tracking-wider">{t('bookingModal.bookingHistory')}</h2>
                                     </div>
+                                    {isNew ? (
+                                        <p className="text-xs text-muted-foreground flex-1">{t('bookingModal.history.noHistory')}</p>
+                                    ) : (
 
                                     <div className="space-y-4 flex-1 overflow-y-auto">
                                         {/* Created At */}
@@ -1004,6 +1026,7 @@ export function BookingDetailModal({
                                             </div>
                                         </div>
                                     </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1067,29 +1090,36 @@ export function BookingDetailModal({
 
                 {/* Footer */}
                 <footer className="px-6 py-4 border-t flex items-center justify-between bg-white z-10">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuLabel>{t('bookingModal.actions')}</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={handleInvoice}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                {t('bookingModal.viewInvoice')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {t('bookingModal.delete')}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {!isNew ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuLabel>{t('bookingModal.actions')}</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={handleInvoice}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    {t('bookingModal.viewInvoice')}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    {t('bookingModal.delete')}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : <div />}
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('bookingModal.cancel')}</Button>
-                        <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? t('bookingModal.saving') : t('bookingModal.save')}</Button>
+                        <Button size="sm" onClick={handleSave} disabled={saving}>
+                            {saving
+                                ? (isNew ? t('bookingModal.creating') : t('bookingModal.saving'))
+                                : (isNew ? t('bookingModal.create') : t('bookingModal.save'))
+                            }
+                        </Button>
                     </div>
                 </footer>
 
