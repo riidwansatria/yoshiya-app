@@ -1,9 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { RecipeComponent } from './components';
-import type { Ingredient } from './ingredients';
-import type { MenuTag } from './menu-tags';
-import type { Menu } from './menus';
+import type { Ingredient, Menu, MenuTag, RecipeComponent } from '@/lib/types/kitchen';
 
 export type KitchenClient = SupabaseClient;
 

@@ -3,6 +3,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 import { getUserRole } from "@/lib/queries/users"
+import { REVALIDATE_PATHS } from "@/lib/constants/routes"
 
 function getSupabaseAdminClient() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -37,7 +38,7 @@ export async function toggleAssignable(userId: string, isAssignable: boolean) {
         .eq('id', userId)
 
     if (error) throw error
-    revalidatePath('/dashboard/settings')
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }
 
 export async function removeStaff(userId: string) {
@@ -82,7 +83,7 @@ export async function removeStaff(userId: string) {
         // Ensure to handle partial failure if needed
     }
 
-    revalidatePath('/dashboard/settings')
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }
 
 export async function addStaff(data: { name: string, username: string, password: string }) {
@@ -123,7 +124,7 @@ export async function addStaff(data: { name: string, username: string, password:
         })
 
     if (dbError) throw dbError
-    revalidatePath('/dashboard/settings')
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }
 
 export async function updateStaff(userId: string, data: { name: string, password?: string }) {
@@ -150,5 +151,5 @@ export async function updateStaff(userId: string, data: { name: string, password
         if (authError) throw authError
     }
 
-    revalidatePath('/dashboard/settings')
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }

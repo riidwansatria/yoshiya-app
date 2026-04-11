@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { DailyOrder } from '../queries/daily-orders';
+import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 
 export async function saveDailyOrders(
     restaurantId: string,
@@ -44,7 +44,7 @@ export async function saveDailyOrders(
         }
     }
 
-    revalidatePath('/[lang]/dashboard/[restaurant]/kitchen/orders', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/kitchen/summary', 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_KITCHEN_ORDERS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_KITCHEN_SUMMARY_PAGE, 'page');
     return { success: true };
 }

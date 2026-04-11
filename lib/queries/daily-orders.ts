@@ -1,16 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { Menu } from './menus';
+import type { DailyOrder } from '@/lib/types/kitchen';
 
-export interface DailyOrder {
-    id: string;
-    restaurant_id: string;
-    target_date: string;
-    menu_id: string;
-    quantity: number;
-    notes: string | null;
-    created_at: string;
-    menu?: Menu;
-}
+export type { DailyOrder } from '@/lib/types/kitchen';
 
 export async function getDailyOrders(restaurantId: string, targetDate: string): Promise<DailyOrder[]> {
     const supabase = await createClient();

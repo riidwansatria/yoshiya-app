@@ -111,7 +111,7 @@ Use these rules to avoid architecture drift:
 1. app can import components, lib, hooks, i18n.
 2. components can import other components, hooks, lib/utils, lib/constants, types.
 3. components should not import lib/supabase directly.
-4. lib/actions can import lib/queries, lib/supabase, lib/validators, lib/utils.
+4. lib/actions can import lib/queries, lib/supabase, lib/validators, lib/constants, lib/utils.
 5. lib/queries can import lib/supabase and lib/types, but no React code.
 6. hooks should not import app route files.
 7. scripts should never import app or components.
@@ -137,12 +137,20 @@ Current repo is already close to a clean domain split. Highest-value improvement
 
 ## Suggested Incremental Migration Plan
 
-1. Week 1: Create components/layout and move shell/navigation components.
-2. Week 1: Add lib/validators and extract one domain (ingredients) as template.
-3. Week 2: Centralize cache tag constants used by actions.
-4. Week 2: Add shared type modules for repeated DB row shapes.
-5. Week 3: Start features/kitchen for new work only (do not rewrite old code).
-6. Week 4+: Migrate domain-by-domain opportunistically when touching files.
+1. Week 1: Create components/layout and move shell/navigation components. Status: Completed.
+2. Week 1: Add lib/validators and extract one domain (ingredients) as template. Status: Completed.
+3. Week 2: Centralize cache tag constants used by actions. Status: Completed.
+4. Week 2: Add shared type modules for repeated DB row shapes. Status: Completed.
+5. Week 3: Start features/kitchen for new work only (do not rewrite old code). Status: Completed (scaffolded for new development).
+6. Week 4+: Migrate domain-by-domain opportunistically when touching files. Status: Ongoing by design.
+
+### Migration Status Snapshot (April 2026)
+
+- `components/layout/` now owns shell/navigation components.
+- `lib/validators/ingredients.ts` is the initial extracted validation module.
+- `lib/constants/cache-tags.ts` and `lib/constants/routes.ts` are the shared invalidation sources.
+- `lib/types/kitchen.ts` centralizes shared kitchen row types.
+- `features/kitchen/` exists as the new-work module boundary.
 
 ## Testing Layout Recommendation
 

@@ -5,6 +5,7 @@ import { getReservationById } from '@/lib/queries/reservations'
 import { getUsers } from '@/lib/queries/users'
 import { revalidatePath } from 'next/cache'
 import { getVenues } from '@/lib/queries/venues'
+import { REVALIDATE_PATHS } from '@/lib/constants/routes'
 
 export async function getStaffList() {
     try {
@@ -57,7 +58,7 @@ export async function updateBooking(
         const supabase = await createClient()
 
         // Build the update payload, only including defined fields
-        const updatePayload: Record<string, any> = {}
+        const updatePayload: Record<string, unknown> = {}
         if (data.status !== undefined) {
             updatePayload.status = data.status
             if (data.status === 'confirmed') {
@@ -106,7 +107,13 @@ export async function updateBooking(
             }
 
             // Insert new assignments
-            const staffRows: any[] = []
+            const staffRows: Array<{
+                reservation_id: string
+                user_id: string | null
+                temp_name?: string
+                role: string
+                duration_minutes: number
+            }> = []
 
             // Helper to add rows
             const addRows = (role: string, ids: string[], tempNames: string[], duration: number) => {
@@ -147,7 +154,7 @@ export async function updateBooking(
             }
         }
 
-        revalidatePath('/dashboard')
+        revalidatePath(REVALIDATE_PATHS.DASHBOARD_PAGE)
         return { success: true }
     } catch (error) {
         console.error('Failed to update booking:', error)
@@ -180,7 +187,7 @@ export async function deleteBooking(id: string) {
             return { success: false, error: error.message }
         }
 
-        revalidatePath('/dashboard')
+        revalidatePath(REVALIDATE_PATHS.DASHBOARD_PAGE)
         return { success: true }
     } catch (error) {
         console.error('Failed to delete booking:', error)

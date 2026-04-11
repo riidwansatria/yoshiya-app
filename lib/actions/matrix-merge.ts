@@ -2,6 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import {
+    buildDashboardComponentsMatrixPath,
+    buildDashboardComponentsPath,
+    buildDashboardMenusMatrixPath,
+    buildDashboardMenusPath,
+    REVALIDATE_PATHS,
+} from '@/lib/constants/routes';
 
 interface MenuMatrixChangeInput {
     menu_id: string;
@@ -54,10 +61,10 @@ export async function applyMenuMatrixChanges(
         }
     }
 
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus/matrix', 'page');
-    revalidatePath(`/dashboard/${restaurantId}/menus`, 'page');
-    revalidatePath(`/dashboard/${restaurantId}/menus/matrix`, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_MATRIX_PAGE, 'page');
+    revalidatePath(buildDashboardMenusPath(restaurantId), 'page');
+    revalidatePath(buildDashboardMenusMatrixPath(restaurantId), 'page');
 
     return {
         success: true,
@@ -106,10 +113,10 @@ export async function applyComponentMatrixChanges(
         }
     }
 
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components/matrix', 'page');
-    revalidatePath(`/dashboard/${restaurantId}/components`, 'page');
-    revalidatePath(`/dashboard/${restaurantId}/components/matrix`, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_MATRIX_PAGE, 'page');
+    revalidatePath(buildDashboardComponentsPath(restaurantId), 'page');
+    revalidatePath(buildDashboardComponentsMatrixPath(restaurantId), 'page');
 
     return {
         success: true,

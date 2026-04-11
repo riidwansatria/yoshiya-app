@@ -2,40 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath, updateTag } from 'next/cache';
-
-type IngredientPayload = {
-    name: string;
-    unit: string;
-    category?: string | null;
-    store?: string | null;
-    package_size?: number | null;
-    package_label?: string | null;
-};
-
-function normalizeIngredientPayload(data: IngredientPayload) {
-    const packageSize = data.package_size ?? null;
-
-    return {
-        name: data.name.trim(),
-        unit: data.unit.trim(),
-        category: data.category?.trim() ? data.category.trim() : null,
-        store: data.store?.trim() ? data.store.trim() : null,
-        package_size: packageSize,
-        package_label: data.package_label?.trim() ? data.package_label.trim() : null,
-    };
-}
-
-function validateIngredientPayload(data: ReturnType<typeof normalizeIngredientPayload>) {
-    if (!data.name) {
-        return 'Ingredient name is required';
-    }
-
-    if (data.package_size !== null && data.package_size <= 0) {
-        return 'Package size must be greater than 0';
-    }
-
-    return null;
-}
+import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+import { REVALIDATE_PATHS } from '@/lib/constants/routes';
+import {
+    normalizeIngredientPayload,
+    type IngredientPayload,
+    validateIngredientPayload,
+} from '@/lib/validators/ingredients';
 
 export async function createIngredient(data: IngredientPayload) {
     const supabase = await createClient();
@@ -60,12 +33,12 @@ export async function createIngredient(data: IngredientPayload) {
         return { error: 'Failed to create ingredient' };
     }
 
-    updateTag('ingredients');
-    updateTag('components');
-    revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components/new', 'page');
+    updateTag(CACHE_TAGS.INGREDIENTS);
+    updateTag(CACHE_TAGS.COMPONENTS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_INGREDIENTS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENT_DETAIL_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENT_NEW_PAGE, 'page');
     return { success: true, data: created };
 }
 
@@ -91,9 +64,9 @@ export async function updateIngredient(
         return { error: 'Failed to update ingredient' };
     }
 
-    updateTag('ingredients');
-    updateTag('components');
-    revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
+    updateTag(CACHE_TAGS.INGREDIENTS);
+    updateTag(CACHE_TAGS.COMPONENTS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_INGREDIENTS_PAGE, 'page');
     return { success: true };
 }
 
@@ -107,9 +80,9 @@ export async function deleteIngredient(id: string) {
         return { error: 'Failed to delete ingredient' };
     }
 
-    updateTag('ingredients');
-    updateTag('components');
-    revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
+    updateTag(CACHE_TAGS.INGREDIENTS);
+    updateTag(CACHE_TAGS.COMPONENTS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_INGREDIENTS_PAGE, 'page');
     return { success: true };
 }
 
@@ -138,8 +111,8 @@ export async function duplicateIngredient(id: string) {
         return { error: 'Failed to duplicate ingredient' };
     }
 
-    updateTag('ingredients');
-    updateTag('components');
-    revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
+    updateTag(CACHE_TAGS.INGREDIENTS);
+    updateTag(CACHE_TAGS.COMPONENTS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_INGREDIENTS_PAGE, 'page');
     return { success: true };
 }

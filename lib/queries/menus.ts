@@ -1,35 +1,17 @@
 import { unstable_cache } from 'next/cache';
 
 import { createCacheClient } from '@/lib/supabase/cache';
-import type { MenuTag } from './menu-tags';
+import type { Menu } from '@/lib/types/kitchen';
 import {
     fetchMenuById as fetchKitchenMenuById,
     fetchMenus as fetchKitchenMenus,
 } from './kitchen';
 
-export interface MenuComponentReference {
-    id: string;
-    name: string;
-}
-
-export interface Menu {
-    id: string;
-    restaurant_id: string;
-    name: string;
-    season: string | null;
-    price: number | null;
-    description: string | null;
-    color: string | null;
-    menu_components?: MenuComponent[];
-    tags?: MenuTag[];
-}
-
-export interface MenuComponent {
-    menu_id: string;
-    component_id: string;
-    qty_per_order: number;
-    components?: MenuComponentReference | null;
-}
+export type {
+    Menu,
+    MenuComponent,
+    MenuComponentReference,
+} from '@/lib/types/kitchen';
 
 export interface GetMenusOptions {
     includeMenuComponents?: boolean;

@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath, updateTag } from 'next/cache';
+import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 
 type ComponentFields = {
     name: string;
@@ -46,9 +48,9 @@ export async function createComponent(data: ComponentCreatePayload) {
         return { error: 'Failed to create component' };
     }
 
-    updateTag('components');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
+    updateTag(CACHE_TAGS.COMPONENTS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
     return { success: true, data: newComponent };
 }
 
@@ -73,10 +75,10 @@ export async function updateComponent(
         return { error: 'Failed to update component' };
     }
 
-    updateTag('components');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
+    updateTag(CACHE_TAGS.COMPONENTS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENT_DETAIL_PAGE, 'page');
     return { success: true };
 }
 
@@ -90,9 +92,9 @@ export async function deleteComponent(id: string) {
         return { error: 'Failed to delete component' };
     }
 
-    updateTag('components');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
+    updateTag(CACHE_TAGS.COMPONENTS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
     return { success: true };
 }
 
@@ -131,10 +133,10 @@ export async function updateComponentIngredients(
         }
     }
 
-    updateTag('components');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components/[id]', 'page');
+    updateTag(CACHE_TAGS.COMPONENTS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENT_DETAIL_PAGE, 'page');
     return { success: true };
 }
 
@@ -181,8 +183,8 @@ export async function duplicateComponent(id: string) {
         await supabase.from('component_ingredients').insert(newIngredients);
     }
 
-    updateTag('components');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/components', 'page');
+    updateTag(CACHE_TAGS.COMPONENTS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
     return { success: true, data: newComp };
 }

@@ -15,7 +15,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
-} from "@/components/sidebar"
+} from "@/components/layout/sidebar"
 import { useTranslations } from "next-intl"
 import { restaurants } from "@/lib/mock-data"
 

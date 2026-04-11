@@ -28,9 +28,9 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
-} from "@/components/sidebar"
-import { RestaurantSwitcher } from "@/components/restaurant-switcher"
-import { NavUser } from "@/components/nav-user"
+} from "@/components/layout/sidebar"
+import { RestaurantSwitcher } from "@/components/layout/restaurant-switcher"
+import { NavUser } from "@/components/layout/nav-user"
 
 export function AppSidebar({ userRole: _userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
     void _userRole

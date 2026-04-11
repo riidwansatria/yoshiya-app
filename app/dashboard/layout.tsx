@@ -1,5 +1,5 @@
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/layout/sidebar"
+import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SettingsProvider } from "@/components/settings/settings-context"
 import { getMenuTagsWithCount } from "@/lib/queries/menu-tags"
 import { getAllStaff, getUserRole } from "@/lib/queries/users"

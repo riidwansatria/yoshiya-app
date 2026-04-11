@@ -3,6 +3,7 @@
 import { updateTag } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
+import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 export async function updateMenuComponents(
     menuId: string,
     components: { component_id: string; qty_per_order: number }[]
@@ -36,6 +37,6 @@ export async function updateMenuComponents(
         }
     }
 
-    updateTag('menus');
+    updateTag(CACHE_TAGS.MENUS);
     return { success: true };
 }

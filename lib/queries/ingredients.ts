@@ -1,18 +1,10 @@
 import { unstable_cache } from 'next/cache';
 
 import { createCacheClient } from '@/lib/supabase/cache';
+import type { Ingredient } from '@/lib/types/kitchen';
 import { fetchIngredientById as fetchKitchenIngredientById, fetchIngredients as fetchKitchenIngredients, fetchDistinctStores as fetchKitchenDistinctStores } from './kitchen';
 
-export interface Ingredient {
-    id: string;
-    name: string;
-    unit: string;
-    category: string | null;
-    store: string | null;
-    package_size: number | null;
-    package_label: string | null;
-    created_at: string;
-}
+export type { Ingredient } from '@/lib/types/kitchen';
 
 export const getIngredients = unstable_cache(
     async (): Promise<Ingredient[]> => {

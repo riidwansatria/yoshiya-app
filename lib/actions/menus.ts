@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath, updateTag } from 'next/cache';
+import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 
 type MenuFields = {
     name: string;
@@ -50,8 +52,8 @@ export async function createMenu(data: MenuCreatePayload) {
         return { error: 'Failed to create menu' };
     }
 
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
     return { success: true, data: newMenu };
 }
 
@@ -76,9 +78,9 @@ export async function updateMenu(
         return { error: 'Failed to update menu' };
     }
 
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
     return { success: true };
 }
 
@@ -94,8 +96,8 @@ export async function deleteMenu(id: string) {
         return { error: 'Failed to delete menu' };
     }
 
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
     return { success: true };
 }
 
@@ -170,7 +172,7 @@ export async function duplicateMenu(id: string) {
         }
     }
 
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
     return { success: true, data: newMenu };
 }

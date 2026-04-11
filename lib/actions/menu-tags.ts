@@ -4,6 +4,8 @@ import { revalidatePath, updateTag } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 import type { MenuTag } from '@/lib/queries/menu-tags';
+import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 import {
     dedupeMenuTagIds,
     normalizeMenuTagLabel,
@@ -48,10 +50,10 @@ export async function createMenuTag(label: string) {
         return { error: 'Failed to create tag' };
     }
 
-    updateTag('menu-tags');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+    updateTag(CACHE_TAGS.MENU_TAGS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
 
     return { success: true, data: createdTag as MenuTag };
 }
@@ -95,10 +97,10 @@ export async function renameMenuTag(tagId: string, newLabel: string) {
         return { error: 'Failed to rename tag' };
     }
 
-    updateTag('menu-tags');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+    updateTag(CACHE_TAGS.MENU_TAGS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
 
     return { success: true, data: updatedTag as MenuTag };
 }
@@ -116,10 +118,10 @@ export async function deleteMenuTag(tagId: string) {
         return { error: 'Failed to delete tag' };
     }
 
-    updateTag('menu-tags');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+    updateTag(CACHE_TAGS.MENU_TAGS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
 
     return { success: true };
 }
@@ -149,10 +151,10 @@ export async function updateMenuTags(menuId: string, tagIds: string[]) {
         }
     }
 
-    updateTag('menu-tags');
-    updateTag('menus');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus', 'page');
-    revalidatePath('/[lang]/dashboard/[restaurant]/menus/[id]', 'page');
+    updateTag(CACHE_TAGS.MENU_TAGS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
 
     return { success: true };
 }

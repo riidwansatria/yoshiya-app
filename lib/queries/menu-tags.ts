@@ -1,25 +1,10 @@
 import { unstable_cache } from 'next/cache';
 
 import { createCacheClient } from '@/lib/supabase/cache';
+import type { MenuTag, MenuTagWithCount, TagMenu } from '@/lib/types/kitchen';
 import { fetchMenuTags as fetchKitchenMenuTags } from './kitchen';
 
-export interface MenuTag {
-    id: string;
-    label: string;
-    created_at: string | null;
-    updated_at: string | null;
-}
-
-export interface TagMenu {
-    id: string;
-    name: string;
-    restaurant_id: string;
-}
-
-export interface MenuTagWithCount extends MenuTag {
-    menu_count: number;
-    menus: TagMenu[];
-}
+export type { MenuTag, MenuTagWithCount, TagMenu } from '@/lib/types/kitchen';
 
 export const getMenuTags = unstable_cache(
     async (): Promise<MenuTag[]> => {
