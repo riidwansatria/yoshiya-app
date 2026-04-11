@@ -15,6 +15,8 @@ import {
 
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
+import { DataTableSortList } from '@/components/data-table/data-table-sort-list';
+import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -287,7 +289,11 @@ export function SummaryPrintView({
                             </p>
                         </div>
                     ) : (
-                        <DataTable table={ingredientsTable} />
+                        <DataTable table={ingredientsTable}>
+                            <DataTableToolbar table={ingredientsTable}>
+                                <DataTableSortList table={ingredientsTable} />
+                            </DataTableToolbar>
+                        </DataTable>
                     )}
                 </TabsContent>
 
@@ -301,7 +307,11 @@ export function SummaryPrintView({
                             </p>
                         </div>
                     ) : (
-                        <DataTable table={componentsTableModel} />
+                        <DataTable table={componentsTableModel}>
+                            <DataTableToolbar table={componentsTableModel}>
+                                <DataTableSortList table={componentsTableModel} />
+                            </DataTableToolbar>
+                        </DataTable>
                     )}
                 </TabsContent>
             </Tabs>
