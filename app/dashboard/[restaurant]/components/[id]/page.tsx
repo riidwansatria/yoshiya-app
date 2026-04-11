@@ -24,7 +24,7 @@ export default async function ComponentDetailPage({
     }
 
     return (
-        <Page className="pb-16">
+        <Page>
             <PageHeader>
                 <PageHeaderHeading>
                     <PageTitle>
@@ -32,7 +32,7 @@ export default async function ComponentDetailPage({
                     </PageTitle>
                 </PageHeaderHeading>
             </PageHeader>
-            <PageContent className="max-w-2xl">
+            <PageContent className="max-w-2xl pb-16">
                 <ComponentForm
                     initialData={component}
                     availableIngredients={ingredients}
