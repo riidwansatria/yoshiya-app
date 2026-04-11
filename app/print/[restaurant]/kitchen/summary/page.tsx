@@ -12,7 +12,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { getComponentsSummary } from "@/lib/queries/components-summary"
-import { getIngredientsSummary } from "@/lib/queries/ingredients-summary"
+import {
+  type AggregatedIngredient,
+  getIngredientsSummary,
+} from "@/lib/queries/ingredients-summary"
+
+function isUncategorizedCategory(category: string) {
+  return category.trim().toLowerCase() === "uncategorized"
+}
 
 export default async function KitchenSummaryPrintPage({
   params,
@@ -32,17 +39,38 @@ export default async function KitchenSummaryPrintPage({
   const dateLocale = localeCode === "ja" ? ja : enUS
 
   const t = await getTranslations("kitchen.summary")
+  const tCommon = await getTranslations("kitchen.common")
+  const tIngredients = await getTranslations("kitchen.ingredients")
 
   const [groupedIngredients, components] = await Promise.all([
     getIngredientsSummary(restaurant, fromDate, toDate),
     getComponentsSummary(restaurant, fromDate, toDate),
   ])
 
-  const categories = Object.keys(groupedIngredients).sort()
-  const hasIngredients = categories.length > 0
+  const allIngredients = Object.values(groupedIngredients).flat()
+  const hasIngredients = allIngredients.length > 0
   const hasComponents = components.length > 0
-  const isUncategorized = (category: string) =>
-    category.trim().toLowerCase() === "uncategorized"
+
+  const ingredientsByStore = allIngredients.reduce<Record<string, AggregatedIngredient[]>>(
+    (acc, item) => {
+      const store = item.store?.trim() || ""
+      const storeKey = store || "__none__"
+
+      if (!acc[storeKey]) {
+        acc[storeKey] = []
+      }
+
+      acc[storeKey].push(item)
+      return acc
+    },
+    {},
+  )
+
+  const storeKeys = Object.keys(ingredientsByStore).sort((a, b) => {
+    const aLabel = a === "__none__" ? "" : a
+    const bLabel = b === "__none__" ? "" : b
+    return aLabel.localeCompare(bLabel)
+  })
 
   const longDateFormat =
     localeCode === "ja" ? "yyyy年M月d日 (EEE)" : "EEEE, MMMM do, yyyy"
@@ -68,30 +96,33 @@ export default async function KitchenSummaryPrintPage({
         <section className="mb-10">
           <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("ingredientsTab")}</h2>
           <div className="space-y-8">
-            {categories.map((category) => (
-              <div key={category} className="space-y-2 break-inside-avoid">
-                {!isUncategorized(category) && (
-                  <h3 className="px-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                    {category}
-                  </h3>
-                )}
+            {storeKeys.map((storeKey) => (
+              <div key={storeKey} className="space-y-2 break-inside-avoid">
+                <h3 className="px-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  {tIngredients("storeLabel")}: {storeKey === "__none__" ? tCommon("none") : storeKey}
+                </h3>
                 <div className="rounded-md border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>{t("ingredientColumn")}</TableHead>
+                        <TableHead>{tCommon("category")}</TableHead>
                         <TableHead className="w-20 text-right">{t("needColumn")}</TableHead>
                         <TableHead className="w-14 text-right">{t("orderColumn")}</TableHead>
                         <TableHead className="pl-2">{t("packColumn")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {groupedIngredients[category].map((item) => {
+                      {ingredientsByStore[storeKey].map((item) => {
                         const hasPack =
                           item.packages_needed !== null && item.package_size != null
+                        const category = item.category?.trim() || ""
                         return (
                           <TableRow key={item.ingredient_id}>
                             <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {isUncategorizedCategory(category) ? tCommon("none") : category || tCommon("none")}
+                            </TableCell>
                             <TableCell className="text-right tabular-nums text-muted-foreground">
                               {item.total_quantity} {item.unit}
                             </TableCell>

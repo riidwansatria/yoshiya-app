@@ -28,6 +28,7 @@ type IngredientSummaryRow = {
     name: string;
     unit: string;
     category: string;
+    store: string | null;
     total_quantity: number;
     package_size: number | null;
     package_label: string | null;
@@ -67,6 +68,7 @@ export function SummaryPrintView({
     const router = useRouter();
     const t = useTranslations('kitchen.summary');
     const tCommon = useTranslations('kitchen.common');
+    const tIngredients = useTranslations('kitchen.ingredients');
     const locale = useLocale();
     const [pendingRange, setPendingRange] = useState<{ from: string; to: string } | null>(null);
     const [isNavigating, startTransition] = useTransition();
@@ -151,6 +153,17 @@ export function SummaryPrintView({
                 },
             },
             {
+                id: 'store',
+                accessorKey: 'store',
+                header: ({ column }) => (
+                    <DataTableColumnHeader column={column} label={tIngredients('storeLabel')} />
+                ),
+                cell: ({ row }) => {
+                    const store = toSafeText(row.original.store).trim();
+                    return <span className="text-muted-foreground">{store || tCommon('none')}</span>;
+                },
+            },
+            {
                 id: 'total_quantity',
                 accessorKey: 'total_quantity',
                 header: ({ column }) => (
@@ -191,7 +204,7 @@ export function SummaryPrintView({
                 },
             },
         ],
-        [t, tCommon]
+        [t, tCommon, tIngredients]
     );
 
     const componentColumns = useMemo<ColumnDef<ComponentSummaryRow>[]>(

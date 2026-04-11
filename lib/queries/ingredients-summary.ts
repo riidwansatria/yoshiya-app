@@ -5,6 +5,7 @@ export interface AggregatedIngredient {
     name: string;
     unit: string;
     category: string;
+    store: string | null;
     total_quantity: number;
     package_size: number | null;
     package_label: string | null;
@@ -49,6 +50,7 @@ export async function getIngredientsSummary(
               name,
               unit,
               category,
+                            store,
               package_size,
               package_label
             )
@@ -68,8 +70,19 @@ export async function getIngredientsSummary(
         name: string;
         unit: string;
         category: string | null;
+        store: string | null;
         package_size: number | null;
         package_label: string | null;
+    }
+
+    interface RawComponentIngredientObj {
+        qty_per_serving: number;
+        ingredients: RawIngredientObj | null;
+    }
+
+    interface RawComponentObj {
+        yield_servings: number | null;
+        component_ingredients: RawComponentIngredientObj[] | null;
     }
 
     const aggregatedMap = new Map<string, AggregatedIngredient>();
@@ -80,7 +93,8 @@ export async function getIngredientsSummary(
         if (!menu || !menu.menu_components) continue;
 
         for (const mc of menu.menu_components) {
-            const component = mc.components as any;
+            const rawComponent = Array.isArray(mc.components) ? mc.components[0] : mc.components;
+            const component = (rawComponent ?? null) as RawComponentObj | null;
             if (!component || !component.component_ingredients) continue;
 
             const compYield = component.yield_servings || 1;
@@ -110,6 +124,7 @@ export async function getIngredientsSummary(
                         name: ingredient.name,
                         unit: ingredient.unit,
                         category: ingredient.category || 'Uncategorized',
+                        store: ingredient.store,
                         total_quantity: ingredientAmount,
                         package_size: ingredient.package_size,
                         package_label: ingredient.package_label,
