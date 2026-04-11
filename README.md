@@ -49,6 +49,10 @@ There are also targeted Node tests for some utility modules, for example:
 node --test lib/kitchen/realtime-merge.test.ts
 ```
 
+## Architecture
+
+- [Codebase Structure Blueprint](docs/CODEBASE_STRUCTURE.md)
+
 ## Kitchen Data Model
 
 Kitchen management is centered on these tables:
