@@ -9,10 +9,12 @@ import { IngredientEditor } from './ingredient-editor';
 export function IngredientEditorPage({
     ingredient,
     stores,
+    categories,
     restaurantId,
 }: {
     ingredient: Ingredient;
     stores: string[];
+    categories: string[];
     restaurantId: string;
 }) {
     const t = useTranslations('kitchen');
@@ -33,6 +35,7 @@ export function IngredientEditorPage({
                     <IngredientEditor
                         ingredient={ingredient}
                         stores={stores}
+                        categories={categories}
                         presentation="page"
                         onCancel={handleClose}
                         onSaved={handleClose}

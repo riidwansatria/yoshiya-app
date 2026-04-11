@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { fetchIngredientsListData, fetchDistinctStores } from '@/lib/queries/kitchen';
+import { fetchDistinctCategories, fetchDistinctStores, fetchIngredientsListData } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 
@@ -54,11 +54,13 @@ function formatPackageDisplay(
 export function IngredientsTable({
     initialData,
     initialStores,
+    initialCategories,
     components,
     restaurantId,
 }: {
     initialData: Ingredient[];
     initialStores: string[];
+    initialCategories: string[];
     components: RecipeComponent[];
     restaurantId: string;
 }) {
@@ -72,6 +74,7 @@ export function IngredientsTable({
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [ingredients, setIngredients] = useState(initialData);
     const [stores, setStores] = useState(initialStores);
+    const [categories, setCategories] = useState(initialCategories);
     const [componentsState, setComponentsState] = useState(components);
     const [, startTransition] = useTransition();
     const refetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,14 +99,16 @@ export function IngredientsTable({
     }, [deletingIngredient, ingredients]);
 
     const refetchListData = useCallback(async () => {
-        const [nextData, nextStores] = await Promise.all([
+        const [nextData, nextStores, nextCategories] = await Promise.all([
             fetchIngredientsListData(supabase, restaurantId),
             fetchDistinctStores(supabase),
+            fetchDistinctCategories(supabase),
         ]);
         startTransition(() => {
             setIngredients(nextData.ingredients);
             setComponentsState(nextData.components);
             setStores(nextStores);
+            setCategories(nextCategories);
         });
     }, [restaurantId, supabase]);
 
@@ -383,7 +388,12 @@ export function IngredientsTable({
                 </Table>
             </div>
 
-            <AddIngredientDialog open={isAddOpen} onOpenChange={setIsAddOpen} stores={stores} />
+            <AddIngredientDialog
+                open={isAddOpen}
+                onOpenChange={setIsAddOpen}
+                stores={stores}
+                categories={categories}
+            />
             {deletingIngredient && (
                 <DeleteIngredientDialog
                     ingredient={deletingIngredient}

@@ -15,9 +15,11 @@ import {
 export function IngredientEditorModal({
     ingredient,
     stores,
+    categories,
 }: {
     ingredient: Ingredient;
     stores: string[];
+    categories: string[];
 }) {
     const t = useTranslations('kitchen');
     const router = useRouter();
@@ -35,6 +37,7 @@ export function IngredientEditorModal({
                 <IngredientEditor
                     ingredient={ingredient}
                     stores={stores}
+                    categories={categories}
                     presentation="modal"
                     onCancel={handleClose}
                     onSaved={handleClose}

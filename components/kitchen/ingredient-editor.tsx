@@ -15,6 +15,7 @@ import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 import { mergeUntouchedFields } from '@/lib/kitchen/realtime-merge';
 
 import { RealtimeSyncBanner } from './realtime-sync-banner';
+import { CategoryCombobox } from './category-combobox';
 import { StoreCombobox } from './store-combobox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,12 +59,14 @@ function toIngredientFormValues(ingredient: Ingredient): FormValues {
 export function IngredientEditor({
     ingredient,
     stores,
+    categories,
     presentation,
     onCancel,
     onSaved,
 }: {
     ingredient: Ingredient;
     stores: string[];
+    categories: string[];
     presentation: 'page' | 'modal';
     onCancel: () => void;
     onSaved: () => void;
@@ -326,7 +329,11 @@ export function IngredientEditor({
                         <FormItem>
                             <FormLabel>{t('common.category')}</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <CategoryCombobox
+                                    value={field.value || ''}
+                                    onValueChange={(val) => field.onChange(val)}
+                                    categories={categories}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

@@ -66,7 +66,35 @@ export async function fetchDistinctStores(client: KitchenClient): Promise<string
         return [];
     }
 
-    const unique = [...new Set((data ?? []).map((row: { store: string }) => row.store))];
+    const unique = [
+        ...new Set(
+            (data ?? [])
+                .map((row: { store: string }) => row.store?.trim())
+                .filter((store): store is string => Boolean(store))
+        ),
+    ];
+    return unique;
+}
+
+export async function fetchDistinctCategories(client: KitchenClient): Promise<string[]> {
+    const { data, error } = await client
+        .from('ingredients')
+        .select('category')
+        .not('category', 'is', null)
+        .order('category', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching distinct categories:', error);
+        return [];
+    }
+
+    const unique = [
+        ...new Set(
+            (data ?? [])
+                .map((row: { category: string }) => row.category?.trim())
+                .filter((category): category is string => Boolean(category))
+        ),
+    ];
     return unique;
 }
 

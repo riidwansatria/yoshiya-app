@@ -39,6 +39,26 @@ export function IngredientCombobox({
     const [pendingName, setPendingName] = useState('');
     const createBtnRef = useRef<HTMLButtonElement>(null);
 
+    const isNonEmptyString = (text: string | null | undefined): text is string => {
+        return typeof text === 'string' && text.trim().length > 0;
+    };
+
+    const stores = Array.from(
+        new Set(
+            ingredients
+                .map((ingredient) => ingredient.store)
+                .filter(isNonEmptyString)
+        )
+    );
+
+    const categories = Array.from(
+        new Set(
+            ingredients
+                .map((ingredient) => ingredient.category)
+                .filter(isNonEmptyString)
+        )
+    );
+
     const selected = ingredients.find((i) => i.id === value) ?? null;
 
     // Filter matches the same way the base-ui combobox does (case-insensitive includes)
@@ -123,6 +143,8 @@ export function IngredientCombobox({
                 open={showCreate}
                 onOpenChange={setShowCreate}
                 initialName={pendingName}
+                stores={stores}
+                categories={categories}
                 onSuccess={(newIngredient) => {
                     onNewIngredient?.(newIngredient);
                     onValueChange(newIngredient.id);

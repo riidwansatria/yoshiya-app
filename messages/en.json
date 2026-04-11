@@ -314,6 +314,11 @@
             "empty": "No stores found.",
             "createNamed": "Add \"{name}\""
         },
+        "categoryCombobox": {
+            "searchPlaceholder": "Search or add category...",
+            "empty": "No categories found.",
+            "createNamed": "Add \"{name}\""
+        },
         "ingredientCombobox": {
             "searchPlaceholder": "Search ingredient...",
             "empty": "No ingredient found.",

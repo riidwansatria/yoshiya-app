@@ -5,6 +5,7 @@ export {
 } from '@/lib/queries/components'
 
 export {
+    getDistinctCategories,
     getDistinctStores,
     getIngredientById,
     getIngredients,

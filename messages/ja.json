@@ -314,6 +314,11 @@
             "empty": "該当する購入先がありません。",
             "createNamed": "「{name}」を追加"
         },
+        "categoryCombobox": {
+            "searchPlaceholder": "カテゴリを検索または追加...",
+            "empty": "該当するカテゴリがありません。",
+            "createNamed": "「{name}」を追加"
+        },
         "ingredientCombobox": {
             "searchPlaceholder": "食材を検索...",
             "empty": "該当する食材がありません。",

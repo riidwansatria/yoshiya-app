@@ -27,6 +27,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
+import { CategoryCombobox } from './category-combobox';
 import { StoreCombobox } from './store-combobox';
 
 const schema = z.object({
@@ -53,12 +54,14 @@ export function AddIngredientDialog({
     onOpenChange,
     initialName = '',
     stores = [],
+    categories = [],
     onSuccess,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initialName?: string;
     stores?: string[];
+    categories?: string[];
     onSuccess?: (ingredient: Ingredient) => void;
 }) {
     const t = useTranslations('kitchen');
@@ -164,7 +167,11 @@ export function AddIngredientDialog({
                                 <FormItem>
                                     <FormLabel>{t('ingredients.categoryOptional')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder={t('ingredients.placeholders.category')} {...field} />
+                                        <CategoryCombobox
+                                            value={field.value || ''}
+                                            onValueChange={(val) => field.onChange(val)}
+                                            categories={categories}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
