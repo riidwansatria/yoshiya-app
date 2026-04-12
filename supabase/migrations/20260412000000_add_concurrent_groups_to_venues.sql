@@ -1,0 +1,1 @@
+alter table "public"."venues" add column "concurrent_groups" integer not null default 1;
