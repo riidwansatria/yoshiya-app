@@ -183,6 +183,13 @@
             "deleteFailed": "Failed to delete booking"
         }
     },
+    "schedule": {
+        "room": "Room",
+        "other": "Other",
+        "today": "Today",
+        "staffOn": "Staff Shown",
+        "staffOff": "Staff Hidden"
+    },
     "kitchen": {
         "pages": {
             "ingredients": "Ingredients",

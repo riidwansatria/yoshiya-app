@@ -183,6 +183,13 @@
             "deleteFailed": "予約の削除に失敗しました"
         }
     },
+    "schedule": {
+        "room": "部屋",
+        "other": "他",
+        "today": "本日",
+        "staffOn": "担当表示中",
+        "staffOff": "担当非表示"
+    },
     "kitchen": {
         "pages": {
             "ingredients": "食材",

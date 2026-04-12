@@ -3,6 +3,7 @@
 import * as React from "react"
 import { format, addDays, subDays, startOfDay } from "date-fns"
 import { ja } from "date-fns/locale"
+import { useTranslations } from "next-intl"
 
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ export function ScheduleGridTransposed({
     initialReservations,
     initialStaff,
 }: ScheduleGridTransposedProps) {
+    const t = useTranslations('schedule')
     const [currentDateStr, setCurrentDateStr] = React.useState(dateStr)
     const date = new Date(currentDateStr + 'T00:00:00')
 
@@ -192,7 +194,7 @@ export function ScheduleGridTransposed({
                         </Button>
                     </div>
                     <Button variant="outline" size="sm" onClick={handleToday}>
-                        本日
+                        {t('today')}
                     </Button>
                 </div>
                 <div className="flex items-center gap-2">
@@ -202,7 +204,7 @@ export function ScheduleGridTransposed({
                         onClick={() => setShowStaffDetails(!showStaffDetails)}
                         className={showStaffDetails ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : ""}
                     >
-                        {showStaffDetails ? "担当表示中" : "担当非表示"}
+                        {showStaffDetails ? t('staffOn') : t('staffOff')}
                     </Button>
                 </div>
             </div> 
@@ -222,7 +224,7 @@ export function ScheduleGridTransposed({
                             className="flex flex-col justify-center px-3 py-2 pt-0.5 text-xs font-medium text-muted-foreground border-b border-r border-border bg-background sticky top-0 left-0 z-30"
                             style={{ gridColumn: 1, gridRow: 1 }}
                         >
-                            <span>部屋</span>
+                            <span>{t('room')}</span>
                         </div>
 
                         {/* Off-hour column header - only shows when there are off-hour bookings */}
@@ -231,7 +233,7 @@ export function ScheduleGridTransposed({
                                 className="flex flex-col justify-center px-2 pt-0.5 text-xs text-muted-foreground font-medium border-b border-r border-border bg-background sticky top-0 z-10"
                                 style={{ gridColumn: 2, gridRow: 1 }}
                             >
-                                <span>他</span>
+                                <span>{t('other')}</span>
                             </div>
                         )}
 
