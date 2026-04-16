@@ -29,10 +29,10 @@ const DIETARY_LABELS = new Set([
 ])
 
 const PRICE_PRESETS: { label: string; value: number | null }[] = [
-    { label: '〜¥3,000', value: 3000 },
+    { label: '〜¥3,300', value: 3300 },
     { label: '〜¥5,500', value: 5500 },
-    { label: '〜¥8,000', value: 8000 },
-    { label: '〜¥10,000', value: 10000 },
+    { label: '〜¥8,800', value: 8800 },
+    { label: '〜¥11,000', value: 11000 },
 ]
 
 function isDietary(label: string) {
@@ -45,7 +45,7 @@ interface MenuFinderClientProps {
     allTags: MenuTag[]
 }
 
-type IngredientMode = 'include' | 'exclude'
+type IngredientMode = 'exclude'
 
 export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
     const [includedDietaryIds, setIncludedDietaryIds] = React.useState<Set<string>>(new Set())
@@ -80,10 +80,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
             ...Array.from(ingredientFilters.entries()).map(([tagId, mode]) => ({ tagId, mode })),
         ]
         return menus.filter(menu => {
-            if (maxPrice !== null) {
-                const displayed = Math.round((menu.price ?? 0) * (1 + menu.tax_rate))
-                if (displayed > maxPrice) return false
-            }
+            if (maxPrice !== null && (menu.price ?? 0) > maxPrice) return false
             return menuMatchesTagFilters((menu.tags ?? []).map(t => t.id), filters)
         })
     }, [menus, includedDietaryIds, ingredientFilters, maxPrice])
@@ -95,13 +92,11 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
             return next
         })
 
-    const cycleIngredient = (id: string) =>
+    const toggleExclude = (id: string) =>
         setIngredientFilters(prev => {
             const next = new Map(prev)
-            const cur = next.get(id)
-            if (!cur) next.set(id, 'include')
-            else if (cur === 'include') next.set(id, 'exclude')
-            else next.delete(id)
+            if (next.has(id)) next.delete(id)
+            else next.set(id, 'exclude')
             return next
         })
 
@@ -178,20 +173,16 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                                     <button
                                         key={tag.id}
                                         type="button"
-                                        onClick={() => cycleIngredient(tag.id)}
+                                        onClick={() => toggleExclude(tag.id)}
                                         className={cn(
                                             'flex flex-col items-center gap-1 px-3 pt-2 pb-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer min-w-14',
-                                            mode === 'include'
-                                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                                                : mode === 'exclude'
+                                            mode === 'exclude'
                                                 ? 'border-red-200 bg-red-50 text-red-700'
                                                 : 'border-border text-foreground hover:bg-muted',
                                         )}
                                     >
                                         <span>{tag.label}</span>
-                                        {mode === 'include'
-                                            ? <Circle className="size-3.5" />
-                                            : mode === 'exclude'
+                                        {mode === 'exclude'
                                             ? <X className="size-3.5" />
                                             : <Minus className="size-3.5 opacity-30" />}
                                     </button>
@@ -199,11 +190,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                             })}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Circle className="size-3" /> 含む
-                            <span className="mx-1">·</span>
-                            <X className="size-3" /> 除く
-                            <span className="mx-1">·</span>
-                            <Minus className="size-3" /> 未選択 · クリックで切替
+                            <X className="size-3" /> 除く · クリックで切替
                         </p>
                     </div>
                 )}
@@ -242,14 +229,13 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                     </TableHeader>
                     <TableBody>
                         {filtered.map(menu => {
-                            const taxPrice = Math.round((menu.price ?? 0) * (1 + menu.tax_rate))
                             const menuTagIds = new Set((menu.tags ?? []).map(t => t.id))
                             return (
                                 <TableRow key={menu.id}>
                                     <TableCell className="text-center" />
                                     <TableCell className="font-medium">{menu.name}</TableCell>
                                     <TableCell className="text-right tabular-nums text-muted-foreground">
-                                        ¥{taxPrice.toLocaleString()}
+                                        ¥{(menu.price ?? 0).toLocaleString()}
                                     </TableCell>
                                     {dietaryTags.map(tag => (
                                         <TableCell key={tag.id} className="text-center">
