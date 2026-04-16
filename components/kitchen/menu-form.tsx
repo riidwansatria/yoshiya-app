@@ -23,6 +23,7 @@ import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { FractionalQuantityInput } from './fractional-quantity-input';
 import {
     Form,
@@ -44,6 +45,7 @@ const menuSchema = z.object({
     price: z.number().nullable(),
     description: z.string().optional(),
     color: z.string().optional(),
+    is_public: z.boolean(),
     tag_ids: z.array(z.string()),
     components: z.array(menuComponentSchema),
 });
@@ -196,6 +198,7 @@ export function MenuForm({
             price: initialData?.price ?? null,
             description: initialData?.description || '',
             color: initialData?.color || '',
+            is_public: initialData?.is_public ?? true,
             tag_ids: initialTagIds,
             components: initialComponents,
         },
@@ -252,6 +255,7 @@ export function MenuForm({
                     price: data.price,
                     description: data.description,
                     color: data.color,
+                    is_public: data.is_public,
                 });
                 if (res.error) throw new Error(res.error);
             } else {
@@ -263,6 +267,7 @@ export function MenuForm({
                     price: data.price,
                     description: data.description,
                     color: data.color,
+                    is_public: data.is_public,
                 });
                 if (res.error || !res.data) throw new Error(res.error || 'Failed to create menu');
                 menuId = res.data.id;
@@ -419,6 +424,27 @@ export function MenuForm({
                                         />
                                     </FormControl>
                                     <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="is_public"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <div className="flex items-center justify-between rounded-md border px-4 py-3">
+                                        <div>
+                                            <FormLabel className="text-sm font-medium">公開する</FormLabel>
+                                            <p className="text-xs text-muted-foreground">埋め込みページに表示されます</p>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </div>
                                 </FormItem>
                             )}
                         />

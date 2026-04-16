@@ -59,6 +59,7 @@ export interface Menu {
     description: string | null;
     color: string | null;
     tax_rate: number;
+    is_public: boolean;
     menu_components?: MenuComponent[];
     tags?: MenuTag[];
 }

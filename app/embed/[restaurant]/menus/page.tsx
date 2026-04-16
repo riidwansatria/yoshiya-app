@@ -10,10 +10,12 @@ export default async function EmbedMenuFinderPage({
 }) {
     const { restaurant } = await params
 
-    const [menus, allTags] = await Promise.all([
+    const [allMenus, allTags] = await Promise.all([
         fetchMenus(createCacheClient(), restaurant, { includeTags: true }),
         getMenuTags(),
     ])
+
+    const menus = allMenus.filter(m => m.is_public)
 
     return (
         <div className="p-4 md:p-6">
