@@ -3,6 +3,8 @@
 import type { Column, Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import * as React from "react";
+import { useLocale } from "next-intl";
+import { getDataTableI18n } from "@/components/data-table/i18n";
 
 import { DataTableDateFilter } from "@/components/data-table/data-table-date-filter";
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
@@ -22,6 +24,7 @@ export function DataTableToolbar<TData>({
   className,
   ...props
 }: DataTableToolbarProps<TData>) {
+  const i18n = getDataTableI18n(useLocale());
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const columns = React.useMemo(
@@ -56,7 +59,7 @@ export function DataTableToolbar<TData>({
             onClick={onReset}
           >
             <X />
-            Reset
+            {i18n.reset}
           </Button>
         )}
       </div>

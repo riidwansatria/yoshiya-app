@@ -3,6 +3,7 @@
 import type { Column } from "@tanstack/react-table";
 import { Check, PlusCircle, XCircle } from "lucide-react";
 import * as React from "react";
+import { useLocale } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { Option } from "@/types/data-table";
+import { getDataTableI18n } from "@/components/data-table/i18n";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -38,6 +40,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   multiple,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const [open, setOpen] = React.useState(false);
+  const i18n = getDataTableI18n(useLocale());
 
   const columnFilterValue = column?.getFilterValue();
   const selectedValues = new Set(
@@ -113,7 +116,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {i18n.selected(selectedValues.size)}
                   </Badge>
                 ) : (
                   options
@@ -137,7 +140,7 @@ export function DataTableFacetedFilter<TData, TValue>({
         <Command>
           <CommandInput placeholder={title} />
           <CommandList className="max-h-full">
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{i18n.noResultsFound}</CommandEmpty>
             <CommandGroup className="max-h-[300px] scroll-py-1 overflow-y-auto overflow-x-hidden">
               {options.map((option) => {
                 const isSelected = selectedValues.has(option.value);
@@ -176,7 +179,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     onSelect={() => onReset()}
                     className="justify-center text-center"
                   >
-                    Clear filters
+                    {i18n.clearFilters}
                   </CommandItem>
                 </CommandGroup>
               </>
