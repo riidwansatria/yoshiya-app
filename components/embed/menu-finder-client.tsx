@@ -52,6 +52,19 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
     const [ingredientFilters, setIngredientFilters] = React.useState<Map<string, IngredientMode>>(new Map())
     const [maxPrice, setMaxPrice] = React.useState<number | null>(null)
 
+    // Auto-height: notify parent iframe of content height changes
+    React.useEffect(() => {
+        const post = () =>
+            window.parent.postMessage(
+                { type: 'menu-finder-height', height: document.body.scrollHeight },
+                '*',
+            )
+        post()
+        const observer = new ResizeObserver(post)
+        observer.observe(document.body)
+        return () => observer.disconnect()
+    }, [])
+
     const { dietaryTags, ingredientTags } = React.useMemo(() => {
         const usedIds = new Set(menus.flatMap(m => (m.tags ?? []).map(t => t.id)))
         const active = allTags.filter(t => usedIds.has(t.id))
