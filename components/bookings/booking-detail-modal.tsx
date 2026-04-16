@@ -113,7 +113,9 @@ export function BookingDetailModal({
 
     const [saving, setSaving] = React.useState(false)
     const [staffList, setStaffList] = React.useState<StaffOption[]>(initialStaff)
-    const [venueList, setVenueList] = React.useState<VenueOption[]>(initialVenues)
+    const [venueList, setVenueList] = React.useState<VenueOption[]>(
+        Array.from(new Map(initialVenues.map(v => [v.id, v])).values())
+    )
     const [staffHydrated, setStaffHydrated] = React.useState(initialStaff.length > 0)
     const [venuesHydrated, setVenuesHydrated] = React.useState(initialVenues.length > 0)
 
@@ -381,7 +383,7 @@ export function BookingDetailModal({
     if (!open) return null
     if (loading) return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-[95vw] sm:max-w-7xl overflow-hidden bg-background p-0 flex flex-col max-h-[90vh] gap-0">
+            <DialogContent showCloseButton={false} aria-describedby={undefined} className="max-w-[95vw] sm:max-w-7xl overflow-hidden bg-background p-0 flex flex-col max-h-[90vh] gap-0">
                 <DialogTitle className="sr-only">Loading booking details</DialogTitle>
                 {/* Skeleton Header */}
                 <header className="px-4 py-3 border-b flex justify-between items-center bg-white z-10">
@@ -617,7 +619,7 @@ export function BookingDetailModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-[95vw] sm:max-w-7xl overflow-hidden bg-background p-0 flex flex-col max-h-[90vh] gap-0">
+            <DialogContent showCloseButton={false} aria-describedby={undefined} className="max-w-[95vw] sm:max-w-7xl overflow-hidden bg-background p-0 flex flex-col max-h-[90vh] gap-0">
 
                 {/* Header */}
                 <header className="px-4 py-3 border-b flex justify-between items-center bg-white z-10">
