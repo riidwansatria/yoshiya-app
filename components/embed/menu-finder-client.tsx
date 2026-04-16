@@ -107,10 +107,10 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
         includedDietaryIds.size > 0 || ingredientFilters.size > 0 || maxPrice !== null
 
     return (
-        <div className="space-y-4 select-none">
+        <div className="space-y-4">
 
             {/* ── Filters ──────────────────────────────────────────────────── */}
-            <div className="rounded-lg border border-border divide-y divide-border">
+            <div className="rounded-lg border border-border divide-y divide-border select-none">
 
                 {/* Category */}
                 <div className="flex items-center gap-4 px-4 py-3">
