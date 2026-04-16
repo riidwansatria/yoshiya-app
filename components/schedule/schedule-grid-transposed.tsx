@@ -221,7 +221,7 @@ export function ScheduleGridTransposed({
                         gridTemplateRows: `${HEADER_HEIGHT}px repeat(${restaurantHalls.length}, ${ROOM_ROW_HEIGHT}px)`
                     }}>
                         <div
-                            className="flex flex-col justify-center px-3 py-2 pt-0.5 text-xs font-medium text-muted-foreground border-b border-r border-border bg-background sticky top-0 left-0 z-30"
+                            className="flex flex-col justify-center px-3 py-2 text-xs font-medium text-muted-foreground border-b border-r border-border bg-background sticky top-0 left-0 z-30"
                             style={{ gridColumn: 1, gridRow: 1 }}
                         >
                             <span>{t('room')}</span>
@@ -230,7 +230,7 @@ export function ScheduleGridTransposed({
                         {/* Off-hour column header - only shows when there are off-hour bookings */}
                         {hasOffHourBookings && (
                             <div
-                                className="flex flex-col justify-center px-2 pt-0.5 text-xs text-muted-foreground font-medium border-b border-r border-border bg-background sticky top-0 z-10"
+                                className="flex flex-col justify-center px-2 text-xs text-muted-foreground font-medium border-b border-r border-border bg-background sticky top-0 z-10"
                                 style={{ gridColumn: 2, gridRow: 1 }}
                             >
                                 <span>{t('other')}</span>
@@ -243,7 +243,7 @@ export function ScheduleGridTransposed({
                             return (
                                 <div
                                     key={`header-${hour}`}
-                                    className="flex flex-col justify-center px-2 pt-0.5 text-xs text-muted-foreground font-medium border-b border-r border-border bg-background sticky top-0 z-10"
+                                    className="flex flex-col justify-center px-2 text-xs text-muted-foreground font-medium border-b border-r border-border bg-background sticky top-0 z-10"
                                     style={{ 
                                         gridColumn: hasOffHourBookings ? hour - DISPLAY_START_HOUR + 3 : hour - DISPLAY_START_HOUR + 2, 
                                         gridRow: 1 

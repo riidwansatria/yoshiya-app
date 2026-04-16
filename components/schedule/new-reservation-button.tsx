@@ -35,7 +35,7 @@ export function NewReservationButton({
 
     return (
         <>
-            <Button size="sm" onClick={handleOpen}>
+            <Button onClick={handleOpen}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t('newTitle')}
             </Button>
