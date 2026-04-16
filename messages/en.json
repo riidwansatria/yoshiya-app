@@ -190,6 +190,16 @@
         "staffOn": "Staff Shown",
         "staffOff": "Staff Hidden"
     },
+    "menuFinder": {
+        "heading": "Menu Finder",
+        "results": "{count} results",
+        "noResults": "No menus match the current filters.",
+        "chip": {
+            "addInclude": "Require {name}",
+            "switchExclude": "Exclude {name}",
+            "clear": "Clear {name}"
+        }
+    },
     "kitchen": {
         "pages": {
             "ingredients": "Ingredients",

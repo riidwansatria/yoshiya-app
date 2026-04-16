@@ -58,6 +58,7 @@ export interface Menu {
     price: number | null;
     description: string | null;
     color: string | null;
+    tax_rate: number;
     menu_components?: MenuComponent[];
     tags?: MenuTag[];
 }
