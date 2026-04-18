@@ -198,6 +198,17 @@
             "addInclude": "Require {name}",
             "switchExclude": "Exclude {name}",
             "clear": "Clear {name}"
+        },
+        "embed": {
+            "dietary": "Dietary",
+            "price": "Price",
+            "pricePreset": "Up to {price}",
+            "ingredients": "Ingredients",
+            "excludeHint": "Exclude - click to toggle",
+            "clearFilters": "Clear filters",
+            "menu": "Menu",
+            "priceColumn": "Price",
+            "noResults": "No menus match the current filters."
         }
     },
     "kitchen": {

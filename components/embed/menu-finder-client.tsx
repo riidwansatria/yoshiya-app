@@ -28,12 +28,7 @@ const DIETARY_LABELS = new Set([
     'kosher', 'コーシャ',
 ])
 
-const PRICE_PRESETS: { label: string; value: number | null }[] = [
-    { label: '〜¥3,300', value: 3300 },
-    { label: '〜¥5,500', value: 5500 },
-    { label: '〜¥8,800', value: 8800 },
-    { label: '〜¥11,000', value: 11000 },
-]
+const PRICE_PRESETS = [3300, 5500, 8800, 11000] as const
 
 function isDietary(label: string) {
     return DIETARY_LABELS.has(label.toLowerCase().trim())
@@ -43,14 +38,41 @@ function isDietary(label: string) {
 interface MenuFinderClientProps {
     menus: Menu[]
     allTags: MenuTag[]
+    locale: EmbedMenuFinderLocale
+    labels: MenuFinderClientLabels
 }
 
 type IngredientMode = 'exclude'
 
-export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
+export type EmbedMenuFinderLocale = 'ja' | 'en'
+
+export interface MenuFinderClientLabels {
+    dietary: string
+    price: string
+    pricePresetTemplate: string
+    ingredients: string
+    excludeHint: string
+    clearFilters: string
+    menu: string
+    priceColumn: string
+    noResults: string
+}
+
+export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderClientProps) {
     const [includedDietaryIds, setIncludedDietaryIds] = React.useState<Set<string>>(new Set())
     const [ingredientFilters, setIngredientFilters] = React.useState<Map<string, IngredientMode>>(new Map())
     const [maxPrice, setMaxPrice] = React.useState<number | null>(null)
+    const numberLocale = locale === 'ja' ? 'ja-JP' : 'en-US'
+
+    const formatYen = React.useCallback(
+        (value: number) => `¥${value.toLocaleString(numberLocale)}`,
+        [numberLocale],
+    )
+
+    const formatPricePresetLabel = React.useCallback(
+        (value: number) => labels.pricePresetTemplate.replace('{price}', formatYen(value)),
+        [formatYen, labels.pricePresetTemplate],
+    )
 
     // Auto-height: notify parent iframe of content height changes
     React.useEffect(() => {
@@ -115,7 +137,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                 {/* Category */}
                 <div className="flex items-center gap-4 px-4 py-3">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
-                        食の配慮
+                        {labels.dietary}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                         {dietaryTags.map(tag => (
@@ -139,22 +161,22 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                 {/* Price */}
                 <div className="flex items-center gap-4 px-4 py-3">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
-                        価格
+                        {labels.price}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                        {PRICE_PRESETS.map(opt => (
+                        {PRICE_PRESETS.map(value => (
                             <button
-                                key={String(opt.value)}
+                                key={String(value)}
                                 type="button"
-                                onClick={() => setMaxPrice(maxPrice === opt.value ? null : opt.value)}
+                                onClick={() => setMaxPrice(maxPrice === value ? null : value)}
                                 className={cn(
                                     'px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer',
-                                    maxPrice === opt.value
+                                    maxPrice === value
                                         ? 'bg-primary text-primary-foreground border-primary'
                                         : 'border-border text-foreground hover:bg-muted',
                                 )}
                             >
-                                {opt.label}
+                                {formatPricePresetLabel(value)}
                             </button>
                         ))}
                     </div>
@@ -164,7 +186,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                 {ingredientTags.length > 0 && (
                     <div className="px-4 py-3 space-y-2">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            食材
+                            {labels.ingredients}
                         </span>
                         <div className="flex flex-wrap gap-2">
                             {ingredientTags.map(tag => {
@@ -190,7 +212,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                             })}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <X className="size-3" /> 除く · クリックで切替
+                            <X className="size-3" /> {labels.excludeHint}
                         </p>
                     </div>
                 )}
@@ -208,7 +230,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                     }}
                     className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors cursor-pointer"
                 >
-                    フィルターをクリア
+                    {labels.clearFilters}
                 </button>
             )}
 
@@ -218,8 +240,8 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-8 text-center" />
-                            <TableHead>メニュー</TableHead>
-                            <TableHead className="text-right">価格</TableHead>
+                            <TableHead>{labels.menu}</TableHead>
+                            <TableHead className="text-right">{labels.priceColumn}</TableHead>
                             {dietaryTags.map(tag => (
                                 <TableHead key={tag.id} className="text-center">
                                     {tag.label}
@@ -235,7 +257,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                                     <TableCell className="text-center" />
                                     <TableCell className="font-medium">{menu.name}</TableCell>
                                     <TableCell className="text-right tabular-nums text-muted-foreground">
-                                        ¥{(menu.price ?? 0).toLocaleString()}
+                                        {formatYen(menu.price ?? 0)}
                                     </TableCell>
                                     {dietaryTags.map(tag => (
                                         <TableCell key={tag.id} className="text-center">
@@ -253,7 +275,7 @@ export function MenuFinderClient({ menus, allTags }: MenuFinderClientProps) {
                                     colSpan={3 + dietaryTags.length}
                                     className="text-center py-10 text-muted-foreground"
                                 >
-                                    条件に一致するメニューがありません。
+                                    {labels.noResults}
                                 </TableCell>
                             </TableRow>
                         )}

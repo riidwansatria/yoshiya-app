@@ -198,6 +198,17 @@
             "addInclude": "{name} を含める",
             "switchExclude": "{name} を除外",
             "clear": "{name} を解除"
+        },
+        "embed": {
+            "dietary": "食の配慮",
+            "price": "価格",
+            "pricePreset": "〜{price}",
+            "ingredients": "食材",
+            "excludeHint": "除く ・ クリックで切替",
+            "clearFilters": "フィルターをクリア",
+            "menu": "メニュー",
+            "priceColumn": "価格",
+            "noResults": "条件に一致するメニューがありません。"
         }
     },
     "kitchen": {
