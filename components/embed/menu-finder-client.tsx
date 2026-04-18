@@ -7,7 +7,6 @@ import type { Menu, MenuTag } from '@/lib/types/kitchen'
 import { menuMatchesTagFilters, type MenuTagFilterSelection } from '@/lib/utils/menu-tags'
 import { cn } from '@/lib/utils'
 import { MenuListImage } from '@/components/embed/menu-list-image'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import {
     Table,
     TableBody,
@@ -64,7 +63,6 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
     const [includedDietaryIds, setIncludedDietaryIds] = React.useState<Set<string>>(new Set())
     const [ingredientFilters, setIngredientFilters] = React.useState<Map<string, IngredientMode>>(new Map())
     const [maxPrice, setMaxPrice] = React.useState<number | null>(null)
-    const [lightboxMenu, setLightboxMenu] = React.useState<Menu | null>(null)
     const numberLocale = locale === 'ja' ? 'ja-JP' : 'en-US'
 
     const formatYen = React.useCallback(
@@ -265,17 +263,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                             return (
                                 <TableRow key={menu.id} className="align-middle">
                                     <TableCell className="py-3 pr-0">
-                                        <button
-                                            type="button"
-                                            onClick={() => setLightboxMenu(menu)}
-                                            className="group cursor-zoom-in rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                            aria-label={menu.name}
-                                        >
-                                            <MenuListImage
-                                                menu={menu}
-                                                className="transition-transform duration-200 group-hover:scale-[1.02]"
-                                            />
-                                        </button>
+                                        <MenuListImage menu={menu} />
                                     </TableCell>
                                     <TableCell className="min-w-[16rem] py-3">
                                         <div className="space-y-1">
@@ -316,23 +304,6 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                 </Table>
             </div>
 
-            <Dialog open={lightboxMenu !== null} onOpenChange={(open) => !open && setLightboxMenu(null)}>
-                <DialogContent className="w-fit max-w-[90vw] overflow-hidden p-0 sm:max-w-[90vw]">
-                    {lightboxMenu && (
-                        <>
-                            <DialogTitle className="sr-only">{lightboxMenu.name}</DialogTitle>
-                            <DialogDescription className="sr-only">
-                                {`${labels.menu}: ${lightboxMenu.name}. ${labels.priceColumn}: ${formatYen(lightboxMenu.price ?? 0)}.`}
-                            </DialogDescription>
-                            <MenuListImage
-                                menu={lightboxMenu}
-                                className="aspect-4/3 h-auto w-3xl max-w-[85vw] rounded-lg"
-                                labelClassName="text-xl tracking-[0.24em]"
-                            />
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }
