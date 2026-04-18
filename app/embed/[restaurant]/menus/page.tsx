@@ -18,7 +18,7 @@ export default async function EmbedMenuFinderPage({
     const menus = allMenus.filter(m => m.is_public)
 
     return (
-        <div className="p-4 md:p-6">
+        <div className="p-4">
             <MenuFinderClient menus={menus} allTags={allTags} />
         </div>
     )
