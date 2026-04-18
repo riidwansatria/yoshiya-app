@@ -6,6 +6,8 @@ import { Circle, Minus, X } from 'lucide-react'
 import type { Menu, MenuTag } from '@/lib/types/kitchen'
 import { menuMatchesTagFilters, type MenuTagFilterSelection } from '@/lib/utils/menu-tags'
 import { cn } from '@/lib/utils'
+import { MenuListImage } from '@/components/embed/menu-list-image'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import {
     Table,
     TableBody,
@@ -62,6 +64,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
     const [includedDietaryIds, setIncludedDietaryIds] = React.useState<Set<string>>(new Set())
     const [ingredientFilters, setIngredientFilters] = React.useState<Map<string, IngredientMode>>(new Map())
     const [maxPrice, setMaxPrice] = React.useState<number | null>(null)
+    const [lightboxMenu, setLightboxMenu] = React.useState<Menu | null>(null)
     const numberLocale = locale === 'ja' ? 'ja-JP' : 'en-US'
 
     const formatYen = React.useCallback(
@@ -220,7 +223,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
             </div>
 
             {/* Clear filters */}
-            {hasActiveFilters && (
+            <div className="min-h-5">
                 <button
                     type="button"
                     onClick={() => {
@@ -228,19 +231,26 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                         setIngredientFilters(new Map())
                         setMaxPrice(null)
                     }}
-                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors cursor-pointer"
+                    disabled={!hasActiveFilters}
+                    aria-hidden={!hasActiveFilters}
+                    className={cn(
+                        'text-xs underline underline-offset-2 transition-colors',
+                        hasActiveFilters
+                            ? 'cursor-pointer text-muted-foreground hover:text-foreground'
+                            : 'pointer-events-none invisible'
+                    )}
                 >
                     {labels.clearFilters}
                 </button>
-            )}
+            </div>
 
             {/* ── Results table ────────────────────────────────────────────── */}
             <div className="rounded-lg border border-border overflow-hidden">
-<Table>
+                <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-8 text-center" />
-                            <TableHead>{labels.menu}</TableHead>
+                            <TableHead className="w-[8.5rem]">{labels.menu}</TableHead>
+                            <TableHead />
                             <TableHead className="text-right">{labels.priceColumn}</TableHead>
                             {dietaryTags.map(tag => (
                                 <TableHead key={tag.id} className="text-center">
@@ -253,14 +263,37 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                         {filtered.map(menu => {
                             const menuTagIds = new Set((menu.tags ?? []).map(t => t.id))
                             return (
-                                <TableRow key={menu.id}>
-                                    <TableCell className="text-center" />
-                                    <TableCell className="font-medium">{menu.name}</TableCell>
-                                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                                <TableRow key={menu.id} className="align-middle">
+                                    <TableCell className="py-3 pr-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => setLightboxMenu(menu)}
+                                            className="group cursor-zoom-in rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                            aria-label={menu.name}
+                                        >
+                                            <MenuListImage
+                                                menu={menu}
+                                                className="transition-transform duration-200 group-hover:scale-[1.02]"
+                                            />
+                                        </button>
+                                    </TableCell>
+                                    <TableCell className="min-w-[16rem] py-3">
+                                        <div className="space-y-1">
+                                            <div className="font-medium text-base text-foreground">
+                                                {menu.name}
+                                            </div>
+                                            {menu.description && (
+                                                <p className="line-clamp-2 max-w-xl text-sm text-muted-foreground">
+                                                    {menu.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="py-3 text-right text-base tabular-nums text-foreground">
                                         {formatYen(menu.price ?? 0)}
                                     </TableCell>
                                     {dietaryTags.map(tag => (
-                                        <TableCell key={tag.id} className="text-center">
+                                        <TableCell key={tag.id} className="py-3 text-center">
                                             {menuTagIds.has(tag.id) && (
                                                 <Circle className="size-3.5 mx-auto text-emerald-600 fill-emerald-600" />
                                             )}
@@ -282,6 +315,24 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                     </TableBody>
                 </Table>
             </div>
+
+            <Dialog open={lightboxMenu !== null} onOpenChange={(open) => !open && setLightboxMenu(null)}>
+                <DialogContent className="w-fit max-w-[90vw] overflow-hidden p-0 sm:max-w-[90vw]">
+                    {lightboxMenu && (
+                        <>
+                            <DialogTitle className="sr-only">{lightboxMenu.name}</DialogTitle>
+                            <DialogDescription className="sr-only">
+                                {`${labels.menu}: ${lightboxMenu.name}. ${labels.priceColumn}: ${formatYen(lightboxMenu.price ?? 0)}.`}
+                            </DialogDescription>
+                            <MenuListImage
+                                menu={lightboxMenu}
+                                className="aspect-4/3 h-auto w-3xl max-w-[85vw] rounded-lg"
+                                labelClassName="text-xl tracking-[0.24em]"
+                            />
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
