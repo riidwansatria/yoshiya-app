@@ -1,13 +1,13 @@
 'use client';
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Control, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Trash, Plus, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash, Plus, ArrowUp, ArrowDown, ImagePlus, Loader2, X } from 'lucide-react';
 
 import { ComponentCombobox } from './component-combobox';
 import { MenuTagSelector } from './menu-tag-selector';
@@ -16,6 +16,7 @@ import type { Menu } from '@/lib/queries/menus';
 import { ComponentOption } from '@/lib/queries/components';
 import type { MenuTag } from '@/lib/queries/menu-tags';
 import { createMenu, updateMenu } from '@/lib/actions/menus';
+import { uploadMenuImage, deleteMenuImage, validateMenuImageFile } from '@/lib/storage/menu-image';
 import { updateMenuComponents } from '@/lib/actions/menu-components';
 import { updateMenuTags } from '@/lib/actions/menu-tags';
 import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
@@ -45,6 +46,7 @@ const menuSchema = z.object({
     price: z.number().nullable(),
     description: z.string().optional(),
     color: z.string().optional(),
+    image_url: z.string().url().nullable().optional(),
     is_public: z.boolean(),
     tag_ids: z.array(z.string()),
     components: z.array(menuComponentSchema),
@@ -172,6 +174,8 @@ export function MenuForm({
     const t = useTranslations('kitchen');
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const [localTagsList, setLocalTagsList] = useState(availableTags);
     const sortedComponentOptions = useMemo(
@@ -198,6 +202,7 @@ export function MenuForm({
             price: initialData?.price ?? null,
             description: initialData?.description || '',
             color: initialData?.color || '',
+            image_url: initialData?.image_url ?? null,
             is_public: initialData?.is_public ?? true,
             tag_ids: initialTagIds,
             components: initialComponents,
@@ -241,6 +246,44 @@ export function MenuForm({
         [form]
     );
     const watchedComponents = form.watch('components') ?? [];
+    const watchedImageUrl = form.watch('image_url');
+
+    const handleImageFile = useCallback(
+        async (file: File) => {
+            const validationError = validateMenuImageFile(file);
+            if (validationError) {
+                toast.error(validationError);
+                return;
+            }
+            setIsUploadingImage(true);
+            try {
+                const result = await uploadMenuImage(file, restaurantId);
+                if (!result.ok) {
+                    toast.error(result.error);
+                    return;
+                }
+                const previous = form.getValues('image_url');
+                form.setValue('image_url', result.publicUrl, { shouldDirty: true });
+                if (previous) {
+                    await deleteMenuImage(previous);
+                }
+            } finally {
+                setIsUploadingImage(false);
+            }
+        },
+        [form, restaurantId]
+    );
+
+    const handleImageRemove = useCallback(async () => {
+        const current = form.getValues('image_url');
+        form.setValue('image_url', null, { shouldDirty: true });
+        if (imageInputRef.current) {
+            imageInputRef.current.value = '';
+        }
+        if (current) {
+            await deleteMenuImage(current);
+        }
+    }, [form]);
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
@@ -255,6 +298,7 @@ export function MenuForm({
                     price: data.price,
                     description: data.description,
                     color: data.color,
+                    image_url: data.image_url ?? null,
                     is_public: data.is_public,
                 });
                 if (res.error) throw new Error(res.error);
@@ -267,6 +311,7 @@ export function MenuForm({
                     price: data.price,
                     description: data.description,
                     color: data.color,
+                    image_url: data.image_url ?? null,
                     is_public: data.is_public,
                 });
                 if (res.error || !res.data) throw new Error(res.error || 'Failed to create menu');
@@ -422,6 +467,86 @@ export function MenuForm({
                                             className="min-h-[100px]"
                                             {...field}
                                         />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="image_url"
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel>画像</FormLabel>
+                                    <FormControl>
+                                        <div className="space-y-2">
+                                            <input
+                                                ref={imageInputRef}
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        void handleImageFile(file);
+                                                    }
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                            {watchedImageUrl ? (
+                                                <div className="flex items-start gap-3">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={watchedImageUrl}
+                                                        alt=""
+                                                        className="h-28 w-28 rounded-md border object-cover"
+                                                    />
+                                                    <div className="flex flex-col gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            disabled={isUploadingImage}
+                                                            onClick={() => imageInputRef.current?.click()}
+                                                        >
+                                                            {isUploadingImage ? (
+                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <ImagePlus className="mr-2 h-4 w-4" />
+                                                            )}
+                                                            画像を変更
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            disabled={isUploadingImage}
+                                                            onClick={() => void handleImageRemove()}
+                                                        >
+                                                            <X className="mr-2 h-4 w-4" />
+                                                            削除
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={isUploadingImage}
+                                                    onClick={() => imageInputRef.current?.click()}
+                                                >
+                                                    {isUploadingImage ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <ImagePlus className="mr-2 h-4 w-4" />
+                                                    )}
+                                                    画像をアップロード
+                                                </Button>
+                                            )}
+                                            <p className="text-xs text-muted-foreground">JPG / PNG / WebP · 最大5MB</p>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

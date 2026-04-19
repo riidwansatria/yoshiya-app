@@ -58,6 +58,7 @@ export interface Menu {
     price: number | null;
     description: string | null;
     color: string | null;
+    image_url: string | null;
     tax_rate: number;
     is_public: boolean;
     menu_components?: MenuComponent[];

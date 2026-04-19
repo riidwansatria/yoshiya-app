@@ -39,6 +39,20 @@ export function MenuListImage({
     className?: string
     labelClassName?: string
 }) {
+    if (menu.image_url) {
+        return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                src={menu.image_url}
+                alt={menu.name}
+                className={cn(
+                    'h-28 w-28 rounded-2xl border object-cover shadow-[0_8px_24px_rgba(15,23,42,0.08)]',
+                    className
+                )}
+            />
+        )
+    }
+
     const palette = getImagePalette(menu.color)
     const label = getImageLabel(menu)
 
