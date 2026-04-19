@@ -263,7 +263,18 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                             return (
                                 <TableRow key={menu.id} className="align-middle">
                                     <TableCell className="py-3 pr-0">
-                                        <MenuListImage menu={menu} />
+                                        {menu.image_url ? (
+                                            <a
+                                                href={menu.image_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-block cursor-zoom-in"
+                                            >
+                                                <MenuListImage menu={menu} />
+                                            </a>
+                                        ) : (
+                                            <MenuListImage menu={menu} />
+                                        )}
                                     </TableCell>
                                     <TableCell className="min-w-[16rem] py-3">
                                         <div className="space-y-1">
