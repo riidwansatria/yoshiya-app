@@ -296,11 +296,18 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                                             <div className="font-medium text-base text-foreground">
                                                 {menu.name}
                                             </div>
-                                            {menu.description && (
-                                                <p className="line-clamp-2 max-w-xl text-sm text-muted-foreground">
-                                                    {menu.description}
-                                                </p>
-                                            )}
+                                            {(() => {
+                                                const tags = (menu.tags ?? []).filter(t => !isDietary(t.label))
+                                                return tags.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {tags.map(t => (
+                                                            <span key={t.id} className="px-2 py-0.5 rounded-full text-xs border border-border text-muted-foreground">
+                                                                {t.label}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : null
+                                            })()}
                                         </div>
                                     </TableCell>
                                     <TableCell className="py-3 text-right text-base tabular-nums text-foreground">
