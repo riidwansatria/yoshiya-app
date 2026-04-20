@@ -64,7 +64,7 @@ export interface MenuFinderClientLabels {
 export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderClientProps) {
     const [includedDietaryIds, setIncludedDietaryIds] = React.useState<Set<string>>(new Set())
     const [ingredientFilters, setIngredientFilters] = React.useState<Map<string, IngredientMode>>(new Map())
-    const [maxPrice, setMaxPrice] = React.useState<number | null>(null)
+    const [minPrice, setMinPrice] = React.useState<number | null>(null)
     const numberLocale = locale === 'ja' ? 'ja-JP' : 'en-US'
 
     const formatYen = React.useCallback(
@@ -105,10 +105,10 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
             ...Array.from(ingredientFilters.entries()).map(([tagId, mode]) => ({ tagId, mode })),
         ]
         return menus.filter(menu => {
-            if (maxPrice !== null && (menu.price ?? 0) > maxPrice) return false
+            if (minPrice !== null && (menu.price ?? 0) < minPrice) return false
             return menuMatchesTagFilters((menu.tags ?? []).map(t => t.id), filters)
         })
-    }, [menus, includedDietaryIds, ingredientFilters, maxPrice])
+    }, [menus, includedDietaryIds, ingredientFilters, minPrice])
 
     const toggleDietary = (id: string) =>
         setIncludedDietaryIds(prev => {
@@ -129,7 +129,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
         ingredientFilters.get(id) ?? 'neutral'
 
     const hasActiveFilters =
-        includedDietaryIds.size > 0 || ingredientFilters.size > 0 || maxPrice !== null
+        includedDietaryIds.size > 0 || ingredientFilters.size > 0 || minPrice !== null
 
     return (
         <div className="space-y-4">
@@ -170,10 +170,10 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                     <div className="flex flex-wrap gap-1.5">
                         <button
                             type="button"
-                            onClick={() => setMaxPrice(null)}
+                            onClick={() => setMinPrice(null)}
                             className={cn(
                                 'px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer',
-                                maxPrice === null
+                                minPrice === null
                                     ? 'bg-primary text-primary-foreground border-primary'
                                     : 'border-border text-foreground hover:bg-muted',
                             )}
@@ -184,10 +184,10 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                             <button
                                 key={String(value)}
                                 type="button"
-                                onClick={() => setMaxPrice(maxPrice === value ? null : value)}
+                                onClick={() => setMinPrice(minPrice === value ? null : value)}
                                 className={cn(
                                     'px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer',
-                                    maxPrice === value
+                                    minPrice === value
                                         ? 'bg-primary text-primary-foreground border-primary'
                                         : 'border-border text-foreground hover:bg-muted',
                                 )}
@@ -242,7 +242,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                     onClick={() => {
                         setIncludedDietaryIds(new Set())
                         setIngredientFilters(new Map())
-                        setMaxPrice(null)
+                        setMinPrice(null)
                     }}
                     disabled={!hasActiveFilters}
                     aria-hidden={!hasActiveFilters}
