@@ -49,7 +49,9 @@ export type EmbedMenuFinderLocale = 'ja' | 'en'
 
 export interface MenuFinderClientLabels {
     dietary: string
+    dietaryHint: string
     price: string
+    priceAll: string
     pricePresetTemplate: string
     ingredients: string
     excludeHint: string
@@ -140,7 +142,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
                         {labels.dietary}
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                         {dietaryTags.map(tag => (
                             <button
                                 key={tag.id}
@@ -156,6 +158,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                                 {tag.label}
                             </button>
                         ))}
+                        <p className="text-xs text-muted-foreground">← {labels.dietaryHint}</p>
                     </div>
                 </div>
 
@@ -165,6 +168,18 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                         {labels.price}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => setMaxPrice(null)}
+                            className={cn(
+                                'px-3 py-1 rounded-full text-sm font-medium border transition-colors cursor-pointer',
+                                maxPrice === null
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'border-border text-foreground hover:bg-muted',
+                            )}
+                        >
+                            {labels.priceAll}
+                        </button>
                         {PRICE_PRESETS.map(value => (
                             <button
                                 key={String(value)}

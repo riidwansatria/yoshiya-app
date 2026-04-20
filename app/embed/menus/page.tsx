@@ -76,7 +76,9 @@ export default async function EmbedMenuFinderPage({
     const m = embedMessages[locale]
     const labels: MenuFinderClientLabels = {
         dietary: m.dietary,
+        dietaryHint: m.dietaryHint,
         price: m.price,
+        priceAll: m.priceAll,
         pricePresetTemplate: m.pricePreset,
         ingredients: m.ingredients,
         excludeHint: m.excludeHint,

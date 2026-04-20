@@ -201,7 +201,9 @@
         },
         "embed": {
             "dietary": "Dietary Preference",
+            "dietaryHint": "Select any dietary requirements that apply to you to filter the menu.",
             "price": "Price",
+            "priceAll": "All",
             "pricePreset": "Up to {price}",
             "ingredients": "Ingredients",
             "excludeHint": "Exclude - click to toggle",

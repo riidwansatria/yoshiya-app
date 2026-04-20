@@ -201,7 +201,9 @@
         },
         "embed": {
             "dietary": "食の多様性",
+            "dietaryHint": "食の制限や好みに合わせてお選びください。",
             "price": "価格",
+            "priceAll": "すべて",
             "pricePreset": "〜{price}",
             "ingredients": "食材",
             "excludeHint": "除く ・ クリックで切替",
