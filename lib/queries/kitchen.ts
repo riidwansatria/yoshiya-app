@@ -167,6 +167,18 @@ export async function fetchComponentOptions(
     return (data ?? []) as Array<{ id: string; name: string }>;
 }
 
+// Circled numbers ①–⑳ (U+2460–U+2473), ㉑–㉟ (U+3251–U+325F), ㊱–㊿ (U+32B1–U+32BF)
+const CIRCLED_NUMBERS = [
+    ...Array.from({ length: 20 }, (_, i) => String.fromCodePoint(0x2460 + i)),
+    ...Array.from({ length: 15 }, (_, i) => String.fromCodePoint(0x3251 + i)),
+    ...Array.from({ length: 15 }, (_, i) => String.fromCodePoint(0x32B1 + i)),
+]
+
+function circledNumberIndex(name: string): number {
+    const idx = CIRCLED_NUMBERS.findIndex(c => name.startsWith(c))
+    return idx === -1 ? Infinity : idx
+}
+
 export async function fetchMenus(
     client: KitchenClient,
     restaurantId: string,
@@ -176,7 +188,6 @@ export async function fetchMenus(
         .from('menus')
         .select(buildMenusSelect(options))
         .eq('restaurant_id', restaurantId)
-        .order('name');
 
     if (error) {
         console.error('Error fetching menus:', error);
@@ -185,11 +196,15 @@ export async function fetchMenus(
 
     const menus = ((data ?? []) as unknown) as MenuWithNestedTags[];
 
+    const sorted = [...menus].sort(
+        (a, b) => circledNumberIndex(a.name) - circledNumberIndex(b.name)
+    )
+
     if (!options?.includeTags) {
-        return menus;
+        return sorted;
     }
 
-    return menus.map(normalizeNestedTags);
+    return sorted.map(normalizeNestedTags);
 }
 
 export async function fetchMenuById(
