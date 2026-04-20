@@ -498,10 +498,11 @@ export function MenuForm({
                                     <FormControl>
                                         <div className="space-y-2">
                                             <input
+                                                id="menu-image-upload"
                                                 ref={imageInputRef}
                                                 type="file"
                                                 accept="image/jpeg,image/png,image/webp"
-                                                className="hidden"
+                                                className="sr-only"
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
                                                     if (file) {
@@ -517,6 +518,11 @@ export function MenuForm({
                                                         src={pendingPreviewUrl ?? watchedImageUrl ?? undefined}
                                                         alt=""
                                                         className="h-28 w-28 rounded-md border object-cover"
+                                                        onError={() => {
+                                                            if (!pendingPreviewUrl) {
+                                                                form.setValue('image_url', null, { shouldDirty: true })
+                                                            }
+                                                        }}
                                                     />
                                                     <div className="flex flex-col gap-2">
                                                         <Button
