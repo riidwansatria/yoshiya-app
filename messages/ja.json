@@ -200,7 +200,7 @@
             "clear": "{name} を解除"
         },
         "embed": {
-            "dietary": "食の配慮",
+            "dietary": "食の多様性",
             "price": "価格",
             "pricePreset": "〜{price}",
             "ingredients": "食材",

@@ -1,5 +1,3 @@
-import { getLocale, getTranslations } from 'next-intl/server'
-
 import {
     MenuFinderClient,
     type EmbedMenuFinderLocale,
@@ -8,6 +6,13 @@ import {
 import { fetchMenus } from '@/lib/queries/kitchen'
 import { getMenuTags } from '@/lib/queries/menu-tags'
 import { createCacheClient } from '@/lib/supabase/cache'
+import en from '@/messages/en.json'
+import ja from '@/messages/ja.json'
+
+const embedMessages = {
+    en: en.menuFinder.embed,
+    ja: ja.menuFinder.embed,
+}
 
 const DEFAULT_EMBED_RESTAURANT = 'banquet'
 
@@ -55,33 +60,30 @@ export default async function EmbedMenuFinderPage({
 }: {
     searchParams: Promise<EmbedSearchParams>
 }) {
-    const [resolvedSearchParams, requestLocale] = await Promise.all([searchParams, getLocale()])
+    const resolvedSearchParams = await searchParams
 
-    const locale =
-        normalizeLocale(
-            getFirstQueryValue(resolvedSearchParams.lang),
-        ) ?? (requestLocale === 'en' ? 'en' : 'ja')
+    const locale = normalizeLocale(getFirstQueryValue(resolvedSearchParams.lang)) ?? 'ja'
 
     const restaurant =
         normalizeRestaurant(getFirstQueryValue(resolvedSearchParams.restaurant)) ??
         DEFAULT_EMBED_RESTAURANT
 
-    const [allMenus, allTags, t] = await Promise.all([
+    const [allMenus, allTags] = await Promise.all([
         fetchMenus(createCacheClient(), restaurant, { includeTags: true }),
         getMenuTags(),
-        getTranslations({ locale, namespace: 'menuFinder.embed' }),
     ])
 
+    const m = embedMessages[locale]
     const labels: MenuFinderClientLabels = {
-        dietary: t('dietary'),
-        price: t('price'),
-        pricePresetTemplate: t('pricePreset', { price: '{price}' }),
-        ingredients: t('ingredients'),
-        excludeHint: t('excludeHint'),
-        clearFilters: t('clearFilters'),
-        menu: t('menu'),
-        priceColumn: t('priceColumn'),
-        noResults: t('noResults'),
+        dietary: m.dietary,
+        price: m.price,
+        pricePresetTemplate: m.pricePreset,
+        ingredients: m.ingredients,
+        excludeHint: m.excludeHint,
+        clearFilters: m.clearFilters,
+        menu: m.menu,
+        priceColumn: m.priceColumn,
+        noResults: m.noResults,
     }
 
     const menus = allMenus.filter(menu => menu.is_public)

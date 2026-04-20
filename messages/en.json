@@ -200,7 +200,7 @@
             "clear": "Clear {name}"
         },
         "embed": {
-            "dietary": "Dietary",
+            "dietary": "Dietary Preference",
             "price": "Price",
             "pricePreset": "Up to {price}",
             "ingredients": "Ingredients",
