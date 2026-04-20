@@ -175,6 +175,8 @@ export function MenuForm({
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+    const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const [localTagsList, setLocalTagsList] = useState(availableTags);
@@ -249,47 +251,61 @@ export function MenuForm({
     const watchedImageUrl = form.watch('image_url');
 
     const handleImageFile = useCallback(
-        async (file: File) => {
+        (file: File) => {
             const validationError = validateMenuImageFile(file);
             if (validationError) {
                 toast.error(validationError);
                 return;
             }
-            setIsUploadingImage(true);
-            try {
-                const result = await uploadMenuImage(file, restaurantId);
-                if (!result.ok) {
-                    toast.error(result.error);
-                    return;
-                }
-                const previous = form.getValues('image_url');
-                form.setValue('image_url', result.publicUrl, { shouldDirty: true });
-                if (previous) {
-                    await deleteMenuImage(previous);
-                }
-            } finally {
-                setIsUploadingImage(false);
-            }
+            if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+            setPendingImageFile(file);
+            setPendingPreviewUrl(URL.createObjectURL(file));
         },
-        [form, restaurantId]
+        [pendingPreviewUrl]
     );
 
     const handleImageRemove = useCallback(async () => {
-        const current = form.getValues('image_url');
-        form.setValue('image_url', null, { shouldDirty: true });
+        if (pendingImageFile) {
+            if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+            setPendingImageFile(null);
+            setPendingPreviewUrl(null);
+        } else {
+            const current = form.getValues('image_url');
+            form.setValue('image_url', null, { shouldDirty: true });
+            if (current) {
+                await deleteMenuImage(current);
+            }
+        }
         if (imageInputRef.current) {
             imageInputRef.current.value = '';
         }
-        if (current) {
-            await deleteMenuImage(current);
-        }
-    }, [form]);
+    }, [form, pendingImageFile, pendingPreviewUrl]);
 
     async function onSubmit(data: FormValues) {
         setIsSaving(true);
         let menuId = initialData?.id;
 
         try {
+            let finalImageUrl = data.image_url ?? null;
+
+            if (pendingImageFile) {
+                setIsUploadingImage(true);
+                try {
+                    const result = await uploadMenuImage(pendingImageFile, restaurantId);
+                    if (!result.ok) {
+                        toast.error(result.error);
+                        return;
+                    }
+                    if (finalImageUrl) await deleteMenuImage(finalImageUrl);
+                    finalImageUrl = result.publicUrl;
+                    if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+                    setPendingImageFile(null);
+                    setPendingPreviewUrl(null);
+                } finally {
+                    setIsUploadingImage(false);
+                }
+            }
+
             if (initialData) {
                 // Update existing menu
                 const res = await updateMenu(initialData.id, {
@@ -298,7 +314,7 @@ export function MenuForm({
                     price: data.price,
                     description: data.description,
                     color: data.color,
-                    image_url: data.image_url ?? null,
+                    image_url: finalImageUrl,
                     is_public: data.is_public,
                 });
                 if (res.error) throw new Error(res.error);
@@ -311,7 +327,7 @@ export function MenuForm({
                     price: data.price,
                     description: data.description,
                     color: data.color,
-                    image_url: data.image_url ?? null,
+                    image_url: finalImageUrl,
                     is_public: data.is_public,
                 });
                 if (res.error || !res.data) throw new Error(res.error || 'Failed to create menu');
@@ -494,11 +510,11 @@ export function MenuForm({
                                                     e.target.value = '';
                                                 }}
                                             />
-                                            {watchedImageUrl ? (
+                                            {(pendingPreviewUrl ?? watchedImageUrl) ? (
                                                 <div className="flex items-start gap-3">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                                     <img
-                                                        src={watchedImageUrl}
+                                                        src={pendingPreviewUrl ?? watchedImageUrl ?? undefined}
                                                         alt=""
                                                         className="h-28 w-28 rounded-md border object-cover"
                                                     />
@@ -662,7 +678,7 @@ export function MenuForm({
                     >
                         {t('common.cancel')}
                     </Button>
-                    <Button type="submit" disabled={isSaving}>
+                    <Button type="submit" disabled={isSaving || isUploadingImage}>
                         {isSaving ? t('common.saving') : t('menus.form.save')}
                     </Button>
                 </div>
