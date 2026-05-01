@@ -42,6 +42,7 @@ const menuComponentSchema = z.object({
 
 const menuSchema = z.object({
     name: z.string().min(1, 'Name is required'),
+    name_en: z.string().optional(),
     season: z.string().optional(),
     price: z.number().nullable(),
     description: z.string().optional(),
@@ -200,6 +201,7 @@ export function MenuForm({
         resolver: zodResolver(menuSchema),
         defaultValues: {
             name: initialData?.name || '',
+            name_en: initialData?.name_en ?? '',
             season: initialData?.season || '',
             price: initialData?.price ?? null,
             description: initialData?.description || '',
@@ -310,6 +312,7 @@ export function MenuForm({
                 // Update existing menu
                 const res = await updateMenu(initialData.id, {
                     name: data.name,
+                    name_en: data.name_en,
                     season: data.season,
                     price: data.price,
                     description: data.description,
@@ -323,6 +326,7 @@ export function MenuForm({
                 const res = await createMenu({
                     restaurant_id: restaurantId,
                     name: data.name,
+                    name_en: data.name_en,
                     season: data.season,
                     price: data.price,
                     description: data.description,
@@ -402,6 +406,20 @@ export function MenuForm({
                                         <FormControl>
                                             <Input placeholder={t('menus.placeholders.name')} {...field} />
                                         </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="name_en"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('menus.form.nameEn')}</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder={t('menus.placeholders.nameEn')} {...field} />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}

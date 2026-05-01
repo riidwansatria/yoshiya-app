@@ -1,8 +1,8 @@
 import type { Menu } from '@/lib/types/kitchen'
 import { cn } from '@/lib/utils'
 
-function getImageLabel(menu: Menu) {
-    const source = menu.name.trim()
+function getImageLabel(menu: Menu, displayName?: string) {
+    const source = (displayName ?? menu.name).trim()
     if (!source) {
         return 'Chef selection'
     }
@@ -32,10 +32,12 @@ function getImagePalette(color?: string | null) {
 
 export function MenuListImage({
     menu,
+    displayName,
     className,
     labelClassName,
 }: {
     menu: Menu
+    displayName?: string
     className?: string
     labelClassName?: string
 }) {
@@ -44,7 +46,7 @@ export function MenuListImage({
             // eslint-disable-next-line @next/next/no-img-element
             <img
                 src={menu.image_url}
-                alt={menu.name}
+                alt={displayName ?? menu.name}
                 className={cn(
                     'h-28 w-28 rounded-2xl border object-cover shadow-[0_8px_24px_rgba(15,23,42,0.08)]',
                     className
@@ -54,7 +56,7 @@ export function MenuListImage({
     }
 
     const palette = getImagePalette(menu.color)
-    const label = getImageLabel(menu)
+    const label = getImageLabel(menu, displayName)
 
     return (
         <div

@@ -457,6 +457,7 @@
             "form": {
                 "details": "Menu Details",
                 "name": "Name",
+                "nameEn": "English name",
                 "season": "Season",
                 "priceOptional": "Price (¥)",
                 "labelColor": "Label Color",
@@ -477,6 +478,7 @@
             },
             "placeholders": {
                 "name": "e.g. Spring Kaiseki",
+                "nameEn": "English name (optional)...",
                 "season": "e.g. Spring 2026",
                 "price": "Leave blank if not needed",
                 "color": "#ffffff",

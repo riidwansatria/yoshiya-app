@@ -457,6 +457,7 @@
             "form": {
                 "details": "メニュー情報",
                 "name": "名称",
+                "nameEn": "英語名",
                 "season": "季節",
                 "priceOptional": "単価（¥）",
                 "labelColor": "ラベルカラー",
@@ -477,6 +478,7 @@
             },
             "placeholders": {
                 "name": "例: 春の会席",
+                "nameEn": "英語名...",
                 "season": "例: 2026年 春",
                 "price": "不要なら空欄",
                 "color": "#ffffff",

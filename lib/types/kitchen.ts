@@ -58,6 +58,7 @@ export interface Menu {
     id: string;
     restaurant_id: string;
     name: string;
+    name_en: string | null;
     season: string | null;
     price: number | null;
     description: string | null;

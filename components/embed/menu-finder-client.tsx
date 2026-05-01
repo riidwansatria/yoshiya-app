@@ -4,6 +4,7 @@ import * as React from 'react'
 
 import { Circle, Minus, X } from 'lucide-react'
 import type { Menu, MenuTag } from '@/lib/types/kitchen'
+import { getLocalizedMenuName } from '@/lib/utils/menus'
 import { getLocalizedTagLabel, menuMatchesTagFilters, partitionTagsByKind, type MenuTagFilterSelection } from '@/lib/utils/menu-tags'
 import { cn } from '@/lib/utils'
 import { MenuListImage } from '@/components/embed/menu-list-image'
@@ -258,6 +259,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                     <TableBody>
                         {filtered.map(menu => {
                             const menuTagIds = new Set((menu.tags ?? []).map(t => t.id))
+                            const menuName = getLocalizedMenuName(menu, locale)
                             return (
                                 <TableRow key={menu.id} className="align-middle">
                                     <TableCell className="py-3 pr-0">
@@ -268,16 +270,16 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                                                 rel="noopener noreferrer"
                                                 className="inline-block cursor-zoom-in"
                                             >
-                                                <MenuListImage menu={menu} />
+                                                <MenuListImage menu={menu} displayName={menuName} />
                                             </a>
                                         ) : (
-                                            <MenuListImage menu={menu} />
+                                            <MenuListImage menu={menu} displayName={menuName} />
                                         )}
                                     </TableCell>
                                     <TableCell className="min-w-[16rem] py-3">
                                         <div className="space-y-1">
                                             <div className="font-medium text-base text-foreground">
-                                                {menu.name}
+                                                {menuName}
                                             </div>
                                             {(() => {
                                                 const tags = (menu.tags ?? []).filter(t => t.kind === 'ingredient')
