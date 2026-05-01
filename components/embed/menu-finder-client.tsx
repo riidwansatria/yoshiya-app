@@ -22,7 +22,6 @@ const PRICE_PRESETS = [3300, 5500, 8800, 11000] as const
 // ─── Component ────────────────────────────────────────────────────────────────
 interface MenuFinderClientProps {
     menus: Menu[]
-    allTags: MenuTag[]
     locale: EmbedMenuFinderLocale
     labels: MenuFinderClientLabels
 }
@@ -45,7 +44,7 @@ export interface MenuFinderClientLabels {
     noResults: string
 }
 
-export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderClientProps) {
+export function MenuFinderClient({ menus, locale, labels }: MenuFinderClientProps) {
     const [includedDietaryIds, setIncludedDietaryIds] = React.useState<Set<string>>(new Set())
     const [ingredientFilters, setIngredientFilters] = React.useState<Map<string, IngredientMode>>(new Map())
     const [minPrice, setMinPrice] = React.useState<number | null>(null)
@@ -75,11 +74,12 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
     }, [])
 
     const { dietaryTags, ingredientTags } = React.useMemo(() => {
-        const usedIds = new Set(menus.flatMap(m => (m.tags ?? []).map(t => t.id)))
-        const active = allTags.filter(t => usedIds.has(t.id))
+        const active = Array.from(
+            new Map(menus.flatMap(m => m.tags ?? []).map(tag => [tag.id, tag])).values(),
+        ).sort((a, b) => a.label.localeCompare(b.label))
         const { dietary, ingredient } = partitionTagsByKind(active)
         return { dietaryTags: dietary, ingredientTags: ingredient }
-    }, [menus, allTags])
+    }, [menus])
 
     const filtered = React.useMemo(() => {
         const filters: MenuTagFilterSelection[] = [

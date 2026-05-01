@@ -4,7 +4,6 @@ import {
     type MenuFinderClientLabels,
 } from '@/components/embed/menu-finder-client'
 import { fetchMenus } from '@/lib/queries/kitchen'
-import { getMenuTags } from '@/lib/queries/menu-tags'
 import { createCacheClient } from '@/lib/supabase/cache'
 import en from '@/messages/en.json'
 import ja from '@/messages/ja.json'
@@ -68,10 +67,7 @@ export default async function EmbedMenuFinderPage({
         normalizeRestaurant(getFirstQueryValue(resolvedSearchParams.restaurant)) ??
         DEFAULT_EMBED_RESTAURANT
 
-    const [allMenus, allTags] = await Promise.all([
-        fetchMenus(createCacheClient(), restaurant, { includeTags: true }),
-        getMenuTags(),
-    ])
+    const allMenus = await fetchMenus(createCacheClient(), restaurant, { includeTags: true })
 
     const m = embedMessages[locale]
     const labels: MenuFinderClientLabels = {
@@ -92,7 +88,7 @@ export default async function EmbedMenuFinderPage({
 
     return (
         <div className="p-4">
-            <MenuFinderClient menus={menus} allTags={allTags} locale={locale} labels={labels} />
+            <MenuFinderClient menus={menus} locale={locale} labels={labels} />
         </div>
     )
 }
