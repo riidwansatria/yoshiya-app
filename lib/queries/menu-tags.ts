@@ -23,7 +23,7 @@ export const getMenuTagsWithCount = unstable_cache(
         const supabase = createCacheClient();
         const { data, error } = await supabase
             .from('menu_tags')
-            .select('id, label, created_at, updated_at, menu_tag_assignments(menu_id, menus(id, name, restaurant_id))')
+            .select('id, label, label_en, kind, created_at, updated_at, menu_tag_assignments(menu_id, menus(id, name, restaurant_id))')
             .order('label', { ascending: true });
 
         if (error) {

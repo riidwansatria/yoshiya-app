@@ -86,7 +86,7 @@ export function MenuTagSelector({
         setIsCreating(true);
 
         try {
-            const result = await createMenuTag(trimmedInput);
+            const result = await createMenuTag(trimmedInput, { kind: 'ingredient' });
 
             if (result.error || !result.data) {
                 throw new Error(result.error || t('menus.tags.createFailed'));

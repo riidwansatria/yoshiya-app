@@ -23,7 +23,7 @@ export {
 export {
     createMenuTag,
     deleteMenuTag,
-    renameMenuTag,
+    updateMenuTag,
     updateMenuTags,
 } from '@/lib/actions/menu-tags'
 

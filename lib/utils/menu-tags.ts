@@ -1,3 +1,7 @@
+import type { MenuTag } from '@/lib/types/kitchen';
+
+export type { MenuTagKind } from '@/lib/types/kitchen';
+
 export type MenuTagFilterMode = 'include' | 'exclude';
 
 export interface MenuTagFilterSelection {
@@ -15,6 +19,20 @@ export function normalizeMenuTagLookupLabel(label: string) {
 
 export function dedupeMenuTagIds(tagIds: string[]) {
     return Array.from(new Set(tagIds.filter(Boolean)));
+}
+
+export function getLocalizedTagLabel(tag: MenuTag, locale: string): string {
+    return locale === 'en' && tag.label_en ? tag.label_en : tag.label;
+}
+
+export function partitionTagsByKind(tags: MenuTag[]): { dietary: MenuTag[]; ingredient: MenuTag[] } {
+    const dietary: MenuTag[] = [];
+    const ingredient: MenuTag[] = [];
+    for (const tag of tags) {
+        if (tag.kind === 'dietary') dietary.push(tag);
+        else ingredient.push(tag);
+    }
+    return { dietary, ingredient };
 }
 
 export function menuMatchesTagFilters(

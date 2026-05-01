@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
-import type { MenuTag } from '@/lib/queries/menu-tags';
+import type { MenuTag, MenuTagKind } from '@/lib/types/kitchen';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 import {
@@ -12,7 +12,38 @@ import {
     normalizeMenuTagLookupLabel,
 } from '@/lib/utils/menu-tags';
 
-export async function createMenuTag(label: string) {
+function normalizeOptionalLabel(value: string | null | undefined): string | null {
+    if (!value) return null;
+    const trimmed = value.trim();
+    return trimmed || null;
+}
+
+function labelCollides(
+    tags: MenuTag[],
+    label: string,
+    labelEn: string | null,
+    excludeId?: string
+): boolean {
+    const normalizedLabel = normalizeMenuTagLookupLabel(label);
+    const normalizedLabelEn = labelEn ? normalizeMenuTagLookupLabel(labelEn) : null;
+
+    return tags
+        .filter((t) => t.id !== excludeId)
+        .some((t) => {
+            if (normalizeMenuTagLookupLabel(t.label) === normalizedLabel) return true;
+            if (normalizedLabelEn && t.label_en && normalizeMenuTagLookupLabel(t.label_en) === normalizedLabelEn) return true;
+            return false;
+        });
+}
+
+function invalidateCaches() {
+    updateTag(CACHE_TAGS.MENU_TAGS);
+    updateTag(CACHE_TAGS.MENUS);
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
+}
+
+export async function createMenuTag(label: string, options: { labelEn?: string; kind: MenuTagKind }) {
     const supabase = await createClient();
     const normalized = normalizeMenuTagLabel(label);
 
@@ -20,7 +51,9 @@ export async function createMenuTag(label: string) {
         return { error: 'Tag label is required' };
     }
 
-    const normalizedLookup = normalizeMenuTagLookupLabel(normalized);
+    const labelEn = normalizeOptionalLabel(options.labelEn);
+    const { kind } = options;
+
     const { data: existingTags, error: existingError } = await supabase
         .from('menu_tags')
         .select('*')
@@ -31,7 +64,9 @@ export async function createMenuTag(label: string) {
         return { error: 'Failed to create tag' };
     }
 
-    const existingTag = ((existingTags ?? []) as MenuTag[]).find(
+    const allTags = (existingTags ?? []) as MenuTag[];
+    const normalizedLookup = normalizeMenuTagLookupLabel(normalized);
+    const existingTag = allTags.find(
         (tag) => normalizeMenuTagLookupLabel(tag.label) === normalizedLookup
     );
 
@@ -39,9 +74,13 @@ export async function createMenuTag(label: string) {
         return { success: true, data: existingTag };
     }
 
+    if (labelEn && labelCollides(allTags, normalized, labelEn)) {
+        return { error: 'A tag with this English name already exists' };
+    }
+
     const { data: createdTag, error } = await supabase
         .from('menu_tags')
-        .insert([{ label: normalized }])
+        .insert([{ label: normalized, label_en: labelEn, kind }])
         .select()
         .single();
 
@@ -50,57 +89,81 @@ export async function createMenuTag(label: string) {
         return { error: 'Failed to create tag' };
     }
 
-    updateTag(CACHE_TAGS.MENU_TAGS);
-    updateTag(CACHE_TAGS.MENUS);
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
+    invalidateCaches();
 
     return { success: true, data: createdTag as MenuTag };
 }
 
-export async function renameMenuTag(tagId: string, newLabel: string) {
+export async function updateMenuTag(
+    tagId: string,
+    updates: { label?: string; labelEn?: string | null; kind?: MenuTagKind }
+) {
     const supabase = await createClient();
-    const normalized = normalizeMenuTagLabel(newLabel);
 
-    if (!normalized) {
-        return { error: 'Tag label is required' };
-    }
-
-    const normalizedLookup = normalizeMenuTagLookupLabel(normalized);
     const { data: existingTags, error: existingError } = await supabase
         .from('menu_tags')
-        .select('id, label')
-        .neq('id', tagId);
+        .select('id, label, label_en, kind')
+        .order('label', { ascending: true });
 
     if (existingError) {
         console.error('Error checking existing menu tags:', existingError);
-        return { error: 'Failed to rename tag' };
+        return { error: 'Failed to update tag' };
     }
 
-    const conflict = ((existingTags ?? []) as MenuTag[]).find(
-        (tag) => normalizeMenuTagLookupLabel(tag.label) === normalizedLookup
-    );
+    const allTags = (existingTags ?? []) as MenuTag[];
+    const current = allTags.find((t) => t.id === tagId);
+    if (!current) {
+        return { error: 'Tag not found' };
+    }
 
-    if (conflict) {
-        return { error: 'A tag with this name already exists' };
+    const patch: Record<string, unknown> = {};
+
+    if (updates.label !== undefined) {
+        const normalized = normalizeMenuTagLabel(updates.label);
+        if (!normalized) return { error: 'Tag label is required' };
+
+        const conflict = allTags
+            .filter((t) => t.id !== tagId)
+            .find((t) => normalizeMenuTagLookupLabel(t.label) === normalizeMenuTagLookupLabel(normalized));
+        if (conflict) return { error: 'A tag with this name already exists' };
+
+        patch.label = normalized;
+    }
+
+    if ('labelEn' in updates) {
+        const labelEn = normalizeOptionalLabel(updates.labelEn ?? null);
+
+        if (labelEn) {
+            const conflict = allTags
+                .filter((t) => t.id !== tagId)
+                .find((t) => t.label_en && normalizeMenuTagLookupLabel(t.label_en) === normalizeMenuTagLookupLabel(labelEn));
+            if (conflict) return { error: 'A tag with this English name already exists' };
+        }
+
+        patch.label_en = labelEn;
+    }
+
+    if (updates.kind !== undefined) {
+        patch.kind = updates.kind;
+    }
+
+    if (Object.keys(patch).length === 0) {
+        return { success: true, data: current };
     }
 
     const { data: updatedTag, error } = await supabase
         .from('menu_tags')
-        .update({ label: normalized })
+        .update(patch)
         .eq('id', tagId)
         .select()
         .single();
 
     if (error) {
-        console.error('Error renaming menu tag:', error);
-        return { error: 'Failed to rename tag' };
+        console.error('Error updating menu tag:', error);
+        return { error: 'Failed to update tag' };
     }
 
-    updateTag(CACHE_TAGS.MENU_TAGS);
-    updateTag(CACHE_TAGS.MENUS);
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
+    invalidateCaches();
 
     return { success: true, data: updatedTag as MenuTag };
 }
@@ -118,10 +181,7 @@ export async function deleteMenuTag(tagId: string) {
         return { error: 'Failed to delete tag' };
     }
 
-    updateTag(CACHE_TAGS.MENU_TAGS);
-    updateTag(CACHE_TAGS.MENUS);
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
+    invalidateCaches();
 
     return { success: true };
 }
@@ -151,10 +211,7 @@ export async function updateMenuTags(menuId: string, tagIds: string[]) {
         }
     }
 
-    updateTag(CACHE_TAGS.MENU_TAGS);
-    updateTag(CACHE_TAGS.MENUS);
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
-    revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENU_DETAIL_PAGE, 'page');
+    invalidateCaches();
 
     return { success: true };
 }

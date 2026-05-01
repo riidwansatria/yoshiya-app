@@ -34,7 +34,7 @@ export function buildMenusSelect({
     }
 
     if (includeTags) {
-        parts.push('menu_tag_assignments (menu_tags (id, label, created_at, updated_at))');
+        parts.push('menu_tag_assignments (menu_tags (id, label, label_en, kind, created_at, updated_at))');
     }
 
     return parts.join(', ');
@@ -234,7 +234,7 @@ export async function fetchMenuById(
 export async function fetchMenuTags(client: KitchenClient): Promise<MenuTag[]> {
     const { data, error } = await client
         .from('menu_tags')
-        .select('id, label, created_at, updated_at')
+        .select('id, label, label_en, kind, created_at, updated_at')
         .order('label', { ascending: true });
 
     if (error) {

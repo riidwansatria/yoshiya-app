@@ -4,7 +4,7 @@ import * as React from 'react'
 
 import { Circle, Minus, X } from 'lucide-react'
 import type { Menu, MenuTag } from '@/lib/types/kitchen'
-import { menuMatchesTagFilters, type MenuTagFilterSelection } from '@/lib/utils/menu-tags'
+import { getLocalizedTagLabel, menuMatchesTagFilters, partitionTagsByKind, type MenuTagFilterSelection } from '@/lib/utils/menu-tags'
 import { cn } from '@/lib/utils'
 import { MenuListImage } from '@/components/embed/menu-list-image'
 import {
@@ -16,24 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table'
 
-// ─── Hardcoded categorization ─────────────────────────────────────────────────
-// Tags whose labels match any of these (case-insensitive) go into the CATEGORY
-// row. All other tags go into the INGREDIENTS grid.
-// Replace with a `kind` DB column when that migration is added.
-const DIETARY_LABELS = new Set([
-    'halal', 'ハラール',
-    'vegan', 'ヴィーガン', 'ビーガン',
-    'vegetarian', 'ベジタリアン',
-    'gluten free', 'gluten-free', 'gf', 'グルテンフリー', 'グルテン',
-    'allergen free', 'allergen-free', 'agf', 'アレルゲンフリー', 'アレルギー',
-    'kosher', 'コーシャ',
-])
-
 const PRICE_PRESETS = [3300, 5500, 8800, 11000] as const
-
-function isDietary(label: string) {
-    return DIETARY_LABELS.has(label.toLowerCase().trim())
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 interface MenuFinderClientProps {
@@ -93,10 +76,8 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
     const { dietaryTags, ingredientTags } = React.useMemo(() => {
         const usedIds = new Set(menus.flatMap(m => (m.tags ?? []).map(t => t.id)))
         const active = allTags.filter(t => usedIds.has(t.id))
-        return {
-            dietaryTags: active.filter(t => isDietary(t.label)),
-            ingredientTags: active.filter(t => !isDietary(t.label)),
-        }
+        const { dietary, ingredient } = partitionTagsByKind(active)
+        return { dietaryTags: dietary, ingredientTags: ingredient }
     }, [menus, allTags])
 
     const filtered = React.useMemo(() => {
@@ -131,13 +112,15 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
     const hasActiveFilters =
         includedDietaryIds.size > 0 || ingredientFilters.size > 0 || minPrice !== null
 
+    const tagLabel = (tag: MenuTag) => getLocalizedTagLabel(tag, locale)
+
     return (
         <div className="space-y-4">
 
             {/* ── Filters ──────────────────────────────────────────────────── */}
             <div className="rounded-lg border border-border divide-y divide-border select-none">
 
-                {/* Category */}
+                {/* Dietary */}
                 <div className="flex items-center gap-4 px-4 py-3">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
                         {labels.dietary}
@@ -155,7 +138,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                                         : 'border-border text-foreground hover:bg-muted',
                                 )}
                             >
-                                {tag.label}
+                                {tagLabel(tag)}
                             </button>
                         ))}
                         <p className="text-xs text-muted-foreground">← {labels.dietaryHint}</p>
@@ -219,7 +202,7 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                                                 : 'border-border text-foreground hover:bg-muted',
                                         )}
                                     >
-                                        <span>{tag.label}</span>
+                                        <span>{tagLabel(tag)}</span>
                                         {mode === 'exclude'
                                             ? <X className="size-3.5" />
                                             : <Minus className="size-3.5 opacity-30" />}
@@ -262,12 +245,12 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[8.5rem]">{labels.menu}</TableHead>
+                            <TableHead className="w-34">{labels.menu}</TableHead>
                             <TableHead />
                             <TableHead className="text-right">{labels.priceColumn}</TableHead>
                             {dietaryTags.map(tag => (
                                 <TableHead key={tag.id} className="text-center">
-                                    {tag.label}
+                                    {tagLabel(tag)}
                                 </TableHead>
                             ))}
                         </TableRow>
@@ -297,12 +280,12 @@ export function MenuFinderClient({ menus, allTags, locale, labels }: MenuFinderC
                                                 {menu.name}
                                             </div>
                                             {(() => {
-                                                const tags = (menu.tags ?? []).filter(t => !isDietary(t.label))
+                                                const tags = (menu.tags ?? []).filter(t => t.kind === 'ingredient')
                                                 return tags.length > 0 ? (
                                                     <div className="flex flex-wrap gap-1">
                                                         {tags.map(t => (
                                                             <span key={t.id} className="px-2 py-0.5 rounded-full text-xs border border-border text-muted-foreground">
-                                                                {t.label}
+                                                                {tagLabel(t)}
                                                             </span>
                                                         ))}
                                                     </div>
