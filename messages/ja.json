@@ -435,6 +435,11 @@
                 "createFailed": "タグの作成に失敗しました",
                 "alreadySelected": "そのタグはすでに選択されています",
                 "remove": "{name} を削除",
+                "kindLabels": {
+                    "season": "季節",
+                    "dietary": "食の多様性",
+                    "ingredient": "食材・アレルゲン"
+                },
                 "validation": {
                     "required": "タグ名を入力してください",
                     "alreadySelected": "そのタグはすでに選択されています"

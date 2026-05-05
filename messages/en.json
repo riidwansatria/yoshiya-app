@@ -435,6 +435,11 @@
                 "createFailed": "Failed to create tag",
                 "alreadySelected": "That tag is already selected",
                 "remove": "Remove {name}",
+                "kindLabels": {
+                    "season": "Season",
+                    "dietary": "Dietary",
+                    "ingredient": "Ingredients & Allergens"
+                },
                 "validation": {
                     "required": "Tag name is required",
                     "alreadySelected": "That tag is already selected"

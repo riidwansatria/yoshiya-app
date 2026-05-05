@@ -70,7 +70,7 @@ const menuSchema = z.object({
     price: z.number().nullable(),
     description: z.string().optional(),
     color: z.string().optional(),
-    image_url: z.string().url().nullable().optional(),
+    image_url: z.url().nullable().optional(),
     is_public: z.boolean(),
     tag_ids: z.array(z.string()),
     components: z.array(menuComponentSchema),
@@ -174,14 +174,13 @@ export function MenuForm({
     const pendingImageDeleteRef = useRef<string | null>(null);
     const { setIsSubmitting } = useMenuFormContext();
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
-    const [localTagsList, setLocalTagsList] = useState(availableTags);
     const sortedComponentOptions = useMemo(
         () => [...localComponentsList].sort((a, b) => a.name.localeCompare(b.name)),
         [localComponentsList]
     );
     const sortedTags = useMemo(
-        () => [...localTagsList].sort((a, b) => a.label.localeCompare(b.label)),
-        [localTagsList]
+        () => [...availableTags].sort((a, b) => a.label.localeCompare(b.label)),
+        [availableTags]
     );
 
     // Map initial components if editing
@@ -241,15 +240,6 @@ export function MenuForm({
             }
 
             return [...prev, newComponent];
-        });
-    }, []);
-    const handleNewTag = useCallback((newTag: MenuTag) => {
-        setLocalTagsList((prev) => {
-            if (prev.some((tag) => tag.id === newTag.id)) {
-                return prev;
-            }
-
-            return [...prev, newTag];
         });
     }, []);
     const watchedComponents = form.watch('components') ?? [];
@@ -626,26 +616,30 @@ export function MenuForm({
                                     )}
                                 />
                             </div>
-                            <div className="col-span-2">
-                                <FormField
-                                    control={form.control}
-                                    name="tag_ids"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('menus.tags.label')}</FormLabel>
-                                            <FormControl>
-                                                <MenuTagSelector
-                                                    tags={sortedTags}
-                                                    selectedTagIds={field.value ?? []}
-                                                    onChange={field.onChange}
-                                                    onNewTag={handleNewTag}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="tag_ids"
+                                render={({ field }) => (
+                                    <>
+                                        {(['season', 'dietary', 'ingredient'] as const).map((kind) => (
+                                            <div key={kind} className="col-span-2">
+                                                <FormItem>
+                                                    <FormLabel>{t(`menus.tags.kindLabels.${kind}`)}</FormLabel>
+                                                    <FormControl>
+                                                        <MenuTagSelector
+                                                            tags={sortedTags}
+                                                            kind={kind}
+                                                            selectedTagIds={field.value ?? []}
+                                                            onChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                </FormItem>
+                                            </div>
+                                        ))}
+                                        <FormMessage />
+                                    </>
+                                )}
+                            />
                         </div>
 
                     {/* Components Mapping Column */}
