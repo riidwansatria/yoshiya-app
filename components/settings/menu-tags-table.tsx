@@ -94,9 +94,9 @@ function TagGroup({
         t("seasonSection")
 
     const otherKinds: { id: MenuTagKind, label: string }[] = [
-        { id: 'dietary', label: t("moveToDietary") },
-        { id: 'ingredient', label: t("moveToIngredient") },
-        { id: 'season', label: t("moveToSeason") },
+        { id: 'dietary' as MenuTagKind, label: t("moveToDietary") },
+        { id: 'ingredient' as MenuTagKind, label: t("moveToIngredient") },
+        { id: 'season' as MenuTagKind, label: t("moveToSeason") },
     ].filter(k => k.id !== kind)
 
     return (
