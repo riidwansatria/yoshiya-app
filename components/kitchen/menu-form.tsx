@@ -7,7 +7,25 @@ import { Control, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Trash, Plus, ArrowUp, ArrowDown, ImagePlus, Loader2, X } from 'lucide-react';
+import { Trash, Plus, GripVertical, ImagePlus, Loader2, X } from 'lucide-react';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { CSS } from '@dnd-kit/utilities';
+import { cn } from '@/lib/utils';
 
 import { ComponentCombobox } from './component-combobox';
 import { MenuTagSelector } from './menu-tag-selector';
@@ -19,13 +37,11 @@ import { createMenu, updateMenu } from '@/lib/actions/menus';
 import { uploadMenuImage, deleteMenuImage, validateMenuImageFile } from '@/lib/storage/menu-image';
 import { updateMenuComponents } from '@/lib/actions/menu-components';
 import { updateMenuTags } from '@/lib/actions/menu-tags';
-import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { FractionalQuantityInput } from './fractional-quantity-input';
 import {
     Form,
     FormControl,
@@ -56,42 +72,51 @@ const menuSchema = z.object({
 type FormValues = z.infer<typeof menuSchema>;
 
 type MenuComponentRowProps = {
+    id: string;
     index: number;
-    rowCount: number;
     control: Control<FormValues>;
     componentOptions: ComponentOption[];
     restaurantId: string;
     usedIds: Set<string>;
     onNewComponent: (component: ComponentOption) => void;
-    onMoveUp: (index: number) => void;
-    onMoveDown: (index: number) => void;
     onRemove: (index: number) => void;
-    onQuantityCommit: (index: number, parsed: number | null, error: string | null) => void;
-    t: ReturnType<typeof useTranslations<'kitchen'>>;
 };
 
 const MenuComponentRow = memo(function MenuComponentRow({
+    id,
     index,
-    rowCount,
     control,
     componentOptions,
     restaurantId,
     usedIds,
     onNewComponent,
-    onMoveUp,
-    onMoveDown,
     onRemove,
-    onQuantityCommit,
-    t,
 }: MenuComponentRowProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
     return (
-        <div className="flex gap-4 items-start bg-background border rounded-md p-3">
+        <div
+            ref={setNodeRef}
+            style={{ transform: CSS.Transform.toString(transform), transition }}
+            className={cn(
+                'flex gap-2 items-center bg-background border rounded-md px-1.5 py-1.5',
+                isDragging && 'opacity-50 shadow-lg'
+            )}
+        >
+            <button
+                type="button"
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 shrink-0 touch-none"
+            >
+                <GripVertical className="h-4 w-4" />
+            </button>
+
             <FormField
                 control={control}
                 name={`components.${index}.component_id`}
                 render={({ field }) => (
-                    <FormItem className="flex-[2]">
-                        <FormLabel className="text-xs">{t('menus.form.component')}</FormLabel>
+                    <FormItem className="flex-1 min-w-0">
                         <FormControl>
                             <ComponentCombobox
                                 value={field.value}
@@ -107,56 +132,15 @@ const MenuComponentRow = memo(function MenuComponentRow({
                 )}
             />
 
-            <FormField
-                control={control}
-                name={`components.${index}.qty_per_order`}
-                render={({ field }) => (
-                    <FormItem className="flex-[1]">
-                        <FormLabel className="text-xs">{t('menus.form.qtyPerOrder')}</FormLabel>
-                        <FormControl>
-                            <FractionalQuantityInput
-                                value={field.value || ''}
-                                onValueChange={field.onChange}
-                                onCommit={(parsed, error) => onQuantityCommit(index, parsed, error)}
-                                label={t('menus.form.qtyPerOrder')}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <div className="mt-6 flex items-center">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={index === 0}
-                    onClick={() => onMoveUp(index)}
-                    className="h-8 w-8 text-muted-foreground"
-                >
-                    <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={index === rowCount - 1}
-                    onClick={() => onMoveDown(index)}
-                    className="h-8 w-8 text-muted-foreground"
-                >
-                    <ArrowDown className="h-4 w-4" />
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRemove(index)}
-                    className="h-8 w-8 text-muted-foreground hover:text-red-600 ml-1"
-                >
-                    <Trash className="h-4 w-4" />
-                </Button>
-            </div>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onRemove(index)}
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-red-600"
+            >
+                <Trash className="h-4 w-4" />
+            </Button>
         </div>
     );
 });
@@ -217,9 +201,21 @@ export function MenuForm({
         control: form.control,
         name: 'components',
     });
-    const handleMoveUp = useCallback((index: number) => move(index, index - 1), [move]);
-    const handleMoveDown = useCallback((index: number) => move(index, index + 1), [move]);
     const handleRemove = useCallback((index: number) => remove(index), [remove]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = fields.findIndex((f) => f.id === active.id);
+            const newIndex = fields.findIndex((f) => f.id === over.id);
+            if (oldIndex !== -1 && newIndex !== -1) move(oldIndex, newIndex);
+        }
+    }, [fields, move]);
     const handleNewComponent = useCallback((newComponent: ComponentOption) => {
         setLocalComponentsList((prev) => {
             if (prev.some((component) => component.id === newComponent.id)) {
@@ -238,17 +234,6 @@ export function MenuForm({
             return [...prev, newTag];
         });
     }, []);
-    const handleQuantityCommit = useCallback(
-        (index: number, _parsed: number | null, error: string | null) => {
-            const path = `components.${index}.qty_per_order` as const;
-            if (error) {
-                form.setError(path, { type: 'manual', message: error });
-                return;
-            }
-            form.clearErrors(path);
-        },
-        [form]
-    );
     const watchedComponents = form.watch('components') ?? [];
     const watchedImageUrl = form.watch('image_url');
 
@@ -338,26 +323,10 @@ export function MenuForm({
                 menuId = res.data.id;
             }
 
-            const parsedComponents = data.components.map((component, index) => {
-                const parsed = parseFractionalQuantity(component.qty_per_order);
-                if (!parsed.ok) {
-                    form.setError(`components.${index}.qty_per_order`, {
-                        type: 'manual',
-                        message: parsed.error,
-                    });
-                    return null;
-                }
-                form.clearErrors(`components.${index}.qty_per_order`);
-                return {
-                    component_id: component.component_id,
-                    qty_per_order: parsed.value,
-                };
-            });
-
-            if (parsedComponents.some((component) => component === null)) {
-                toast.error(t('menus.form.fixQuantityErrors'));
-                return;
-            }
+            const parsedComponents = data.components.map((component) => ({
+                component_id: component.component_id,
+                qty_per_order: 1,
+            }));
 
             // Update mapping
             if (menuId) {
@@ -392,9 +361,9 @@ export function MenuForm({
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1 min-h-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 min-h-0">
                     {/* Menu Details Column */}
-                    <div className="space-y-4 rounded-md border p-6 h-fit overflow-y-auto">
+                    <div className="col-span-2 space-y-4 rounded-md border p-4 h-fit overflow-y-auto">
                         <h3 className="font-semibold text-lg">{t('menus.form.details')}</h3>
 
                         <FormField
@@ -635,15 +604,9 @@ export function MenuForm({
                     </div>
 
                     {/* Components Mapping Column */}
-                    <div className="col-span-2 flex flex-col space-y-4 rounded-md border p-6 min-h-0">
+                    <div className="flex flex-col space-y-4 rounded-md border p-4 min-h-0">
                         <div className="flex justify-between items-center shrink-0">
-                            <div>
-                                <h3 className="font-semibold text-lg">{t('menus.form.mappedComponents')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('menus.form.mappedComponentsHint')}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    {t('menus.form.quantityHint')}
-                                </p>
-                            </div>
+                            <h3 className="font-semibold text-lg">{t('menus.form.mappedComponents')}</h3>
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
@@ -663,33 +626,42 @@ export function MenuForm({
                                 <p className="text-xs text-muted-foreground mt-1">{t('menus.form.emptyHint')}</p>
                             </div>
                         ) : (
-                            <div className="flex-1 space-y-4 pr-2 overflow-y-auto min-h-0">
-                                {fields.map((field, index) => {
-                                    const usedIds = new Set(
-                                        watchedComponents
-                                            .map((component) => component?.component_id)
-                                            .filter((id): id is string => !!id)
-                                    );
-
-                                    return (
-                                        <MenuComponentRow
-                                            key={field.id}
-                                            index={index}
-                                            rowCount={fields.length}
-                                            control={form.control}
-                                            componentOptions={sortedComponentOptions}
-                                            restaurantId={restaurantId}
-                                            usedIds={usedIds}
-                                            onNewComponent={handleNewComponent}
-                                            onMoveUp={handleMoveUp}
-                                            onMoveDown={handleMoveDown}
-                                            onRemove={handleRemove}
-                                            onQuantityCommit={handleQuantityCommit}
-                                            t={t}
-                                        />
-                                    );
-                                })}
-                            </div>
+                            <>
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    modifiers={[restrictToVerticalAxis]}
+                                    onDragEnd={handleDragEnd}
+                                >
+                                    <SortableContext
+                                        items={fields.map((f) => f.id)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        <div className="flex-1 space-y-2 overflow-y-auto min-h-0">
+                                            {fields.map((field, index) => {
+                                                const usedIds = new Set(
+                                                    watchedComponents
+                                                        .map((component) => component?.component_id)
+                                                        .filter((id): id is string => !!id)
+                                                );
+                                                return (
+                                                    <MenuComponentRow
+                                                        key={field.id}
+                                                        id={field.id}
+                                                        index={index}
+                                                        control={form.control}
+                                                        componentOptions={sortedComponentOptions}
+                                                        restaurantId={restaurantId}
+                                                        usedIds={usedIds}
+                                                        onNewComponent={handleNewComponent}
+                                                        onRemove={handleRemove}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </SortableContext>
+                                </DndContext>
+                            </>
                         )}
                     </div>
                 </div>

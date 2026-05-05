@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig = {
   devIndicators: false,
+  allowedDevOrigins: ['192.168.0.57'],
   experimental: {
     staleTimes: {
       dynamic: 30,

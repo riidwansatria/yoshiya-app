@@ -474,7 +474,8 @@
                 "created": "Menu created",
                 "updated": "Menu updated",
                 "saveFailed": "Failed to save menu",
-                "fixQuantityErrors": "Please fix quantity errors before saving."
+                "fixQuantityErrors": "Please fix quantity errors before saving.",
+                "totalItems": "Total items"
             },
             "placeholders": {
                 "name": "e.g. Spring Kaiseki",

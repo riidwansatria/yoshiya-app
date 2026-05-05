@@ -462,10 +462,10 @@
                 "priceOptional": "単価（¥）",
                 "labelColor": "ラベルカラー",
                 "description": "説明",
-                "mappedComponents": "登録済み内容",
+                "mappedComponents": "メニュー内容",
                 "mappedComponentsHint": "このメニューに使用する内容を追加します。",
                 "quantityHint": "数量は小数（0.5）、分数（1/6）、帯分数（1 1/2）で入力できます。",
-                "addRow": "内容を追加",
+                "addRow": "追加",
                 "empty": "内容がまだ追加されていません。",
                 "emptyHint": "内容を登録すると、このメニューで必要な食材を集計できます。",
                 "component": "内容",
@@ -474,7 +474,8 @@
                 "created": "メニューを作成しました",
                 "updated": "メニューを更新しました",
                 "saveFailed": "メニューの保存に失敗しました",
-                "fixQuantityErrors": "保存前に数量エラーを修正してください。"
+                "fixQuantityErrors": "保存前に数量エラーを修正してください。",
+                "totalItems": "合計アイテム数"
             },
             "placeholders": {
                 "name": "例: 春の会席",
