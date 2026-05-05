@@ -7,6 +7,7 @@ import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent, PageFooter, PageActions } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { MenuFormProvider, MenuFormSubmitButton } from '@/components/kitchen/menu-form-context';
 
 export default async function MenuDetailPage({
     params,
@@ -28,37 +29,39 @@ export default async function MenuDetailPage({
     }
 
     return (
-        <Page>
-            <PageHeader>
-                <PageHeaderHeading>
-                    <PageTitle>
-                        {isNew ? t('pages.newMenu') : t('pages.editMenu')}
-                    </PageTitle>
-                </PageHeaderHeading>
-                <PageActions>
-                    <div id="menu-status-slot" />
-                </PageActions>
-            </PageHeader>
-            <PageContent>
-                <MenuForm
-                    initialData={menu}
-                    availableComponents={components}
-                    availableTags={availableTags}
-                    restaurantId={restaurant}
-                />
-            </PageContent>
-            <PageFooter>
-                <PageActions>
-                    <Button asChild variant="outline" size="sm">
-                        <Link href={`/dashboard/${restaurant}/menus`}>
-                            {t('common.cancel')}
-                        </Link>
-                    </Button>
-                    <Button type="submit" form="menu-form" size="sm">
-                        {t('menus.form.save')}
-                    </Button>
-                </PageActions>
-            </PageFooter>
-        </Page>
+        <MenuFormProvider>
+            <Page>
+                <PageHeader>
+                    <PageHeaderHeading>
+                        <PageTitle>
+                            {isNew ? t('pages.newMenu') : t('pages.editMenu')}
+                        </PageTitle>
+                    </PageHeaderHeading>
+                    <PageActions>
+                        <div id="menu-status-slot" />
+                    </PageActions>
+                </PageHeader>
+                <PageContent>
+                    <MenuForm
+                        initialData={menu}
+                        availableComponents={components}
+                        availableTags={availableTags}
+                        restaurantId={restaurant}
+                    />
+                </PageContent>
+                <PageFooter>
+                    <PageActions>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/${restaurant}/menus`}>
+                                {t('common.cancel')}
+                            </Link>
+                        </Button>
+                        <MenuFormSubmitButton>
+                            {t('menus.form.save')}
+                        </MenuFormSubmitButton>
+                    </PageActions>
+                </PageFooter>
+            </Page>
+        </MenuFormProvider>
     );
 }

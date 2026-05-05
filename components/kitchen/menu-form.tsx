@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 
 import { ComponentCombobox } from './component-combobox';
 import { MenuTagSelector } from './menu-tag-selector';
+import { useMenuFormContext } from './menu-form-context';
 
 import type { Menu } from '@/lib/queries/menus';
 import { ComponentOption } from '@/lib/queries/components';
@@ -171,6 +172,7 @@ export function MenuForm({
     const [statusPortalTarget, setStatusPortalTarget] = useState<HTMLElement | null>(null);
     const [imageLoadFailed, setImageLoadFailed] = useState(false);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
+    const { setIsSubmitting } = useMenuFormContext();
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const [localTagsList, setLocalTagsList] = useState(availableTags);
     const sortedComponentOptions = useMemo(
@@ -213,6 +215,10 @@ export function MenuForm({
     useEffect(() => {
         setStatusPortalTarget(document.getElementById('menu-status-slot'));
     }, []);
+
+    useEffect(() => {
+        setIsSubmitting(form.formState.isSubmitting);
+    }, [form.formState.isSubmitting, setIsSubmitting]);
 
     const handleRemove = useCallback((index: number) => remove(index), [remove]);
 
