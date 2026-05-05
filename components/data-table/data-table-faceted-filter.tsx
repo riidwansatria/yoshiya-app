@@ -1,7 +1,7 @@
 "use client";
 
 import type { Column } from "@tanstack/react-table";
-import { Check, PlusCircle, XCircle } from "lucide-react";
+import { Check, PlusCircle, X, XCircle } from "lucide-react";
 import * as React from "react";
 import { useLocale } from "next-intl";
 
@@ -31,6 +31,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   title?: string;
   options: Option[];
   multiple?: boolean;
+  exclude?: boolean;
 }
 
 export function DataTableFacetedFilter<TData, TValue>({
@@ -38,6 +39,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
   multiple,
+  exclude,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const [open, setOpen] = React.useState(false);
   const i18n = getDataTableI18n(useLocale());
@@ -154,11 +156,13 @@ export function DataTableFacetedFilter<TData, TValue>({
                       className={cn(
                         "flex size-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
-                          ? "bg-primary"
+                          ? exclude
+                            ? "bg-destructive border-destructive"
+                            : "bg-primary"
                           : "opacity-50 [&_svg]:invisible",
                       )}
                     >
-                      <Check />
+                      {exclude ? <X className="size-3" /> : <Check />}
                     </div>
                     {option.icon && <option.icon />}
                     <span className="truncate">{option.label}</span>

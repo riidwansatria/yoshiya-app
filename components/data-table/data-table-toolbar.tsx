@@ -139,6 +139,7 @@ function DataTableToolbarFilter<TData>({
               title={columnMeta.label ?? column.id}
               options={columnMeta.options ?? []}
               multiple={columnMeta.variant === "multiSelect"}
+              exclude={columnMeta.exclude}
             />
           );
 

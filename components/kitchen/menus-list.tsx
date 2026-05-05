@@ -71,6 +71,14 @@ const menuTagsFilterFn: FilterFn<Menu> = (row, _columnId, filterValue: string[])
 };
 menuTagsFilterFn.autoRemove = (val: string[]) => !val?.length;
 
+// Exclude tag filter: menu must NOT have any selected tag
+const menuTagsExcludeFilterFn: FilterFn<Menu> = (row, _columnId, filterValue: string[]) => {
+    if (!filterValue.length) return true;
+    const menuTagIds = new Set((row.original.tags ?? []).map((t) => t.id));
+    return !filterValue.some((id) => menuTagIds.has(id));
+};
+menuTagsExcludeFilterFn.autoRemove = (val: string[]) => !val?.length;
+
 export function MenusList({
     initialData,
     availableTags,
@@ -87,10 +95,22 @@ export function MenusList({
     const [sorting, setSorting] = useState<SortingState>([]);
     const [expanded, setExpanded] = useState<ExpandedState>({});
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ tags: false });
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+        dietaryTags: false,
+        ingredientTags: false,
+        seasonTags: false,
+    });
 
-    const tagOptions = useMemo(
-        () => availableTags.map((tag) => ({ label: tag.label, value: tag.id })),
+    const dietaryTags = useMemo(
+        () => availableTags.filter((t) => t.kind === 'dietary'),
+        [availableTags]
+    );
+    const ingredientTags = useMemo(
+        () => availableTags.filter((t) => t.kind === 'ingredient'),
+        [availableTags]
+    );
+    const seasonTags = useMemo(
+        () => availableTags.filter((t) => t.kind === 'season'),
         [availableTags]
     );
 
@@ -192,17 +212,43 @@ export function MenusList({
                 ),
             },
             {
-                // Hidden column — only used for tag filtering via the toolbar
-                id: 'tags',
-                accessorFn: (row) => (row.tags ?? []).map((t) => t.id),
+                id: 'dietaryTags',
+                accessorFn: (row) => (row.tags ?? []).filter((t) => t.kind === 'dietary').map((t) => t.id),
                 enableSorting: false,
                 enableHiding: false,
                 enableColumnFilter: true,
                 filterFn: menuTagsFilterFn,
                 meta: {
-                    label: t('menus.tags.label'),
+                    label: t('menus.tags.kindLabels.dietary'),
                     variant: 'multiSelect',
-                    options: tagOptions,
+                    options: dietaryTags.map((tag) => ({ label: tag.label, value: tag.id })),
+                },
+            },
+            {
+                id: 'ingredientTags',
+                accessorFn: (row) => (row.tags ?? []).filter((t) => t.kind === 'ingredient').map((t) => t.id),
+                enableSorting: false,
+                enableHiding: false,
+                enableColumnFilter: true,
+                filterFn: menuTagsExcludeFilterFn,
+                meta: {
+                    label: t('menus.tags.kindLabels.ingredient'),
+                    variant: 'multiSelect',
+                    options: ingredientTags.map((tag) => ({ label: tag.label, value: tag.id })),
+                    exclude: true,
+                },
+            },
+            {
+                id: 'seasonTags',
+                accessorFn: (row) => (row.tags ?? []).filter((t) => t.kind === 'season').map((t) => t.id),
+                enableSorting: false,
+                enableHiding: false,
+                enableColumnFilter: true,
+                filterFn: menuTagsFilterFn,
+                meta: {
+                    label: t('menus.tags.kindLabels.season'),
+                    variant: 'multiSelect',
+                    options: seasonTags.map((tag) => ({ label: tag.label, value: tag.id })),
                 },
             },
             {
@@ -268,7 +314,7 @@ export function MenusList({
                 },
             },
         ],
-        [t, restaurantId, router, duplicatingId, tagOptions]
+        [t, restaurantId, router, duplicatingId, dietaryTags, ingredientTags, seasonTags]
     );
 
     const table = useReactTable({
