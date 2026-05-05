@@ -25,7 +25,7 @@ export function buildMenusSelect({
     includeComponentDetails = false,
     includeTags = false,
 }: FetchMenusOptions = {}) {
-    const baseSelect = 'id, restaurant_id, name, name_en, price, description, color, image_url, tax_rate, is_public';
+    const baseSelect = 'id, restaurant_id, name, name_en, price, description, staff_memo, color, image_url, tax_rate, is_public';
     const parts = [baseSelect];
 
     if (includeMenuComponents) {

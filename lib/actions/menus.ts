@@ -10,6 +10,7 @@ type MenuFields = {
     name_en?: string | null;
     price?: number | null;
     description?: string | null;
+    staff_memo?: string | null;
     color?: string | null;
     image_url?: string | null;
     is_public?: boolean;
@@ -25,6 +26,7 @@ function normalizeMenuFields(data: MenuFields) {
         name_en: data.name_en?.trim() ? data.name_en.trim() : null,
         price: data.price ?? null,
         description: data.description?.trim() ? data.description.trim() : null,
+        staff_memo: data.staff_memo?.trim() ? data.staff_memo.trim() : null,
         color: data.color?.trim() ? data.color.trim() : null,
         image_url: data.image_url?.trim() ? data.image_url.trim() : null,
         is_public: data.is_public ?? true,

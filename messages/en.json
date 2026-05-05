@@ -467,6 +467,7 @@
                 "season": "Season",
                 "priceOptional": "Price (¥)",
                 "labelColor": "Label Color",
+                "staffMemo": "Staff Memo",
                 "description": "Description",
                 "statusPublic": "Published",
                 "statusPrivate": "Private",

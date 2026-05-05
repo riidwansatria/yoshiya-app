@@ -54,6 +54,7 @@ const menuSearchFilterFn: FilterFn<Menu> = (row, _columnId, filterValue) => {
     return (
         m.name.toLowerCase().includes(q) ||
         (m.description ?? '').toLowerCase().includes(q) ||
+        (m.staff_memo ?? '').toLowerCase().includes(q) ||
         (m.tags ?? []).some((t) => t.label.toLowerCase().includes(q)) ||
         (m.menu_components ?? []).some((mc) =>
             (mc.components?.name ?? '').toLowerCase().includes(q)

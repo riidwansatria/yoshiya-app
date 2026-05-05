@@ -61,6 +61,7 @@ export interface Menu {
     name_en: string | null;
     price: number | null;
     description: string | null;
+    staff_memo: string | null;
     color: string | null;
     image_url: string | null;
     tax_rate: number;

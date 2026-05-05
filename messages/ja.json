@@ -467,6 +467,7 @@
                 "season": "季節",
                 "priceOptional": "単価（¥）",
                 "labelColor": "ラベルカラー",
+                "staffMemo": "スタッフメモ",
                 "description": "説明",
                 "statusPublic": "公開中",
                 "statusPrivate": "非公開",

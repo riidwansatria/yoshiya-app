@@ -69,6 +69,7 @@ const menuSchema = z.object({
     name_en: z.string().optional(),
     price: z.number().nullable(),
     description: z.string().optional(),
+    staff_memo: z.string().optional(),
     color: z.string().optional(),
     image_url: z.url().nullable().optional(),
     is_public: z.boolean(),
@@ -197,6 +198,7 @@ export function MenuForm({
             name_en: initialData?.name_en ?? '',
             price: initialData?.price ?? null,
             description: initialData?.description || '',
+            staff_memo: initialData?.staff_memo || '',
             color: initialData?.color || '#000000',
             image_url: initialData?.image_url ?? null,
             is_public: initialData?.is_public ?? true,
@@ -309,6 +311,7 @@ export function MenuForm({
                     name_en: data.name_en,
                     price: data.price,
                     description: data.description,
+                    staff_memo: data.staff_memo,
                     color: data.color,
                     image_url: finalImageUrl,
                     is_public: data.is_public,
@@ -322,6 +325,7 @@ export function MenuForm({
                     name_en: data.name_en,
                     price: data.price,
                     description: data.description,
+                    staff_memo: data.staff_memo,
                     color: data.color,
                     image_url: finalImageUrl,
                     is_public: data.is_public,
@@ -635,6 +639,24 @@ export function MenuForm({
                                                     );
                                                 })}
                                             </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="staff_memo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{t('menus.form.staffMemo')}</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder="..."
+                                                className="resize-y min-h-[4rem]"
+                                                rows={3}
+                                                {...field}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
