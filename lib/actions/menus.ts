@@ -8,7 +8,6 @@ import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 type MenuFields = {
     name: string;
     name_en?: string | null;
-    season?: string | null;
     price?: number | null;
     description?: string | null;
     color?: string | null;
@@ -24,7 +23,6 @@ function normalizeMenuFields(data: MenuFields) {
     return {
         name: data.name.trim(),
         name_en: data.name_en?.trim() ? data.name_en.trim() : null,
-        season: data.season?.trim() ? data.season.trim() : null,
         price: data.price ?? null,
         description: data.description?.trim() ? data.description.trim() : null,
         color: data.color?.trim() ? data.color.trim() : null,

@@ -46,14 +46,13 @@ import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DeleteMenuDialog } from './menu-dialogs';
 import { duplicateMenu } from '@/lib/actions/menus';
 
-// Multi-field search across name, season, description, tags, and component names
+// Multi-field search across name, description, tags, and component names
 const menuSearchFilterFn: FilterFn<Menu> = (row, _columnId, filterValue) => {
     const q = String(filterValue).toLowerCase().trim();
     if (!q) return true;
     const m = row.original;
     return (
         m.name.toLowerCase().includes(q) ||
-        (m.season ?? '').toLowerCase().includes(q) ||
         (m.description ?? '').toLowerCase().includes(q) ||
         (m.tags ?? []).some((t) => t.label.toLowerCase().includes(q)) ||
         (m.menu_components ?? []).some((mc) =>

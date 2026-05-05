@@ -31,7 +31,7 @@ export interface RecipeComponent {
     component_ingredients?: ComponentIngredient[];
 }
 
-export type MenuTagKind = 'dietary' | 'ingredient';
+export type MenuTagKind = 'dietary' | 'ingredient' | 'season';
 
 export interface MenuTag {
     id: string;
@@ -59,7 +59,6 @@ export interface Menu {
     restaurant_id: string;
     name: string;
     name_en: string | null;
-    season: string | null;
     price: number | null;
     description: string | null;
     color: string | null;
