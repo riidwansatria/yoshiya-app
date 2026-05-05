@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-// @ts-expect-error TS5097 -- Node strip-types test runner resolves explicit .ts imports.
 import {
     getLocalizedTagLabel,
     menuMatchesTagFilters,
     normalizeMenuTagLabel,
     normalizeMenuTagLookupLabel,
     partitionTagsByKind,
+    // @ts-expect-error TS5097 -- Node strip-types test runner resolves explicit .ts imports.
 } from './menu-tags.ts';
 
 const makeTag = (overrides: Partial<{

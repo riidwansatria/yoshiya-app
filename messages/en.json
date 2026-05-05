@@ -483,6 +483,8 @@
                 "component": "Component",
                 "qtyPerOrder": "Qty / Order",
                 "save": "Save Menu",
+                "confirmSaveTitle": "Save Menu?",
+                "confirmSaveDesc": "Are you sure you want to save this menu?",
                 "created": "Menu created",
                 "updated": "Menu updated",
                 "saveFailed": "Failed to save menu",

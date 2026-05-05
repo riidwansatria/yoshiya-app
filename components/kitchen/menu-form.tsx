@@ -41,6 +41,14 @@ import { updateMenuComponents } from '@/lib/actions/menu-components';
 import { updateMenuTags } from '@/lib/actions/menu-tags';
 
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -174,6 +182,10 @@ export function MenuForm({
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const pendingImageDeleteRef = useRef<string | null>(null);
     const { setIsSubmitting } = useMenuFormContext();
+
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [pendingSubmitData, setPendingSubmitData] = useState<FormValues | null>(null);
+    const [isManualSubmitting, setIsManualSubmitting] = useState(false);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const sortedComponentOptions = useMemo(
         () => [...localComponentsList].sort((a, b) => a.name.localeCompare(b.name)),
@@ -199,7 +211,7 @@ export function MenuForm({
             price: initialData?.price ?? null,
             description: initialData?.description || '',
             staff_memo: initialData?.staff_memo || '',
-            color: initialData?.color || '#000000',
+            color: initialData?.color || '',
             image_url: initialData?.image_url ?? null,
             is_public: initialData?.is_public ?? true,
             tag_ids: initialTagIds,
@@ -217,8 +229,8 @@ export function MenuForm({
     }, []);
 
     useEffect(() => {
-        setIsSubmitting(form.formState.isSubmitting);
-    }, [form.formState.isSubmitting, setIsSubmitting]);
+        setIsSubmitting(form.formState.isSubmitting || isManualSubmitting);
+    }, [form.formState.isSubmitting, isManualSubmitting, setIsSubmitting]);
 
     const handleRemove = useCallback((index: number) => remove(index), [remove]);
 
@@ -280,8 +292,14 @@ export function MenuForm({
         setImageLoadFailed(false);
     }, [form, pendingImageFile, pendingPreviewUrl]);
 
+    async function onFormValid(data: FormValues) {
+        setPendingSubmitData(data);
+        setIsConfirmModalOpen(true);
+    }
+
     async function onSubmit(data: FormValues) {
-                let menuId = initialData?.id;
+        setIsManualSubmitting(true);
+        let menuId = initialData?.id;
 
         try {
             let finalImageUrl = data.image_url ?? null;
@@ -370,7 +388,8 @@ export function MenuForm({
             const message = error instanceof Error ? error.message : t('menus.form.saveFailed');
             toast.error(message);
         } finally {
-                    }
+            setIsManualSubmitting(false);
+        }
     }
 
     return (
@@ -415,7 +434,8 @@ export function MenuForm({
                     statusPortalTarget
                 )
                 : null}
-            <form id="menu-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+            <form id="menu-form" onSubmit={form.handleSubmit(onFormValid)} className="flex flex-col">
+                <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
                 <div className="flex flex-col gap-3">
                     {/* Hero card - full width */}
                     <div className="rounded-md border overflow-hidden">
@@ -615,7 +635,7 @@ export function MenuForm({
                                 control={form.control}
                                 name="color"
                                 render={({ field }) => (
-                                    <FormItem>
+                                    <FormItem className="pb-2">
                                         <FormLabel>{t('menus.form.labelColor')}</FormLabel>
                                         <FormControl>
                                             <div className="flex flex-wrap gap-2">
@@ -727,6 +747,29 @@ export function MenuForm({
 
 
             </form>
+            <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('menus.form.confirmSaveTitle')}</DialogTitle>
+                        <DialogDescription>{t('menus.form.confirmSaveDesc')}</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsConfirmModalOpen(false)}>
+                            {t('common.cancel')}
+                        </Button>
+                        <Button
+                            type="button"
+                            autoFocus
+                            onClick={() => {
+                                setIsConfirmModalOpen(false);
+                                if (pendingSubmitData) onSubmit(pendingSubmitData);
+                            }}
+                        >
+                            {t('menus.form.save')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Form>
     );
 }

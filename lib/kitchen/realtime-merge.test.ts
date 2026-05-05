@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-// @ts-expect-error TS5097 -- Node strip-types test runner resolves explicit .ts imports.
 import {
     areIngredientDraftRowsEqual,
     mergeComponentIngredientRows,
     mergeUntouchedFields,
+    // @ts-expect-error TS5097 -- Node strip-types test runner resolves explicit .ts imports.
 } from './realtime-merge.ts';
 
 test('mergeUntouchedFields applies untouched scalar fields and preserves dirty fields', () => {

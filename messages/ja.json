@@ -483,6 +483,8 @@
                 "component": "内容",
                 "qtyPerOrder": "1注文あたり数量",
                 "save": "メニューを保存",
+                "confirmSaveTitle": "メニューを保存しますか？",
+                "confirmSaveDesc": "この内容でメニューを保存してもよろしいですか？",
                 "created": "メニューを作成しました",
                 "updated": "メニューを更新しました",
                 "saveFailed": "メニューの保存に失敗しました",
