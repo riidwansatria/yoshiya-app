@@ -88,9 +88,16 @@ function TagGroup({
     onAdd: (kind: MenuTagKind) => void
     isAdding: boolean
 }) {
-    const sectionTitle = kind === 'dietary' ? t("dietarySection") : t("ingredientSection")
-    const oppositeKind: MenuTagKind = kind === 'dietary' ? 'ingredient' : 'dietary'
-    const moveLabel = kind === 'dietary' ? t("moveToIngredient") : t("moveToDietary")
+    const sectionTitle =
+        kind === 'dietary' ? t("dietarySection") :
+        kind === 'ingredient' ? t("ingredientSection") :
+        t("seasonSection")
+
+    const otherKinds: { id: MenuTagKind, label: string }[] = [
+        { id: 'dietary', label: t("moveToDietary") },
+        { id: 'ingredient', label: t("moveToIngredient") },
+        { id: 'season', label: t("moveToSeason") },
+    ].filter(k => k.id !== kind)
 
     return (
         <div className="space-y-3">
@@ -102,10 +109,10 @@ function TagGroup({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t("columnLabel")}</TableHead>
+                            <TableHead className="rounded-tl-md">{t("columnLabel")}</TableHead>
                             <TableHead>{t("columnLabelEn")}</TableHead>
                             <TableHead className="w-24 text-right">{t("columnMenuCount")}</TableHead>
-                            <TableHead className="w-[70px]" />
+                            <TableHead className="w-[70px] rounded-tr-md" />
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -186,9 +193,11 @@ function TagGroup({
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
-                                            <DropdownMenuItem onClick={() => onMoveKind(tag, oppositeKind)}>
-                                                {moveLabel}
-                                            </DropdownMenuItem>
+                                            {otherKinds.map((k) => (
+                                                <DropdownMenuItem key={k.id} onClick={() => onMoveKind(tag, k.id as MenuTagKind)}>
+                                                    {k.label}
+                                                </DropdownMenuItem>
+                                            ))}
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                                 className="text-destructive"
@@ -203,7 +212,7 @@ function TagGroup({
                         ))}
 
                         {/* Add row */}
-                        <TableRow>
+                        <TableRow className="last:[&>td]:rounded-bl-md last:[&>td]:rounded-br-md">
                             <TableCell>
                                 <Input
                                     placeholder={t("addPlaceholder")}
@@ -261,6 +270,7 @@ export function MenuTagsTable({ data }: MenuTagsTableProps) {
     const [isAdding, setIsAdding] = useState(false)
     const [dietaryAdd, setDietaryAdd] = useState<AddState>({ label: '', labelEn: '' })
     const [ingredientAdd, setIngredientAdd] = useState<AddState>({ label: '', labelEn: '' })
+    const [seasonAdd, setSeasonAdd] = useState<AddState>({ label: '', labelEn: '' })
     const editInputRef = useRef<HTMLInputElement>(null)
     const [localData, setLocalData] = useState<MenuTagWithCount[]>(data)
 
@@ -269,6 +279,7 @@ export function MenuTagsTable({ data }: MenuTagsTableProps) {
 
     const dietaryTags = localData.filter((t) => t.kind === 'dietary')
     const ingredientTags = localData.filter((t) => t.kind === 'ingredient')
+    const seasonTags = localData.filter((t) => t.kind === 'season')
 
     const startEdit = (tag: MenuTagWithCount, field: 'label' | 'label_en') => {
         setEditState({ id: tag.id, field, value: (field === 'label' ? tag.label : tag.label_en) ?? '' })
@@ -323,7 +334,7 @@ export function MenuTagsTable({ data }: MenuTagsTableProps) {
     }
 
     const handleAdd = async (kind: MenuTagKind) => {
-        const addState = kind === 'dietary' ? dietaryAdd : ingredientAdd
+        const addState = kind === 'dietary' ? dietaryAdd : kind === 'season' ? seasonAdd : ingredientAdd
         const label = addState.label.trim()
         if (!label) return
 
@@ -335,6 +346,7 @@ export function MenuTagsTable({ data }: MenuTagsTableProps) {
                 setLocalData((prev) => [...prev, { ...result.data!, menu_count: 0, menus: [] }])
             }
             if (kind === 'dietary') setDietaryAdd({ label: '', labelEn: '' })
+            else if (kind === 'season') setSeasonAdd({ label: '', labelEn: '' })
             else setIngredientAdd({ label: '', labelEn: '' })
             router.refresh()
             toast.success(t("addSuccess"))
@@ -396,6 +408,15 @@ export function MenuTagsTable({ data }: MenuTagsTableProps) {
                 tags={ingredientTags}
                 addState={ingredientAdd}
                 onAddChange={(field, value) => setIngredientAdd((s) => ({ ...s, [field]: value }))}
+                onAdd={handleAdd}
+                {...commonGroupProps}
+            />
+
+            <TagGroup
+                kind="season"
+                tags={seasonTags}
+                addState={seasonAdd}
+                onAddChange={(field, value) => setSeasonAdd((s) => ({ ...s, [field]: value }))}
                 onAdd={handleAdd}
                 {...commonGroupProps}
             />

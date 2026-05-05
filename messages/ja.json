@@ -65,7 +65,9 @@
             "emptyState": "タグはまだありません。",
             "cancel": "キャンセル",
             "moveToDietary": "ダイエタリーに移動",
-            "moveToIngredient": "食材・アレルゲンに移動"
+            "moveToIngredient": "食材・アレルゲンに移動",
+            "moveToSeason": "シーズンに移動",
+            "seasonSection": "シーズン"
         },
         "staff": {
             "description": "アカウント作成、スタッフ情報の編集、配役表示の切り替えを行います。"

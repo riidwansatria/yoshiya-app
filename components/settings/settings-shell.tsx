@@ -108,7 +108,7 @@ export function SettingsShell({
 
     return (
         <SidebarProvider className="min-h-0 h-full! w-full items-start">
-            <Sidebar collapsible="none" className="hidden h-full md:flex">
+            <Sidebar collapsible="none" className="hidden h-full md:flex w-48">
                 <SidebarContent className="gap-0">
                     <SidebarGroup>
                         <SidebarGroupContent>
@@ -175,8 +175,8 @@ export function SettingsShell({
                     </DialogClose>
                 </header>
 
-                <div className="flex-1 overflow-y-auto">
-                    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
+                <div className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6 min-w-0">
                         {activeSection === "language" ? (
                             <Card>
                                 <CardHeader>

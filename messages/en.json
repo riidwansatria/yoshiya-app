@@ -65,7 +65,9 @@
             "emptyState": "No tags yet.",
             "cancel": "Cancel",
             "moveToDietary": "Move to Dietary",
-            "moveToIngredient": "Move to Ingredients"
+            "moveToIngredient": "Move to Ingredients",
+            "moveToSeason": "Move to Season",
+            "seasonSection": "Season"
         },
         "staff": {
             "description": "Create accounts, edit staff details, and control assignment visibility."

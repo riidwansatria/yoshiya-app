@@ -34,7 +34,7 @@ export function SettingsDialog({
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent
                 showCloseButton={false}
-                className="overflow-hidden gap-0 p-0 max-w-none sm:max-w-none"
+                className="overflow-hidden flex flex-col gap-0 p-0 max-w-none sm:max-w-none"
                 style={{ width: "min(1000px, calc(100vw - 2rem))", height: "min(600px, calc(100svh - 2rem))" }}
             >
                 <DialogTitle className="sr-only">{t("title")}</DialogTitle>
