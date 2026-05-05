@@ -171,6 +171,7 @@ export function MenuForm({
     const [statusPortalTarget, setStatusPortalTarget] = useState<HTMLElement | null>(null);
     const [imageLoadFailed, setImageLoadFailed] = useState(false);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
+    const pendingImageDeleteRef = useRef<string | null>(null);
     const { setIsSubmitting } = useMenuFormContext();
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const [localTagsList, setLocalTagsList] = useState(availableTags);
@@ -269,7 +270,7 @@ export function MenuForm({
         [pendingPreviewUrl]
     );
 
-    const handleImageRemove = useCallback(async () => {
+    const handleImageRemove = useCallback(() => {
         if (pendingImageFile) {
             if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
             setPendingImageFile(null);
@@ -278,7 +279,7 @@ export function MenuForm({
             const current = form.getValues('image_url');
             form.setValue('image_url', null, { shouldDirty: true });
             if (current) {
-                await deleteMenuImage(current);
+                pendingImageDeleteRef.current = current;
             }
         }
         if (imageInputRef.current) {
@@ -354,6 +355,11 @@ export function MenuForm({
 
                 const tagRes = await updateMenuTags(menuId, data.tag_ids);
                 if (tagRes.error) throw new Error(tagRes.error);
+            }
+
+            if (pendingImageDeleteRef.current) {
+                await deleteMenuImage(pendingImageDeleteRef.current);
+                pendingImageDeleteRef.current = null;
             }
 
             toast.success(
