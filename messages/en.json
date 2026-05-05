@@ -8,7 +8,7 @@
         "staffManagement": "Staff Management",
         "kitchen": "Kitchen",
         "dailyOrders": "Daily Orders",
-        "summary": "Summary",
+        "summary": "Order Form",
         "dashboard": "Dashboard",
         "appName": "Yoshiya App"
     },
@@ -234,23 +234,27 @@
             "newMenuButton": "New Menu"
         },
         "summary": {
-            "title": "Kitchen Summary",
-            "printHeader": "Daily Kitchen Summary",
+            "title": "Order Form",
+            "printHeader": "Order Form",
             "targetDate": "Target Date",
             "printButton": "Print Summary",
             "generatedAt": "Generated",
             "ingredientsTab": "Ingredients",
             "componentsTab": "Components",
+            "menusTab": "Menus",
             "noIngredients": "No ingredients needed for this date.",
             "noIngredientsHint": "Ensure daily orders are entered and mapped to menus with ingredients.",
             "noComponents": "No components needed for this date.",
             "noComponentsHint": "Ensure daily orders are entered and menus have components mapped.",
+            "noMenus": "No menus ordered for this date.",
+            "noMenusHint": "Ensure daily orders are entered.",
             "ingredientColumn": "Ingredient",
             "needColumn": "Need",
             "orderColumn": "Order",
             "packColumn": "Pack",
             "componentColumn": "Component",
             "totalQtyColumn": "Total Qty",
+            "menuColumn": "Menu",
             "defaultPackLabel": "pack"
         },
         "orders": {

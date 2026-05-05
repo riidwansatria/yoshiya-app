@@ -8,7 +8,7 @@
         "staffManagement": "スタッフ管理",
         "kitchen": "調理場",
         "dailyOrders": "日次発注",
-        "summary": "集計",
+        "summary": "発注表",
         "dashboard": "ダッシュボード",
         "appName": "Yoshiya App"
     },
@@ -234,23 +234,27 @@
             "newMenuButton": "新規メニュー"
         },
         "summary": {
-            "title": "調理集計",
-            "printHeader": "日次調理集計",
+            "title": "発注表",
+            "printHeader": "発注表",
             "targetDate": "対象日",
             "printButton": "集計を印刷",
             "generatedAt": "作成日時",
             "ingredientsTab": "食材",
             "componentsTab": "内容",
+            "menusTab": "メニュー",
             "noIngredients": "この日付に必要な食材はありません。",
             "noIngredientsHint": "日次注文が入力され、食材のあるメニューに紐付けられているか確認してください。",
             "noComponents": "この日付に必要な内容はありません。",
             "noComponentsHint": "日次注文が入力され、メニューに内容が紐付けられているか確認してください。",
+            "noMenus": "この日付に注文されたメニューはありません。",
+            "noMenusHint": "日次注文が入力されているか確認してください。",
             "ingredientColumn": "食材",
             "needColumn": "必要量",
             "orderColumn": "発注数",
             "packColumn": "パック",
             "componentColumn": "内容",
             "totalQtyColumn": "合計数量",
+            "menuColumn": "メニュー",
             "defaultPackLabel": "パック"
         },
         "orders": {

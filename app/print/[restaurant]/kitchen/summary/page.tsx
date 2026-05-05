@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { getComponentsSummary } from "@/lib/queries/components-summary"
+import { getMenusSummary } from "@/lib/queries/menus-summary"
 import {
   type AggregatedIngredient,
   getIngredientsSummary,
@@ -42,14 +43,16 @@ export default async function KitchenSummaryPrintPage({
   const tCommon = await getTranslations("kitchen.common")
   const tIngredients = await getTranslations("kitchen.ingredients")
 
-  const [groupedIngredients, components] = await Promise.all([
+  const [groupedIngredients, components, menus] = await Promise.all([
     getIngredientsSummary(restaurant, fromDate, toDate),
     getComponentsSummary(restaurant, fromDate, toDate),
+    getMenusSummary(restaurant, fromDate, toDate),
   ])
 
   const allIngredients = Object.values(groupedIngredients).flat()
   const hasIngredients = allIngredients.length > 0
   const hasComponents = components.length > 0
+  const hasMenus = menus.length > 0
 
   const ingredientsByStore = allIngredients.reduce<Record<string, AggregatedIngredient[]>>(
     (acc, item) => {
@@ -147,7 +150,7 @@ export default async function KitchenSummaryPrintPage({
       )}
 
       {hasComponents && (
-        <section>
+        <section className="mb-10">
           <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("componentsTab")}</h2>
           <div className="rounded-md border overflow-hidden">
             <Table>
@@ -179,7 +182,33 @@ export default async function KitchenSummaryPrintPage({
         </section>
       )}
 
-      {!hasIngredients && !hasComponents && (
+      {hasMenus && (
+        <section>
+          <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("menusTab")}</h2>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("menuColumn")}</TableHead>
+                  <TableHead className="w-32 text-right">{t("totalQtyColumn")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {menus.map((menu) => (
+                  <TableRow key={menu.menu_id}>
+                    <TableCell className="font-medium">{menu.name}</TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">
+                      {menu.total_quantity}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      )}
+
+      {!hasIngredients && !hasComponents && !hasMenus && (
         <div className="rounded-md border border-dashed bg-muted/20 p-12 text-center">
           <p className="text-lg text-muted-foreground">{t("noIngredients")}</p>
           <p className="mt-2 text-sm text-muted-foreground">{t("noIngredientsHint")}</p>

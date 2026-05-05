@@ -1,5 +1,6 @@
 import { getIngredientsSummary } from '@/lib/queries/ingredients-summary';
 import { getComponentsSummary } from '@/lib/queries/components-summary';
+import { getMenusSummary } from '@/lib/queries/menus-summary';
 import { SummaryPrintView } from '@/components/kitchen/summary-print-view';
 import { format, isValid, parseISO } from 'date-fns';
 import { getTranslations } from 'next-intl/server';
@@ -36,11 +37,13 @@ export default async function IngredientsSummaryPage({
 
     let groupedIngredients;
     let components;
+    let menus;
 
     try {
-        [groupedIngredients, components] = await Promise.all([
+        [groupedIngredients, components, menus] = await Promise.all([
             getIngredientsSummary(restaurant, fromDate, toDate),
             getComponentsSummary(restaurant, fromDate, toDate),
+            getMenusSummary(restaurant, fromDate, toDate),
         ]);
     } catch (error) {
         console.error('[IngredientsSummaryPage] Failed to load summary data', {
@@ -66,6 +69,7 @@ export default async function IngredientsSummaryPage({
                     toDate={toDate}
                     groupedIngredients={groupedIngredients}
                     components={components}
+                    menus={menus}
                 />
             </PageContent>
         </Page>

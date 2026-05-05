@@ -22,6 +22,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AggregatedIngredient } from '@/lib/queries/ingredients-summary';
 import { AggregatedComponent } from '@/lib/queries/components-summary';
+import { AggregatedMenu } from '@/lib/queries/menus-summary';
 
 type IngredientSummaryRow = {
     ingredient_id: string;
@@ -42,6 +43,12 @@ type ComponentSummaryRow = {
     description: string | null;
 };
 
+type MenuSummaryRow = {
+    menu_id: string;
+    name: string;
+    total_quantity: number;
+};
+
 function isUncategorizedCategory(category: string) {
     return category.trim().toLowerCase() === 'uncategorized';
 }
@@ -58,12 +65,14 @@ export function SummaryPrintView({
     toDate,
     groupedIngredients,
     components,
+    menus,
 }: {
     restaurantId: string;
     fromDate: string;
     toDate: string;
     groupedIngredients: Record<string, AggregatedIngredient[]>;
     components: AggregatedComponent[];
+    menus: AggregatedMenu[];
 }) {
     const router = useRouter();
     const t = useTranslations('kitchen.summary');
@@ -77,6 +86,9 @@ export function SummaryPrintView({
         { id: 'name', desc: false },
     ]);
     const [componentsSorting, setComponentsSorting] = useState<SortingState>([
+        { id: 'name', desc: false },
+    ]);
+    const [menusSorting, setMenusSorting] = useState<SortingState>([
         { id: 'name', desc: false },
     ]);
 
@@ -111,6 +123,7 @@ export function SummaryPrintView({
     const categories = useMemo(() => Object.keys(groupedIngredients).sort(), [groupedIngredients]);
     const hasIngredients = categories.length > 0;
     const hasComponents = components.length > 0;
+    const hasMenus = menus.length > 0;
 
     const ingredientRows = useMemo<IngredientSummaryRow[]>(
         () => categories.flatMap((category) => groupedIngredients[category]),
@@ -125,6 +138,15 @@ export function SummaryPrintView({
             description: component.description,
         })),
         [components]
+    );
+
+    const menuRows = useMemo<MenuSummaryRow[]>(
+        () => menus.map((menu) => ({
+            menu_id: menu.menu_id,
+            name: menu.name,
+            total_quantity: menu.total_quantity,
+        })),
+        [menus]
     );
 
     const ingredientColumns = useMemo<ColumnDef<IngredientSummaryRow>[]>(
@@ -240,6 +262,30 @@ export function SummaryPrintView({
         [t]
     );
 
+    const menuColumns = useMemo<ColumnDef<MenuSummaryRow>[]>(
+        () => [
+            {
+                id: 'name',
+                accessorKey: 'name',
+                header: ({ column }) => (
+                    <DataTableColumnHeader column={column} label={t('menuColumn')} />
+                ),
+                cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+            },
+            {
+                id: 'total_quantity',
+                accessorKey: 'total_quantity',
+                header: ({ column }) => (
+                    <DataTableColumnHeader column={column} label={t('totalQtyColumn')} />
+                ),
+                cell: ({ row }) => (
+                    <span className="tabular-nums font-semibold">{row.original.total_quantity}</span>
+                ),
+            },
+        ],
+        [t]
+    );
+
     const ingredientsTable = useReactTable({
         data: ingredientRows,
         columns: ingredientColumns,
@@ -268,6 +314,20 @@ export function SummaryPrintView({
         },
     });
 
+    const menusTableModel = useReactTable({
+        data: menuRows,
+        columns: menuColumns,
+        state: { sorting: menusSorting },
+        onSortingChange: setMenusSorting,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        enableRowSelection: false,
+        initialState: {
+            pagination: { pageSize: 20 },
+        },
+    });
+
     return (
         <div className="flex flex-col h-full space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center border-b pb-4 shrink-0">
@@ -281,7 +341,7 @@ export function SummaryPrintView({
                         disabled={isNavigating}
                     />
                 </div>
-                <Button onClick={handlePrint} variant="outline" disabled={isNavigating || (!hasIngredients && !hasComponents)}>
+                <Button onClick={handlePrint} variant="outline" disabled={isNavigating || (!hasIngredients && !hasComponents && !hasMenus)}>
                     <Printer className="mr-2 h-4 w-4" /> {t('printButton')}
                 </Button>
             </div>
@@ -290,6 +350,7 @@ export function SummaryPrintView({
                 <TabsList>
                     <TabsTrigger value="ingredients">{t('ingredientsTab')}</TabsTrigger>
                     <TabsTrigger value="components">{t('componentsTab')}</TabsTrigger>
+                    <TabsTrigger value="menus">{t('menusTab')}</TabsTrigger>
                 </TabsList>
 
                 {/* ─── Ingredients tab ─── */}
@@ -323,6 +384,24 @@ export function SummaryPrintView({
                         <DataTable table={componentsTableModel}>
                             <DataTableToolbar table={componentsTableModel}>
                                 <DataTableSortList table={componentsTableModel} />
+                            </DataTableToolbar>
+                        </DataTable>
+                    )}
+                </TabsContent>
+
+                {/* ─── Menus tab ─── */}
+                <TabsContent value="menus" className="flex-1 min-h-0 overflow-y-auto mt-4">
+                    {!hasMenus ? (
+                        <div className="text-center p-12 border border-dashed rounded-md bg-muted/20">
+                            <p className="text-lg text-muted-foreground">{t('noMenus')}</p>
+                            <p className="text-sm text-muted-foreground mt-2">
+                                {t('noMenusHint')}
+                            </p>
+                        </div>
+                    ) : (
+                        <DataTable table={menusTableModel}>
+                            <DataTableToolbar table={menusTableModel}>
+                                <DataTableSortList table={menusTableModel} />
                             </DataTableToolbar>
                         </DataTable>
                     )}
