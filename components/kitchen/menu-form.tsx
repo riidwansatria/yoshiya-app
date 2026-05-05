@@ -1,13 +1,14 @@
 'use client';
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Control, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Trash, Plus, GripVertical, ImagePlus, Loader2, X } from 'lucide-react';
+import { Trash, Plus, GripVertical, ImagePlus, Camera, Loader2, X } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -41,7 +42,13 @@ import { updateMenuTags } from '@/lib/actions/menu-tags';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Form,
     FormControl,
@@ -158,10 +165,11 @@ export function MenuForm({
 }) {
     const t = useTranslations('kitchen');
     const router = useRouter();
-    const [isSaving, setIsSaving] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
     const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+    const [statusPortalTarget, setStatusPortalTarget] = useState<HTMLElement | null>(null);
+    const [imageLoadFailed, setImageLoadFailed] = useState(false);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [localComponentsList, setLocalComponentsList] = useState(availableComponents);
     const [localTagsList, setLocalTagsList] = useState(availableTags);
@@ -201,6 +209,11 @@ export function MenuForm({
         control: form.control,
         name: 'components',
     });
+
+    useEffect(() => {
+        setStatusPortalTarget(document.getElementById('menu-status-slot'));
+    }, []);
+
     const handleRemove = useCallback((index: number) => remove(index), [remove]);
 
     const sensors = useSensors(
@@ -247,6 +260,7 @@ export function MenuForm({
             if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
             setPendingImageFile(file);
             setPendingPreviewUrl(URL.createObjectURL(file));
+            setImageLoadFailed(false);
         },
         [pendingPreviewUrl]
     );
@@ -266,11 +280,11 @@ export function MenuForm({
         if (imageInputRef.current) {
             imageInputRef.current.value = '';
         }
+        setImageLoadFailed(false);
     }, [form, pendingImageFile, pendingPreviewUrl]);
 
     async function onSubmit(data: FormValues) {
-        setIsSaving(true);
-        let menuId = initialData?.id;
+                let menuId = initialData?.id;
 
         try {
             let finalImageUrl = data.image_url ?? null;
@@ -354,61 +368,200 @@ export function MenuForm({
             const message = error instanceof Error ? error.message : t('menus.form.saveFailed');
             toast.error(message);
         } finally {
-            setIsSaving(false);
-        }
+                    }
     }
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 min-h-0">
-                    {/* Menu Details Column */}
-                    <div className="col-span-2 space-y-4 rounded-md border p-4 h-fit overflow-y-auto">
-                        <h3 className="font-semibold text-lg">{t('menus.form.details')}</h3>
-
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('menus.form.name')}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder={t('menus.placeholders.name')} {...field} />
-                                        </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+            {statusPortalTarget
+                ? createPortal(
+                    <FormField
+                        control={form.control}
+                        name="is_public"
+                        render={({ field }) => (
+                            <Select
+                                value={field.value ? 'public' : 'private'}
+                                onValueChange={(value) => field.onChange(value === 'public')}
+                            >
+                                <SelectTrigger
+                                    className={cn(
+                                        "h-7 w-auto rounded-full border px-2.5 py-4 text-xs font-medium shadow-none focus:ring-0 gap-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+                                        field.value
+                                            ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                                            : "bg-muted/60 border-border text-muted-foreground hover:bg-muted"
+                                    )}
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent align="end">
+                                    <SelectItem value="public">
+                                        <span className="flex items-center gap-2">
+                                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                            {t('menus.form.statusPublic')}
+                                        </span>
+                                    </SelectItem>
+                                    <SelectItem value="private">
+                                        <span className="flex items-center gap-2">
+                                            <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+                                            {t('menus.form.statusPrivate')}
+                                        </span>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />,
+                    statusPortalTarget
+                )
+                : null}
+            <form id="menu-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+                <div className="flex flex-col gap-3">
+                    {/* Hero card - full width */}
+                    <div className="rounded-md border overflow-hidden">
+                        {/* Hidden file input */}
+                        <input
+                            id="menu-image-upload"
+                            ref={imageInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="sr-only"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleImageFile(file);
+                                e.target.value = '';
+                            }}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="name_en"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('menus.form.nameEn')}</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder={t('menus.placeholders.nameEn')} {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="season"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('menus.form.season')}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder={t('menus.placeholders.season')} {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                        {/* Hero: image left + core info right */}
+                        <div className="grid grid-cols-3 min-h-[260px]">
+                            {/* Image area */}
+                            <div className="col-span-1 relative bg-muted flex flex-col items-center justify-center gap-3 group">
+                                {(pendingPreviewUrl ?? watchedImageUrl) && !imageLoadFailed ? (
+                                    <>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={pendingPreviewUrl ?? watchedImageUrl ?? undefined}
+                                            alt=""
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                            onLoad={() => setImageLoadFailed(false)}
+                                            onError={() => setImageLoadFailed(true)}
+                                        />
+                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                disabled={isUploadingImage}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    imageInputRef.current?.click();
+                                                }}
+                                            >
+                                                {isUploadingImage ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}
+                                                {t('menus.form.changeImage')}
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                disabled={isUploadingImage}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    void handleImageRemove();
+                                                }}
+                                            >
+                                                <X className="mr-1.5 h-4 w-4" />
+                                                {t('menus.form.removeImage')}
+                                            </Button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ImagePlus className="h-8 w-8 text-muted-foreground/30" />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={isUploadingImage}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                imageInputRef.current?.click();
+                                            }}
+                                        >
+                                            {isUploadingImage ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}
+                                            {t('menus.form.addImage')}
+                                        </Button>
+                                        <p className="text-xs text-muted-foreground/50">JPG · PNG · WebP · 最大5MB</p>
+                                    </>
                                 )}
-                            />
+                            </div>
 
+                            {/* Core info: name, name_en, status, description */}
+                            <div className="col-span-2 p-5 flex flex-col gap-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1 flex flex-col gap-1">
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <input
+                                                            placeholder={t('menus.placeholders.name')}
+                                                            {...field}
+                                                            className="text-xl font-bold w-full bg-transparent outline-none placeholder:text-muted-foreground/40 border-b border-transparent focus:border-border transition-colors pb-0.5"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="name_en"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <input
+                                                            placeholder={t('menus.placeholders.nameEn')}
+                                                            {...field}
+                                                            className="text-sm text-muted-foreground w-full bg-transparent outline-none placeholder:text-muted-foreground/40 border-b border-transparent focus:border-border transition-colors pb-0.5"
+                                                        />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="border-t pt-3 flex-1 flex flex-col gap-1.5">
+                                    <FormField
+                                        control={form.control}
+                                        name="description"
+                                        render={({ field }) => (
+                                            <FormItem className="flex min-h-0 flex-1 flex-col">
+                                                <FormLabel>{t('menus.form.description')}</FormLabel>
+                                                <FormControl className="flex min-h-0 flex-1">
+                                                    <Textarea
+                                                        placeholder={t('menus.placeholders.description')}
+                                                        className="min-h-0 flex-1 resize-none"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom row: secondary fields + components */}
+                    <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
+                        {/* Secondary fields */}
+                        <div className="grid h-fit grid-cols-2 gap-4 rounded-md border p-5 md:col-span-2">
+                            <div className="col-span-2">
+                                <h3 className="font-semibold text-lg">{t('menus.form.additionalDetails')}</h3>
+                            </div>
                             <FormField
                                 control={form.control}
                                 name="price"
@@ -428,183 +581,59 @@ export function MenuForm({
                                     </FormItem>
                                 )}
                             />
+                            <div className="col-span-2">
+                                <FormField
+                                    control={form.control}
+                                    name="color"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('menus.form.labelColor')}</FormLabel>
+                                            <FormControl>
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        type="color"
+                                                        className="w-12 h-10 p-1"
+                                                        value={field.value || '#000000'}
+                                                        onChange={field.onChange}
+                                                    />
+                                                    <Input
+                                                        type="text"
+                                                        placeholder={t('menus.placeholders.color')}
+                                                        {...field}
+                                                        value={field.value || ''}
+                                                        className="font-mono"
+                                                    />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <FormField
+                                    control={form.control}
+                                    name="tag_ids"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t('menus.tags.label')}</FormLabel>
+                                            <FormControl>
+                                                <MenuTagSelector
+                                                    tags={sortedTags}
+                                                    selectedTagIds={field.value ?? []}
+                                                    onChange={field.onChange}
+                                                    onNewTag={handleNewTag}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </div>
 
-                        <FormField
-                            control={form.control}
-                            name="color"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t('menus.form.labelColor')}</FormLabel>
-                                <FormControl>
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                type="color"
-                                                className="w-12 h-10 p-1"
-                                                value={field.value || '#000000'}
-                                                onChange={field.onChange}
-                                            />
-                                            <Input
-                                                type="text"
-                                                placeholder={t('menus.placeholders.color')}
-                                                {...field}
-                                                value={field.value || ''}
-                                                className="font-mono"
-                                            />
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('menus.form.description')}</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder={t('menus.placeholders.description')}
-                                            className="min-h-[100px]"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="image_url"
-                            render={() => (
-                                <FormItem>
-                                    <FormLabel>画像</FormLabel>
-                                    <FormControl>
-                                        <div className="space-y-2">
-                                            <input
-                                                id="menu-image-upload"
-                                                ref={imageInputRef}
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/webp"
-                                                className="sr-only"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        void handleImageFile(file);
-                                                    }
-                                                    e.target.value = '';
-                                                }}
-                                            />
-                                            {(pendingPreviewUrl ?? watchedImageUrl) ? (
-                                                <div className="flex items-start gap-3">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
-                                                        src={pendingPreviewUrl ?? watchedImageUrl ?? undefined}
-                                                        alt=""
-                                                        className="h-28 w-28 rounded-md border object-cover"
-                                                        onError={() => {
-                                                            if (!pendingPreviewUrl) {
-                                                                form.setValue('image_url', null, { shouldDirty: true })
-                                                            }
-                                                        }}
-                                                    />
-                                                    <div className="flex flex-col gap-2">
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            disabled={isUploadingImage}
-                                                            onClick={() => imageInputRef.current?.click()}
-                                                        >
-                                                            {isUploadingImage ? (
-                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <ImagePlus className="mr-2 h-4 w-4" />
-                                                            )}
-                                                            画像を変更
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={isUploadingImage}
-                                                            onClick={() => void handleImageRemove()}
-                                                        >
-                                                            <X className="mr-2 h-4 w-4" />
-                                                            削除
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={isUploadingImage}
-                                                    onClick={() => imageInputRef.current?.click()}
-                                                >
-                                                    {isUploadingImage ? (
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <ImagePlus className="mr-2 h-4 w-4" />
-                                                    )}
-                                                    画像をアップロード
-                                                </Button>
-                                            )}
-                                            <p className="text-xs text-muted-foreground">JPG / PNG / WebP · 最大5MB</p>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="is_public"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <div className="flex items-center justify-between rounded-md border px-4 py-3">
-                                        <div>
-                                            <FormLabel className="text-sm font-medium">公開する</FormLabel>
-                                            <p className="text-xs text-muted-foreground">埋め込みページに表示されます</p>
-                                        </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="tag_ids"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('menus.tags.label')}</FormLabel>
-                                    <FormControl>
-                                        <MenuTagSelector
-                                            tags={sortedTags}
-                                            selectedTagIds={field.value ?? []}
-                                            onChange={field.onChange}
-                                            onNewTag={handleNewTag}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
                     {/* Components Mapping Column */}
-                    <div className="flex flex-col space-y-4 rounded-md border p-4 min-h-0">
+                    <div className="flex flex-col gap-3 rounded-md border p-4">
                         <div className="flex justify-between items-center shrink-0">
                             <h3 className="font-semibold text-lg">{t('menus.form.mappedComponents')}</h3>
                             <div className="flex gap-2">
@@ -628,6 +657,7 @@ export function MenuForm({
                         ) : (
                             <>
                                 <DndContext
+                                    id="menu-components-dnd"
                                     sensors={sensors}
                                     collisionDetection={closestCenter}
                                     modifiers={[restrictToVerticalAxis]}
@@ -637,7 +667,7 @@ export function MenuForm({
                                         items={fields.map((f) => f.id)}
                                         strategy={verticalListSortingStrategy}
                                     >
-                                        <div className="flex-1 space-y-2 overflow-y-auto min-h-0">
+                                        <div className="space-y-2">
                                             {fields.map((field, index) => {
                                                 const usedIds = new Set(
                                                     watchedComponents
@@ -664,20 +694,10 @@ export function MenuForm({
                             </>
                         )}
                     </div>
+                    </div>
                 </div>
 
-                <div className="flex justify-end gap-4 shrink-0 pt-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => router.push(`/dashboard/${restaurantId}/menus`)}
-                    >
-                        {t('common.cancel')}
-                    </Button>
-                    <Button type="submit" disabled={isSaving || isUploadingImage}>
-                        {isSaving ? t('common.saving') : t('menus.form.save')}
-                    </Button>
-                </div>
+
             </form>
         </Form>
     );

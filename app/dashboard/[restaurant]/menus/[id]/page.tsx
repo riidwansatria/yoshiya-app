@@ -4,7 +4,9 @@ import { getMenuTags } from '@/lib/queries/menu-tags';
 import { MenuForm } from '@/components/kitchen/menu-form';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
+import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent, PageFooter, PageActions } from '@/components/layout/page';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default async function MenuDetailPage({
     params,
@@ -33,6 +35,9 @@ export default async function MenuDetailPage({
                         {isNew ? t('pages.newMenu') : t('pages.editMenu')}
                     </PageTitle>
                 </PageHeaderHeading>
+                <PageActions>
+                    <div id="menu-status-slot" />
+                </PageActions>
             </PageHeader>
             <PageContent>
                 <MenuForm
@@ -42,6 +47,18 @@ export default async function MenuDetailPage({
                     restaurantId={restaurant}
                 />
             </PageContent>
+            <PageFooter>
+                <PageActions>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/dashboard/${restaurant}/menus`}>
+                            {t('common.cancel')}
+                        </Link>
+                    </Button>
+                    <Button type="submit" form="menu-form" size="sm">
+                        {t('menus.form.save')}
+                    </Button>
+                </PageActions>
+            </PageFooter>
         </Page>
     );
 }
