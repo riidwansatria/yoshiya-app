@@ -37,8 +37,8 @@ export function MenuTagSelector({ tags, kind, selectedTagIds, onChange }: MenuTa
                         className={cn(
                             'rounded-full border px-3 py-1 text-sm transition-colors',
                             isSelected
-                                ? 'bg-primary text-primary-foreground border-primary'
-                                : 'border-border bg-background text-foreground hover:bg-muted'
+                                ? 'bg-foreground/10 border-foreground/30 text-foreground font-medium'
+                                : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
                         )}
                     >
                         {tag.label}

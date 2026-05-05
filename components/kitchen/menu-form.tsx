@@ -41,7 +41,7 @@ import { updateMenuComponents } from '@/lib/actions/menu-components';
 import { updateMenuTags } from '@/lib/actions/menu-tags';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
@@ -197,7 +197,7 @@ export function MenuForm({
             name_en: initialData?.name_en ?? '',
             price: initialData?.price ?? null,
             description: initialData?.description || '',
-            color: initialData?.color || '',
+            color: initialData?.color || '#000000',
             image_url: initialData?.image_url ?? null,
             is_public: initialData?.is_public ?? true,
             tag_ids: initialTagIds,
@@ -583,70 +583,69 @@ export function MenuForm({
                     {/* Bottom row: secondary fields + components */}
                     <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
                         {/* Secondary fields */}
-                        <div className="grid h-fit grid-cols-2 gap-4 rounded-md border p-5 md:col-span-2">
-                            <div className="col-span-2">
-                                <h3 className="font-semibold text-lg">{t('menus.form.additionalDetails')}</h3>
-                            </div>
-                            <div className="col-span-2">
-                                <FormField
-                                    control={form.control}
-                                    name="color"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('menus.form.labelColor')}</FormLabel>
-                                            <FormControl>
-                                                <div className="flex items-center gap-2">
-                                                    <Input
-                                                        type="color"
-                                                        className="w-12 h-10 p-1"
-                                                        value={field.value || '#000000'}
-                                                        onChange={field.onChange}
-                                                    />
-                                                    <Input
-                                                        type="text"
-                                                        placeholder={t('menus.placeholders.color')}
-                                                        {...field}
-                                                        value={field.value || ''}
-                                                        className="font-mono"
-                                                    />
-                                                </div>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                        <div className="grid h-fit grid-cols-1 gap-4 rounded-md border p-5 md:col-span-2">
+                            <h3 className="font-semibold text-lg">{t('menus.form.additionalDetails')}</h3>
                             <FormField
                                 control={form.control}
                                 name="tag_ids"
                                 render={({ field }) => (
                                     <>
-                                        {(['season', 'dietary', 'ingredient'] as const).map((kind) => (
-                                            <div key={kind} className="col-span-2">
-                                                <FormItem>
-                                                    <FormLabel>{t(`menus.tags.kindLabels.${kind}`)}</FormLabel>
-                                                    <FormControl>
-                                                        <MenuTagSelector
-                                                            tags={sortedTags}
-                                                            kind={kind}
-                                                            selectedTagIds={field.value ?? []}
-                                                            onChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                            </div>
+                                        {(['dietary', 'ingredient', 'season'] as const).map((kind) => (
+                                            <FormItem key={kind}>
+                                                <FormLabel>{t(`menus.tags.kindLabels.${kind}`)}</FormLabel>
+                                                <FormControl>
+                                                    <MenuTagSelector
+                                                        tags={sortedTags}
+                                                        kind={kind}
+                                                        selectedTagIds={field.value ?? []}
+                                                        onChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
                                         ))}
                                         <FormMessage />
                                     </>
                                 )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="color"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{t('menus.form.labelColor')}</FormLabel>
+                                        <FormControl>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    '#000000', '#ef4444', '#f97316',
+                                                    '#eab308', '#22c55e', '#3b82f6',
+                                                    '#a855f7', '#ec4899',
+                                                ].map((color) => {
+                                                    const isSelected = field.value === color;
+                                                    return (
+                                                        <button
+                                                            key={color}
+                                                            type="button"
+                                                            onClick={() => field.onChange(isSelected ? '' : color)}
+                                                            className={cn(
+                                                                'h-7 w-7 rounded-full transition-transform hover:scale-110',
+                                                                isSelected && 'ring-2 ring-offset-2 ring-foreground scale-110'
+                                                            )}
+                                                            style={{ backgroundColor: color }}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
-                    {/* Components Mapping Column */}
-                    <div className="flex flex-col gap-3 rounded-md border p-4">
-                        <div className="flex justify-between items-center shrink-0">
-                            <h3 className="font-semibold text-lg">{t('menus.form.mappedComponents')}</h3>
-                            <div className="flex gap-2">
+                        {/* Components Mapping Column */}
+                        <div className="flex flex-col gap-3 rounded-md border p-4">
+                            <div className="flex justify-between items-center shrink-0">
+                                <h3 className="font-semibold text-lg">{t('menus.form.mappedComponents')}</h3>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -657,15 +656,13 @@ export function MenuForm({
                                     {t('menus.form.addRow')}
                                 </Button>
                             </div>
-                        </div>
 
-                        {fields.length === 0 ? (
-                            <div className="rounded-md border border-dashed p-8 text-center bg-muted/50 shrink-0">
-                                <p className="text-sm text-muted-foreground">{t('menus.form.empty')}</p>
-                                <p className="text-xs text-muted-foreground mt-1">{t('menus.form.emptyHint')}</p>
-                            </div>
-                        ) : (
-                            <>
+                            {fields.length === 0 ? (
+                                <div className="rounded-md border border-dashed p-8 text-center bg-muted/50 shrink-0">
+                                    <p className="text-sm text-muted-foreground">{t('menus.form.empty')}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{t('menus.form.emptyHint')}</p>
+                                </div>
+                            ) : (
                                 <DndContext
                                     id="menu-components-dnd"
                                     sensors={sensors}
@@ -701,9 +698,8 @@ export function MenuForm({
                                         </div>
                                     </SortableContext>
                                 </DndContext>
-                            </>
-                        )}
-                    </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
