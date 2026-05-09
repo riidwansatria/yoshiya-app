@@ -1,25 +1,33 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { Fragment, useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Printer } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
     type ColumnDef,
+    type Row,
     type SortingState,
+    flexRender,
     getCoreRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
 
-import { DataTable } from '@/components/dice-ui/data-table/data-table';
 import { DataTableColumnHeader } from '@/components/dice-ui/data-table/data-table-column-header';
 import { DataTableSortList } from '@/components/dice-ui/data-table/data-table-sort-list';
 import { DataTableToolbar } from '@/components/dice-ui/data-table/data-table-toolbar';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { AggregatedIngredient } from '@/lib/queries/ingredients-summary';
 import { AggregatedComponent } from '@/lib/queries/components-summary';
 import { AggregatedMenu } from '@/lib/queries/menus-summary';
@@ -47,6 +55,12 @@ type MenuSummaryRow = {
     menu_id: string;
     name: string;
     total_quantity: number;
+};
+
+type IngredientSummaryGroup = {
+    key: string;
+    label: string;
+    rows: Row<IngredientSummaryRow>[];
 };
 
 function isUncategorizedCategory(category: string) {
@@ -77,7 +91,6 @@ export function SummaryPrintView({
     const router = useRouter();
     const t = useTranslations('kitchen.summary');
     const tCommon = useTranslations('kitchen.common');
-    const tIngredients = useTranslations('kitchen.ingredients');
     const locale = useLocale();
     const [pendingRange, setPendingRange] = useState<{ from: string; to: string } | null>(null);
     const [isNavigating, startTransition] = useTransition();
@@ -175,17 +188,6 @@ export function SummaryPrintView({
                 },
             },
             {
-                id: 'store',
-                accessorKey: 'store',
-                header: ({ column }) => (
-                    <DataTableColumnHeader column={column} label={tIngredients('storeLabel')} />
-                ),
-                cell: ({ row }) => {
-                    const store = toSafeText(row.original.store).trim();
-                    return <span className="text-muted-foreground">{store || tCommon('none')}</span>;
-                },
-            },
-            {
                 id: 'total_quantity',
                 accessorKey: 'total_quantity',
                 header: ({ column }) => (
@@ -226,7 +228,7 @@ export function SummaryPrintView({
                 },
             },
         ],
-        [t, tCommon, tIngredients]
+        [t, tCommon]
     );
 
     const componentColumns = useMemo<ColumnDef<ComponentSummaryRow>[]>(
@@ -293,12 +295,31 @@ export function SummaryPrintView({
         onSortingChange: setIngredientsSorting,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         enableRowSelection: false,
-        initialState: {
-            pagination: { pageSize: 20 },
-        },
     });
+
+    const ingredientGroups = useMemo<IngredientSummaryGroup[]>(() => {
+        const groups = new Map<string, IngredientSummaryGroup>();
+
+        for (const row of ingredientsTable.getRowModel().rows) {
+            const store = toSafeText(row.original.store).trim();
+            const key = store || '__none__';
+            const label = store || tCommon('none');
+            const group = groups.get(key);
+
+            if (group) {
+                group.rows.push(row);
+            } else {
+                groups.set(key, { key, label, rows: [row] });
+            }
+        }
+
+        return Array.from(groups.values()).sort((a, b) => {
+            const aLabel = a.key === '__none__' ? '' : a.label;
+            const bLabel = b.key === '__none__' ? '' : b.label;
+            return aLabel.localeCompare(bLabel);
+        });
+    }, [ingredientsTable, tCommon]);
 
     const componentsTableModel = useReactTable({
         data: componentRows,
@@ -307,11 +328,7 @@ export function SummaryPrintView({
         onSortingChange: setComponentsSorting,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         enableRowSelection: false,
-        initialState: {
-            pagination: { pageSize: 20 },
-        },
     });
 
     const menusTableModel = useReactTable({
@@ -321,11 +338,7 @@ export function SummaryPrintView({
         onSortingChange: setMenusSorting,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         enableRowSelection: false,
-        initialState: {
-            pagination: { pageSize: 20 },
-        },
     });
 
     return (
@@ -363,11 +376,72 @@ export function SummaryPrintView({
                             </p>
                         </div>
                     ) : (
-                        <DataTable table={ingredientsTable}>
+                        <div className="flex w-full flex-col gap-2.5 overflow-auto">
                             <DataTableToolbar table={ingredientsTable}>
                                 <DataTableSortList table={ingredientsTable} />
                             </DataTableToolbar>
-                        </DataTable>
+                            <div className="overflow-hidden rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        {ingredientsTable.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead
+                                                        key={header.id}
+                                                        colSpan={header.colSpan}
+                                                        style={{ width: header.getSize() }}
+                                                    >
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(
+                                                                  header.column.columnDef.header,
+                                                                  header.getContext()
+                                                              )}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {ingredientGroups.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell
+                                                    colSpan={ingredientsTable.getAllColumns().length}
+                                                    className="h-24 text-center"
+                                                >
+                                                    {t('noIngredients')}
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            ingredientGroups.map((group) => (
+                                                <Fragment key={group.key}>
+                                                    <TableRow className="bg-muted hover:bg-muted">
+                                                        <TableCell
+                                                            colSpan={ingredientsTable.getVisibleFlatColumns().length}
+                                                            className="px-2 py-2 text-sm font-medium text-muted-foreground/70"
+                                                        >
+                                                            {group.label}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {group.rows.map((row) => (
+                                                        <TableRow key={row.id}>
+                                                            {row.getVisibleCells().map((cell) => (
+                                                                <TableCell key={cell.id}>
+                                                                    {flexRender(
+                                                                        cell.column.columnDef.cell,
+                                                                        cell.getContext()
+                                                                    )}
+                                                                </TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    ))}
+                                                </Fragment>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
                     )}
                 </TabsContent>
 
@@ -381,11 +455,49 @@ export function SummaryPrintView({
                             </p>
                         </div>
                     ) : (
-                        <DataTable table={componentsTableModel}>
+                        <div className="flex w-full flex-col gap-2.5 overflow-auto">
                             <DataTableToolbar table={componentsTableModel}>
                                 <DataTableSortList table={componentsTableModel} />
                             </DataTableToolbar>
-                        </DataTable>
+                            <div className="overflow-hidden rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        {componentsTableModel.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead
+                                                        key={header.id}
+                                                        colSpan={header.colSpan}
+                                                        style={{ width: header.getSize() }}
+                                                    >
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(
+                                                                  header.column.columnDef.header,
+                                                                  header.getContext()
+                                                              )}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {componentsTableModel.getRowModel().rows.map((row) => (
+                                            <TableRow key={row.id}>
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id}>
+                                                        {flexRender(
+                                                            cell.column.columnDef.cell,
+                                                            cell.getContext()
+                                                        )}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
                     )}
                 </TabsContent>
 
@@ -399,11 +511,49 @@ export function SummaryPrintView({
                             </p>
                         </div>
                     ) : (
-                        <DataTable table={menusTableModel}>
+                        <div className="flex w-full flex-col gap-2.5 overflow-auto">
                             <DataTableToolbar table={menusTableModel}>
                                 <DataTableSortList table={menusTableModel} />
                             </DataTableToolbar>
-                        </DataTable>
+                            <div className="overflow-hidden rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        {menusTableModel.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead
+                                                        key={header.id}
+                                                        colSpan={header.colSpan}
+                                                        style={{ width: header.getSize() }}
+                                                    >
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(
+                                                                  header.column.columnDef.header,
+                                                                  header.getContext()
+                                                              )}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {menusTableModel.getRowModel().rows.map((row) => (
+                                            <TableRow key={row.id}>
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id}>
+                                                        {flexRender(
+                                                            cell.column.columnDef.cell,
+                                                            cell.getContext()
+                                                        )}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
                     )}
                 </TabsContent>
             </Tabs>
