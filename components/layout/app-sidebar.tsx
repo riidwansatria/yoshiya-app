@@ -10,7 +10,8 @@ import {
     Salad,
     BookOpen,
     ClipboardPen,
-    FilePieChart
+    FilePieChart,
+    FileText
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -151,6 +152,18 @@ export function AppSidebar({ userRole: _userRole, ...props }: React.ComponentPro
                                     <Link href={`/dashboard/${restaurantId}/kitchen/summary`}>
                                         <FilePieChart />
                                         <span>{tNav('summary')}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname.includes('/kitchen/purchase-orders')}
+                                    tooltip={tNav('purchaseOrders')}
+                                >
+                                    <Link href={`/dashboard/${restaurantId}/kitchen/purchase-orders`}>
+                                        <FileText />
+                                        <span>{tNav('purchaseOrders')}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

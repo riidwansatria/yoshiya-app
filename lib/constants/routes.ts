@@ -11,6 +11,7 @@ export const REVALIDATE_PATHS = {
     DASHBOARD_MENUS_MATRIX_PAGE: '/[lang]/dashboard/[restaurant]/menus/matrix',
     DASHBOARD_KITCHEN_ORDERS_PAGE: '/[lang]/dashboard/[restaurant]/kitchen/orders',
     DASHBOARD_KITCHEN_SUMMARY_PAGE: '/[lang]/dashboard/[restaurant]/kitchen/summary',
+    DASHBOARD_KITCHEN_PURCHASE_ORDERS_PAGE: '/[lang]/dashboard/[restaurant]/kitchen/purchase-orders',
 } as const
 
 export const buildDashboardMenusPath = (restaurantId: string) => `/dashboard/${restaurantId}/menus`
@@ -23,3 +24,9 @@ export const buildDashboardComponentsPath = (restaurantId: string) =>
 
 export const buildDashboardComponentsMatrixPath = (restaurantId: string) =>
     `/dashboard/${restaurantId}/components/matrix`
+
+export const buildDashboardKitchenOrdersPath = (restaurantId: string) =>
+    `/dashboard/${restaurantId}/kitchen/orders`
+
+export const buildDashboardKitchenSummaryPath = (restaurantId: string) =>
+    `/dashboard/${restaurantId}/kitchen/summary`

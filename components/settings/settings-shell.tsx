@@ -1,12 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { Globe, Tag, UserCog, X } from "lucide-react"
+import { FileText, Globe, Tag, UserCog, X } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
+import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
 import { MenuTagsTable } from "@/components/settings/menu-tags-table"
+import { PurchaseOrderSettingsForm } from "@/components/settings/purchase-order-settings-form"
 import { StaffTable } from "@/components/settings/staff-table"
 import {
     Breadcrumb,
@@ -41,6 +43,7 @@ import type { SettingsSection, StaffRecord } from "./types"
 type SettingsShellProps = {
     initialSection: SettingsSection
     menuTags: MenuTagWithCount[]
+    purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
     userRole?: string | null
 }
@@ -55,6 +58,7 @@ type SettingsNavItem = {
 export function SettingsShell({
     initialSection,
     menuTags,
+    purchaseOrderSettings,
     staff,
     userRole,
 }: SettingsShellProps) {
@@ -80,6 +84,12 @@ export function SettingsShell({
             icon: Tag,
             id: "menu-tags",
             label: t("sections.menuTags"),
+        },
+        {
+            description: t("purchaseOrders.description"),
+            icon: FileText,
+            id: "purchase-orders",
+            label: t("sections.purchaseOrders"),
         },
     ]
 
@@ -219,6 +229,10 @@ export function SettingsShell({
 
                         {activeSection === "menu-tags" ? (
                             <MenuTagsTable data={menuTags} />
+                        ) : null}
+
+                        {activeSection === "purchase-orders" ? (
+                            <PurchaseOrderSettingsForm settings={purchaseOrderSettings} />
                         ) : null}
 
                         {activeSection === "staff" && userRole === "manager" ? (

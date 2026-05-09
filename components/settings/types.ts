@@ -1,4 +1,4 @@
-export type SettingsSection = "language" | "staff" | "menu-tags"
+export type SettingsSection = "language" | "staff" | "menu-tags" | "purchase-orders"
 
 export interface StaffRecord {
     id: string
@@ -15,8 +15,12 @@ export function resolveSettingsSection(
 ): SettingsSection {
     const normalizedSection = Array.isArray(section) ? section[0] : section
 
-    if (normalizedSection === "staff" && userRole === "manager") {
-        return "staff"
+    if (normalizedSection === "staff") {
+        return userRole === "manager" ? "staff" : "language"
+    }
+
+    if (normalizedSection === "menu-tags" || normalizedSection === "purchase-orders") {
+        return normalizedSection
     }
 
     return "language"

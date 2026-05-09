@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
+import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
 import type { SettingsSection, StaffRecord } from "./types"
 
 type SettingsContextValue = {
@@ -21,11 +22,18 @@ export function useSettings() {
 type SettingsProviderProps = {
     children: React.ReactNode
     menuTags: MenuTagWithCount[]
+    purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
     userRole?: string | null
 }
 
-export function SettingsProvider({ children, menuTags, staff, userRole }: SettingsProviderProps) {
+export function SettingsProvider({
+    children,
+    menuTags,
+    purchaseOrderSettings,
+    staff,
+    userRole,
+}: SettingsProviderProps) {
     const [isOpen, setIsOpen] = React.useState(false)
     const [section, setSection] = React.useState<SettingsSection>("language")
 
@@ -43,6 +51,7 @@ export function SettingsProvider({ children, menuTags, staff, userRole }: Settin
                 <SettingsDialogLazy
                     initialSection={section}
                     menuTags={menuTags}
+                    purchaseOrderSettings={purchaseOrderSettings}
                     staff={staff}
                     userRole={userRole}
                     onClose={() => setIsOpen(false)}

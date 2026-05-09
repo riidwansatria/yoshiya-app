@@ -9,6 +9,7 @@
         "kitchen": "調理場",
         "dailyOrders": "日次発注",
         "summary": "仕込み表",
+        "purchaseOrders": "発注書",
         "dashboard": "ダッシュボード",
         "appName": "Yoshiya App"
     },
@@ -27,6 +28,7 @@
         "sections": {
             "language": "言語",
             "menuTags": "メニュータグ",
+            "purchaseOrders": "発注書",
             "staff": "スタッフ管理"
         },
         "language": {
@@ -68,6 +70,20 @@
             "moveToIngredient": "食材・アレルゲンに移動",
             "moveToSeason": "シーズンに移動",
             "seasonSection": "シーズン"
+        },
+        "purchaseOrders": {
+            "title": "発注書",
+            "description": "発注書に印字する自社情報を設定します。",
+            "companyName": "会社名",
+            "postalCode": "郵便番号",
+            "address": "住所",
+            "tel": "TEL",
+            "fax": "FAX",
+            "email": "EMAIL",
+            "contactPerson": "担当者",
+            "save": "保存",
+            "saving": "保存中...",
+            "saveSuccess": "発注書設定を保存しました"
         },
         "staff": {
             "description": "アカウント作成、スタッフ情報の編集、配役表示の切り替えを行います。"
@@ -255,7 +271,51 @@
             "componentColumn": "内容名",
             "totalQtyColumn": "合計数量",
             "menuColumn": "メニュー名",
-            "defaultPackLabel": "パック"
+            "defaultPackLabel": "パック",
+            "createPurchaseOrder": "発注書を作成",
+            "purchaseOrderCreateSuccess": "発注書を作成しました。"
+        },
+        "purchaseOrders": {
+            "title": "発注書",
+            "detailTitle": "発注書を編集",
+            "supplierLabel": "購入先",
+            "subjectLabel": "件名",
+            "defaultSubject": "発注書",
+            "supplierPlaceholder": "購入先を入力...",
+            "supplierColumn": "購入先",
+            "orderDate": "発注日",
+            "status": "ステータス",
+            "statusDraft": "下書き",
+            "statusDone": "完了",
+            "sourceBlank": "手動作成",
+            "sourceSummary": "仕込み表から作成",
+            "lineCount": "行数",
+            "updatedAt": "更新日",
+            "newBlank": "新規発注書",
+            "openMenu": "メニューを開く",
+            "editAction": "編集",
+            "printAction": "印刷",
+            "deleteAction": "削除",
+            "saveAction": "保存",
+            "emptyState": "発注書はまだありません。",
+            "createSuccess": "発注書を作成しました。",
+            "deleteSuccess": "発注書を削除しました。",
+            "saveSuccess": "発注書を保存しました。",
+            "addIngredient": "食材を追加",
+            "ingredientPlaceholder": "食材を選択...",
+            "addLine": "行を追加",
+            "addLineSuccess": "行を追加しました。",
+            "deleteLine": "行を削除",
+            "deleteLineSuccess": "行を削除しました。",
+            "noLines": "行はまだありません。",
+            "itemName": "品名",
+            "category": "カテゴリ",
+            "neededQuantity": "必要量",
+            "pack": "パック",
+            "orderQuantity": "発注数",
+            "memo": "メモ",
+            "defaultPackLabel": "パック",
+            "none": "なし"
         },
         "orders": {
             "title": "日次注文入力",

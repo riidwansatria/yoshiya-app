@@ -2,8 +2,9 @@
 
 import { Fragment, useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Printer } from 'lucide-react';
+import { FilePlus2, Printer } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
     type ColumnDef,
     type Row,
@@ -31,6 +32,7 @@ import {
 import { AggregatedIngredient } from '@/lib/queries/ingredients-summary';
 import { AggregatedComponent } from '@/lib/queries/components-summary';
 import { AggregatedMenu } from '@/lib/queries/menus-summary';
+import { createPurchaseOrderFromSummary } from '@/lib/actions/purchase-orders';
 
 type IngredientSummaryRow = {
     ingredient_id: string;
@@ -73,6 +75,40 @@ function toSafeText(value: unknown) {
     return String(value);
 }
 
+function getLocalIsoDate() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function groupIngredientRowsByStore(
+    rows: Row<IngredientSummaryRow>[],
+    fallbackLabel: string
+): IngredientSummaryGroup[] {
+    const groups = new Map<string, IngredientSummaryGroup>();
+
+    for (const row of rows) {
+        const store = toSafeText(row.original.store).trim();
+        const key = store || '__none__';
+        const label = store || fallbackLabel;
+        const group = groups.get(key);
+
+        if (group) {
+            group.rows.push(row);
+        } else {
+            groups.set(key, { key, label, rows: [row] });
+        }
+    }
+
+    return Array.from(groups.values()).sort((a, b) => {
+        const aLabel = a.key === '__none__' ? '' : a.label;
+        const bLabel = b.key === '__none__' ? '' : b.label;
+        return aLabel.localeCompare(bLabel);
+    });
+}
+
 export function SummaryPrintView({
     restaurantId,
     fromDate,
@@ -94,6 +130,7 @@ export function SummaryPrintView({
     const locale = useLocale();
     const [pendingRange, setPendingRange] = useState<{ from: string; to: string } | null>(null);
     const [isNavigating, startTransition] = useTransition();
+    const [creatingPurchaseOrderFor, setCreatingPurchaseOrderFor] = useState<string | null>(null);
     const [ingredientsSorting, setIngredientsSorting] = useState<SortingState>([
         { id: 'category', desc: false },
         { id: 'name', desc: false },
@@ -131,6 +168,35 @@ export function SummaryPrintView({
     const handlePrint = () => {
         const printUrl = `/print/${restaurantId}/kitchen/summary?from=${rangeFrom}&to=${rangeTo}&locale=${locale}`;
         window.open(printUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleCreatePurchaseOrder = async (group: IngredientSummaryGroup) => {
+        setCreatingPurchaseOrderFor(group.key);
+        const result = await createPurchaseOrderFromSummary(
+            restaurantId,
+            group.label,
+            getLocalIsoDate(),
+            group.rows.map((row) => ({
+                ingredient_id: row.original.ingredient_id,
+                item_name: row.original.name,
+                unit: row.original.unit,
+                category: row.original.category,
+                needed_quantity: row.original.total_quantity,
+                package_size: row.original.package_size,
+                package_label: row.original.package_label,
+                order_quantity: row.original.packages_needed,
+                memo: null,
+            }))
+        );
+        setCreatingPurchaseOrderFor(null);
+
+        if (result.error) {
+            toast.error(result.error);
+            return;
+        }
+
+        toast.success(t('purchaseOrderCreateSuccess'));
+        router.push(`/dashboard/${restaurantId}/kitchen/purchase-orders/${result.id}`);
     };
 
     const categories = useMemo(() => Object.keys(groupedIngredients).sort(), [groupedIngredients]);
@@ -298,28 +364,10 @@ export function SummaryPrintView({
         enableRowSelection: false,
     });
 
-    const ingredientGroups = useMemo<IngredientSummaryGroup[]>(() => {
-        const groups = new Map<string, IngredientSummaryGroup>();
-
-        for (const row of ingredientsTable.getRowModel().rows) {
-            const store = toSafeText(row.original.store).trim();
-            const key = store || '__none__';
-            const label = store || tCommon('none');
-            const group = groups.get(key);
-
-            if (group) {
-                group.rows.push(row);
-            } else {
-                groups.set(key, { key, label, rows: [row] });
-            }
-        }
-
-        return Array.from(groups.values()).sort((a, b) => {
-            const aLabel = a.key === '__none__' ? '' : a.label;
-            const bLabel = b.key === '__none__' ? '' : b.label;
-            return aLabel.localeCompare(bLabel);
-        });
-    }, [ingredientsTable, tCommon]);
+    const ingredientGroups = groupIngredientRowsByStore(
+        ingredientsTable.getRowModel().rows,
+        tCommon('none')
+    );
 
     const componentsTableModel = useReactTable({
         data: componentRows,
@@ -420,7 +468,19 @@ export function SummaryPrintView({
                                                             colSpan={ingredientsTable.getVisibleFlatColumns().length}
                                                             className="px-2 py-2 text-sm font-medium text-muted-foreground/70"
                                                         >
-                                                            {group.label}
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span>{group.label}</span>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleCreatePurchaseOrder(group)}
+                                                                    disabled={creatingPurchaseOrderFor === group.key}
+                                                                >
+                                                                    <FilePlus2 />
+                                                                    {t('createPurchaseOrder')}
+                                                                </Button>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                     {group.rows.map((row) => (

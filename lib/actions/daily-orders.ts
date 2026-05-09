@@ -2,7 +2,11 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { REVALIDATE_PATHS } from '@/lib/constants/routes';
+import {
+    buildDashboardKitchenOrdersPath,
+    buildDashboardKitchenSummaryPath,
+    REVALIDATE_PATHS,
+} from '@/lib/constants/routes';
 
 export async function saveDailyOrders(
     restaurantId: string,
@@ -46,5 +50,7 @@ export async function saveDailyOrders(
 
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_KITCHEN_ORDERS_PAGE, 'page');
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_KITCHEN_SUMMARY_PAGE, 'page');
+    revalidatePath(buildDashboardKitchenOrdersPath(restaurantId), 'page');
+    revalidatePath(buildDashboardKitchenSummaryPath(restaurantId), 'page');
     return { success: true };
 }

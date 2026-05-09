@@ -12,11 +12,13 @@ import {
 import { SettingsShell } from "./settings-shell"
 import type { SettingsSection, StaffRecord } from "./types"
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
+import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
 
 type SettingsDialogProps = {
     initialSection: SettingsSection
     menuTags: MenuTagWithCount[]
     onClose: () => void
+    purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
     userRole?: string | null
 }
@@ -25,6 +27,7 @@ export function SettingsDialog({
     initialSection,
     menuTags,
     onClose,
+    purchaseOrderSettings,
     staff,
     userRole,
 }: SettingsDialogProps) {
@@ -44,6 +47,7 @@ export function SettingsDialog({
                 <SettingsShell
                     initialSection={initialSection}
                     menuTags={menuTags}
+                    purchaseOrderSettings={purchaseOrderSettings}
                     staff={staff}
                     userRole={userRole}
                 />

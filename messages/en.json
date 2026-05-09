@@ -9,6 +9,7 @@
         "kitchen": "Kitchen",
         "dailyOrders": "Daily Orders",
         "summary": "Order Form",
+        "purchaseOrders": "Purchase Orders",
         "dashboard": "Dashboard",
         "appName": "Yoshiya App"
     },
@@ -27,6 +28,7 @@
         "sections": {
             "language": "Language",
             "menuTags": "Menu Tags",
+            "purchaseOrders": "Purchase Orders",
             "staff": "Staff Management"
         },
         "language": {
@@ -68,6 +70,20 @@
             "moveToIngredient": "Move to Ingredients",
             "moveToSeason": "Move to Season",
             "seasonSection": "Season"
+        },
+        "purchaseOrders": {
+            "title": "Purchase Orders",
+            "description": "Set the sender information printed on purchase orders.",
+            "companyName": "Company Name",
+            "postalCode": "Postal Code",
+            "address": "Address",
+            "tel": "TEL",
+            "fax": "FAX",
+            "email": "Email",
+            "contactPerson": "Contact Person",
+            "save": "Save",
+            "saving": "Saving...",
+            "saveSuccess": "Purchase order settings saved"
         },
         "staff": {
             "description": "Create accounts, edit staff details, and control assignment visibility."
@@ -255,7 +271,51 @@
             "componentColumn": "Component",
             "totalQtyColumn": "Total Qty",
             "menuColumn": "Menu",
-            "defaultPackLabel": "pack"
+            "defaultPackLabel": "pack",
+            "createPurchaseOrder": "Create purchase order",
+            "purchaseOrderCreateSuccess": "Purchase order created."
+        },
+        "purchaseOrders": {
+            "title": "Purchase Orders",
+            "detailTitle": "Edit Purchase Order",
+            "supplierLabel": "Supplier",
+            "subjectLabel": "Subject",
+            "defaultSubject": "Purchase Order",
+            "supplierPlaceholder": "Enter supplier...",
+            "supplierColumn": "Supplier",
+            "orderDate": "Order Date",
+            "status": "Status",
+            "statusDraft": "Draft",
+            "statusDone": "Done",
+            "sourceBlank": "Manual",
+            "sourceSummary": "From prep sheet",
+            "lineCount": "Lines",
+            "updatedAt": "Updated",
+            "newBlank": "New Purchase Order",
+            "openMenu": "Open menu",
+            "editAction": "Edit",
+            "printAction": "Print",
+            "deleteAction": "Delete",
+            "saveAction": "Save",
+            "emptyState": "No purchase orders yet.",
+            "createSuccess": "Purchase order created.",
+            "deleteSuccess": "Purchase order deleted.",
+            "saveSuccess": "Purchase order saved.",
+            "addIngredient": "Add Ingredient",
+            "ingredientPlaceholder": "Select ingredient...",
+            "addLine": "Add Line",
+            "addLineSuccess": "Line added.",
+            "deleteLine": "Delete line",
+            "deleteLineSuccess": "Line deleted.",
+            "noLines": "No lines yet.",
+            "itemName": "Item",
+            "category": "Category",
+            "neededQuantity": "Needed",
+            "pack": "Pack",
+            "orderQuantity": "Order Qty",
+            "memo": "Memo",
+            "defaultPackLabel": "pack",
+            "none": "None"
         },
         "orders": {
             "title": "Daily Orders Input",
