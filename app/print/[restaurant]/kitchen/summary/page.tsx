@@ -100,8 +100,8 @@ export default async function KitchenSummaryPrintPage({
           <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("ingredientsTab")}</h2>
           <div className="space-y-8">
             {storeKeys.map((storeKey) => (
-              <div key={storeKey} className="space-y-2 break-inside-avoid">
-                <h3 className="px-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              <div key={storeKey} className="space-y-2">
+                <h3 className="break-after-avoid px-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   {tIngredients("storeLabel")}: {storeKey === "__none__" ? tCommon("none") : storeKey}
                 </h3>
                 <div className="rounded-md border overflow-hidden">
@@ -121,7 +121,7 @@ export default async function KitchenSummaryPrintPage({
                           item.packages_needed !== null && item.package_size != null
                         const category = item.category?.trim() || ""
                         return (
-                          <TableRow key={item.ingredient_id}>
+                          <TableRow key={item.ingredient_id} className="break-inside-avoid">
                             <TableCell className="font-medium">{item.name}</TableCell>
                             <TableCell className="text-muted-foreground">
                               {isUncategorizedCategory(category) ? tCommon("none") : category || tCommon("none")}
