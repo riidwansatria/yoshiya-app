@@ -1,6 +1,7 @@
 import { format, parseISO } from "date-fns"
 import { enUS, ja } from "date-fns/locale"
 import { getTranslations } from "next-intl/server"
+import { Fragment } from "react"
 
 import { AutoPrint } from "@/components/print/auto-print"
 import {
@@ -41,8 +42,6 @@ export default async function KitchenSummaryPrintPage({
 
   const t = await getTranslations("kitchen.summary")
   const tCommon = await getTranslations("kitchen.common")
-  const tIngredients = await getTranslations("kitchen.ingredients")
-
   const [groupedIngredients, components, menus] = await Promise.all([
     getIngredientsSummary(restaurant, fromDate, toDate),
     getComponentsSummary(restaurant, fromDate, toDate),
@@ -98,53 +97,66 @@ export default async function KitchenSummaryPrintPage({
       {hasIngredients && (
         <section className="mb-10">
           <h2 className="mb-4 border-b pb-2 text-xl font-bold">{t("ingredientsTab")}</h2>
-          <div className="space-y-8">
-            {storeKeys.map((storeKey) => (
-              <div key={storeKey} className="space-y-2">
-                <h3 className="break-after-avoid px-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  {tIngredients("storeLabel")}: {storeKey === "__none__" ? tCommon("none") : storeKey}
-                </h3>
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("ingredientColumn")}</TableHead>
-                        <TableHead>{tCommon("category")}</TableHead>
-                        <TableHead className="w-20 text-right">{t("needColumn")}</TableHead>
-                        <TableHead className="w-14 text-right">{t("orderColumn")}</TableHead>
-                        <TableHead className="pl-2">{t("packColumn")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {ingredientsByStore[storeKey].map((item) => {
-                        const hasPack =
-                          item.packages_needed !== null && item.package_size != null
-                        const category = item.category?.trim() || ""
-                        return (
-                          <TableRow key={item.ingredient_id} className="break-inside-avoid">
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {isUncategorizedCategory(category) ? tCommon("none") : category || tCommon("none")}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums text-muted-foreground">
-                              {item.total_quantity} {item.unit}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums font-bold">
-                              {hasPack ? item.packages_needed : "—"}
-                            </TableCell>
-                            <TableCell className="pl-2 text-xs text-muted-foreground">
-                              {hasPack
-                                ? `× ${item.package_size}${item.unit} ${item.package_label?.trim() || t("defaultPackLabel")}`
-                                : null}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-hidden rounded-md border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-2 border-border hover:bg-transparent">
+                  <TableHead className="h-9 border-b-2 border-border bg-background font-bold text-foreground">
+                    {t("ingredientColumn")}
+                  </TableHead>
+                  <TableHead className="h-9 border-b-2 border-border bg-background font-bold text-foreground">
+                    {tCommon("category")}
+                  </TableHead>
+                  <TableHead className="h-9 w-20 border-b-2 border-border bg-background text-right font-bold text-foreground">
+                    {t("needColumn")}
+                  </TableHead>
+                  <TableHead className="h-9 w-14 border-b-2 border-border bg-background text-right font-bold text-foreground">
+                    {t("orderColumn")}
+                  </TableHead>
+                  <TableHead className="h-9 border-b-2 border-border bg-background pl-2 font-bold text-foreground">
+                    {t("packColumn")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {storeKeys.map((storeKey) => (
+                  <Fragment key={storeKey}>
+                    <TableRow className="break-after-avoid bg-muted hover:bg-muted">
+                      <TableCell
+                        colSpan={5}
+                        className="px-2 py-2 text-sm font-medium text-muted-foreground/70"
+                      >
+                        {storeKey === "__none__" ? tCommon("none") : storeKey}
+                      </TableCell>
+                    </TableRow>
+                    {ingredientsByStore[storeKey].map((item) => {
+                      const hasPack =
+                        item.packages_needed !== null && item.package_size != null
+                      const category = item.category?.trim() || ""
+                      return (
+                        <TableRow key={item.ingredient_id} className="break-inside-avoid">
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {isUncategorizedCategory(category) ? tCommon("none") : category || tCommon("none")}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-muted-foreground">
+                            {item.total_quantity} {item.unit}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums font-bold">
+                            {hasPack ? item.packages_needed : "—"}
+                          </TableCell>
+                          <TableCell className="pl-2 text-xs text-muted-foreground">
+                            {hasPack
+                              ? `× ${item.package_size}${item.unit} ${item.package_label?.trim() || t("defaultPackLabel")}`
+                              : null}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </Fragment>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </section>
       )}
@@ -155,9 +167,13 @@ export default async function KitchenSummaryPrintPage({
           <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>{t("componentColumn")}</TableHead>
-                  <TableHead className="w-32 text-right">{t("totalQtyColumn")}</TableHead>
+                <TableRow className="border-b-2 border-border hover:bg-transparent">
+                  <TableHead className="h-9 border-b-2 border-border bg-background font-bold text-foreground">
+                    {t("componentColumn")}
+                  </TableHead>
+                  <TableHead className="h-9 w-32 border-b-2 border-border bg-background text-right font-bold text-foreground">
+                    {t("totalQtyColumn")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -188,9 +204,13 @@ export default async function KitchenSummaryPrintPage({
           <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>{t("menuColumn")}</TableHead>
-                  <TableHead className="w-32 text-right">{t("totalQtyColumn")}</TableHead>
+                <TableRow className="border-b-2 border-border hover:bg-transparent">
+                  <TableHead className="h-9 border-b-2 border-border bg-background font-bold text-foreground">
+                    {t("menuColumn")}
+                  </TableHead>
+                  <TableHead className="h-9 w-32 border-b-2 border-border bg-background text-right font-bold text-foreground">
+                    {t("totalQtyColumn")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
