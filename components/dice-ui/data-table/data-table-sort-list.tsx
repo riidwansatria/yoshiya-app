@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useLocale } from "next-intl";
-import { getDataTableI18n } from "@/components/data-table/i18n";
+import { getDataTableI18n } from "@/components/dice-ui/data-table/i18n";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

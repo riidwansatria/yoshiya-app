@@ -24,7 +24,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { Option } from "@/types/data-table";
-import { getDataTableI18n } from "@/components/data-table/i18n";
+import { getDataTableI18n } from "@/components/dice-ui/data-table/i18n";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;

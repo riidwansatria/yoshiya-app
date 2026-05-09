@@ -40,9 +40,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
-import { DataTableToolbar } from '@/components/data-table/data-table-toolbar';
-import { DataTableSortList } from '@/components/data-table/data-table-sort-list';
+import { DataTableColumnHeader } from '@/components/dice-ui/data-table/data-table-column-header';
+import { DataTableToolbar } from '@/components/dice-ui/data-table/data-table-toolbar';
+import { DataTableSortList } from '@/components/dice-ui/data-table/data-table-sort-list';
 import { DeleteMenuDialog } from './menu-dialogs';
 import { duplicateMenu } from '@/lib/actions/menus';
 

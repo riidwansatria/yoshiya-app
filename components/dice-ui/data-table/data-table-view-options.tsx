@@ -5,7 +5,7 @@ import { Check, Settings2 } from "lucide-react";
 import * as React from "react";
 import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { getDataTableI18n } from "@/components/data-table/i18n";
+import { getDataTableI18n } from "@/components/dice-ui/data-table/i18n";
 import {
   Command,
   CommandEmpty,
