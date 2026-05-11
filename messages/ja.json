@@ -317,6 +317,7 @@
             "lineCount": "行数",
             "updatedAt": "更新日",
             "newBlank": "新規発注書",
+            "unassignedSupplier": "未設定",
             "openMenu": "メニューを開く",
             "editAction": "編集",
             "printAction": "印刷",

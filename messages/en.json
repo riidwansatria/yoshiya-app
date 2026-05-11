@@ -317,6 +317,7 @@
             "lineCount": "Lines",
             "updatedAt": "Updated",
             "newBlank": "New Purchase Order",
+            "unassignedSupplier": "Unassigned",
             "openMenu": "Open menu",
             "editAction": "Edit",
             "printAction": "Print",
