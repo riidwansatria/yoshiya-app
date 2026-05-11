@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
 import { Page, PageContent, PageHeader, PageHeaderHeading, PageTitle } from "@/components/layout/page"
-import { PurchaseOrderForm } from "@/components/kitchen/purchase-order-form"
+import { PurchaseOrderForm } from "@/components/kitchen/purchase-order/purchase-order-form"
 import { getIngredients } from "@/lib/queries/ingredients"
 import { getPurchaseOrderById } from "@/lib/queries/purchase-orders"
 

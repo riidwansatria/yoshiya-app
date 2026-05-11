@@ -7,7 +7,6 @@ import { AutoPrint } from "@/components/print/auto-print"
 import {
   getPurchaseOrderById,
   getPurchaseOrderSettings,
-  getPurchaseOrderYearSequence,
   type PurchaseOrderSettings,
 } from "@/lib/queries/purchase-orders"
 
@@ -93,13 +92,12 @@ export default async function PurchaseOrderPrintPage({
   }
 
   const sender = getSender(settings)
-  const documentSequence = await getPurchaseOrderYearSequence(restaurant, order)
   const formattedDate = format(
     parseISO(order.order_date),
     localeCode === "ja" ? "yyyy年M月d日 (EEE)" : "EEEE, MMMM do, yyyy",
     { locale: dateLocale },
   )
-  const documentNo = `PO-${order.order_date.replaceAll("-", "")}-${String(documentSequence).padStart(4, "0")}`
+  const documentNo = order.document_no
   const paddedLines = [
     ...order.lines,
     ...Array.from({ length: Math.max(0, 12 - order.lines.length) }, (_, index) => ({

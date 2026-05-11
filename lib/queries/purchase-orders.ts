@@ -30,6 +30,7 @@ export interface PurchaseOrder {
     supplier_name: string;
     subject: string;
     notes: string | null;
+    document_no: string;
     order_date: string;
     status: PurchaseOrderStatus;
     source_type: PurchaseOrderSourceType;
@@ -136,30 +137,6 @@ export async function getPurchaseOrderSettings(
     return (data ?? null) as PurchaseOrderSettings | null;
 }
 
-export async function getPurchaseOrderYearSequence(
-    restaurantId: string,
-    order: Pick<PurchaseOrder, 'id' | 'order_date'>
-): Promise<number> {
-    const year = order.order_date.slice(0, 4);
-    const supabase = await createClient();
-    const { data, error } = await supabase
-        .from('purchase_orders')
-        .select('id, order_date, created_at')
-        .eq('restaurant_id', restaurantId)
-        .gte('order_date', `${year}-01-01`)
-        .lte('order_date', `${year}-12-31`)
-        .order('order_date', { ascending: true })
-        .order('created_at', { ascending: true })
-        .order('id', { ascending: true });
-
-    if (error) {
-        console.error('[getPurchaseOrderYearSequence] Failed to load yearly sequence', error);
-        return 1;
-    }
-
-    const index = (data ?? []).findIndex((row) => row.id === order.id);
-    return index >= 0 ? index + 1 : 1;
-}
 
 export async function getPurchaseOrderById(
     restaurantId: string,

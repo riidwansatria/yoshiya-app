@@ -161,6 +161,12 @@ export function PurchaseOrderForm({
     return (
         <div className="flex h-full min-h-0 flex-col gap-4">
             <div className="flex flex-col gap-3 rounded-md border p-3 lg:flex-row lg:items-end">
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t("documentNo")}</label>
+                    <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
+                        {order.document_no}
+                    </div>
+                </div>
                 <div className="flex flex-1 flex-col gap-1.5">
                     <label htmlFor="purchase-order-supplier" className="text-sm font-medium">
                         {t("supplierLabel")}

@@ -278,6 +278,7 @@
         "purchaseOrders": {
             "title": "発注書",
             "detailTitle": "発注書を編集",
+            "documentNo": "発注No.",
             "supplierLabel": "購入先",
             "subjectLabel": "件名",
             "defaultSubject": "発注書",

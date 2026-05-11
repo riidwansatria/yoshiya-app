@@ -45,6 +45,30 @@ export interface PurchaseOrderSettingsInput {
 
 const DEFAULT_PURCHASE_ORDER_SUBJECT = '発注書';
 
+async function generateDocumentNo(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    restaurantId: string,
+    orderDate: string
+): Promise<string> {
+    const year = orderDate.slice(0, 4);
+    const { data } = await supabase
+        .from('purchase_orders')
+        .select('document_no')
+        .eq('restaurant_id', restaurantId)
+        .gte('order_date', `${year}-01-01`)
+        .lte('order_date', `${year}-12-31`)
+        .not('document_no', 'is', null);
+
+    const maxSeq = ((data ?? []) as { document_no: string | null }[]).reduce((max, row) => {
+        if (!row.document_no) return max;
+        const parts = row.document_no.split('-');
+        const seq = parseInt(parts[parts.length - 1], 10);
+        return Math.max(max, isNaN(seq) ? 0 : seq);
+    }, 0);
+
+    return `PO-${year}-${String(maxSeq + 1).padStart(4, '0')}`;
+}
+
 function normalizeRequiredText(value: string) {
     return value.trim();
 }
@@ -102,12 +126,14 @@ export async function createBlankPurchaseOrder(
     if (!orderDate) return { error: 'Order date is required' };
 
     const supabase = await createClient();
+    const documentNo = await generateDocumentNo(supabase, restaurantId, orderDate);
     const { data, error } = await supabase
         .from('purchase_orders')
         .insert({
             restaurant_id: restaurantId,
             supplier_name: supplier,
             subject: DEFAULT_PURCHASE_ORDER_SUBJECT,
+            document_no: documentNo,
             order_date: orderDate,
             status: 'draft',
             source_type: 'blank',
@@ -136,12 +162,14 @@ export async function createPurchaseOrderFromSummary(
     if (lines.length === 0) return { error: 'No lines to create' };
 
     const supabase = await createClient();
+    const documentNo = await generateDocumentNo(supabase, restaurantId, orderDate);
     const { data: order, error: orderError } = await supabase
         .from('purchase_orders')
         .insert({
             restaurant_id: restaurantId,
             supplier_name: supplier,
             subject: DEFAULT_PURCHASE_ORDER_SUBJECT,
+            document_no: documentNo,
             order_date: orderDate,
             status: 'draft',
             source_type: 'summary',

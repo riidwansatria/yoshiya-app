@@ -278,6 +278,7 @@
         "purchaseOrders": {
             "title": "Purchase Orders",
             "detailTitle": "Edit Purchase Order",
+            "documentNo": "PO No.",
             "supplierLabel": "Supplier",
             "subjectLabel": "Subject",
             "defaultSubject": "Purchase Order",
