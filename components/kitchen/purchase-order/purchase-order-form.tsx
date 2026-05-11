@@ -19,8 +19,17 @@ import type {
     PurchaseOrderStatus,
 } from "@/lib/queries/purchase-orders"
 import type { Ingredient } from "@/lib/queries/ingredients"
+import type { Vendor } from "@/lib/queries/vendors"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
 import {
     Select,
@@ -44,6 +53,7 @@ interface PurchaseOrderFormProps {
     restaurantId: string
     order: PurchaseOrderDetail
     ingredients: Ingredient[]
+    vendors: Vendor[]
 }
 
 function numberInputValue(value: number | null) {
@@ -54,11 +64,16 @@ export function PurchaseOrderForm({
     restaurantId,
     order,
     ingredients,
+    vendors,
 }: PurchaseOrderFormProps) {
     const router = useRouter()
     const locale = useLocale()
     const t = useTranslations("kitchen.purchaseOrders")
-    const [supplierName, setSupplierName] = useState(order.supplier_name)
+    const initialVendor = useMemo(
+        () => vendors.find((vendor) => vendor.id === order.vendor_id) ?? vendors.find((vendor) => vendor.name === order.supplier_name) ?? null,
+        [order.supplier_name, order.vendor_id, vendors]
+    )
+    const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(initialVendor)
     const [subject, setSubject] = useState(order.subject || t("defaultSubject"))
     const [notes, setNotes] = useState(order.notes ?? "")
     const [orderDate, setOrderDate] = useState(order.order_date.slice(0, 10))
@@ -94,7 +109,8 @@ export function PurchaseOrderForm({
     const save = () => {
         startTransition(async () => {
             const headerResult = await updatePurchaseOrderHeader(restaurantId, order.id, {
-                supplier_name: supplierName,
+                supplier_name: selectedVendor?.name ?? "",
+                vendor_id: selectedVendor?.id ?? null,
                 subject,
                 notes,
                 order_date: orderDate,
@@ -171,11 +187,29 @@ export function PurchaseOrderForm({
                     <label htmlFor="purchase-order-supplier" className="text-sm font-medium">
                         {t("supplierLabel")}
                     </label>
-                    <Input
-                        id="purchase-order-supplier"
-                        value={supplierName}
-                        onChange={(event) => setSupplierName(event.target.value)}
-                    />
+                    <Combobox
+                        value={selectedVendor}
+                        onValueChange={setSelectedVendor}
+                        items={vendors}
+                        itemToStringLabel={(vendor) => vendor.name}
+                        autoHighlight
+                    >
+                        <ComboboxInput
+                            id="purchase-order-supplier"
+                            placeholder={t("vendorPlaceholder")}
+                            showClear={!!selectedVendor}
+                        />
+                        <ComboboxContent>
+                            <ComboboxEmpty>{t("vendorEmpty")}</ComboboxEmpty>
+                            <ComboboxList>
+                                {(vendor) => (
+                                    <ComboboxItem key={vendor.id} value={vendor}>
+                                        {vendor.name}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5">
                     <label htmlFor="purchase-order-subject" className="text-sm font-medium">
@@ -219,7 +253,7 @@ export function PurchaseOrderForm({
                     {order.source_type === "summary" ? t("sourceSummary") : t("sourceBlank")}
                 </Badge>
                 <div className="flex gap-2">
-                    <Button type="button" onClick={save} disabled={isPending}>
+                    <Button type="button" onClick={save} disabled={isPending || !selectedVendor}>
                         <Save />
                         {t("saveAction")}
                     </Button>

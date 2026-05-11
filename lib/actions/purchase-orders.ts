@@ -214,6 +214,7 @@ export async function updatePurchaseOrderHeader(
     id: string,
     values: {
         supplier_name: string;
+        vendor_id?: string | null;
         subject: string;
         notes?: string | null;
         order_date: string;
@@ -231,6 +232,7 @@ export async function updatePurchaseOrderHeader(
         .from('purchase_orders')
         .update({
             supplier_name: supplier,
+            vendor_id: values.vendor_id ?? null,
             subject,
             notes: normalizeOptionalText(values.notes),
             order_date: values.order_date,
