@@ -113,10 +113,7 @@ export default async function PurchaseOrderPrintPage({
       memo: null,
     })),
   ]
-  const remarks = order.lines
-    .map((line) => line.memo?.trim())
-    .filter(Boolean)
-    .join("\n")
+  const remarks = order.notes?.trim() ?? ""
 
   return (
     <div className="mx-auto min-h-screen w-full bg-muted/20 p-6 text-foreground print:bg-background print:p-0">
@@ -201,7 +198,7 @@ export default async function PurchaseOrderPrintPage({
         </table>
 
         <section className="mt-4">
-          <div className="bg-foreground px-2 py-1 text-xs font-medium text-background">備考</div>
+          <div className="bg-foreground px-2 py-1 text-center text-xs font-medium text-background">特記事項</div>
           <div className="min-h-24 whitespace-pre-wrap border border-foreground p-2 text-xs text-muted-foreground">
             {remarks}
           </div>

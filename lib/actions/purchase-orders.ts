@@ -187,6 +187,7 @@ export async function updatePurchaseOrderHeader(
     values: {
         supplier_name: string;
         subject: string;
+        notes?: string | null;
         order_date: string;
         status: PurchaseOrderStatus;
     }
@@ -203,6 +204,7 @@ export async function updatePurchaseOrderHeader(
         .update({
             supplier_name: supplier,
             subject,
+            notes: normalizeOptionalText(values.notes),
             order_date: values.order_date,
             status: values.status,
         })

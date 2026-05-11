@@ -29,6 +29,7 @@ export interface PurchaseOrder {
     restaurant_id: string;
     supplier_name: string;
     subject: string;
+    notes: string | null;
     order_date: string;
     status: PurchaseOrderStatus;
     source_type: PurchaseOrderSourceType;

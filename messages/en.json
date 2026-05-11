@@ -313,7 +313,9 @@
             "neededQuantity": "Needed",
             "pack": "Pack",
             "orderQuantity": "Order Qty",
-            "memo": "Memo",
+            "memo": "Notes",
+            "notes": "Special Notes",
+            "notesPlaceholder": "Enter special notes...",
             "defaultPackLabel": "pack",
             "none": "None"
         },

@@ -313,7 +313,9 @@
             "neededQuantity": "必要量",
             "pack": "パック",
             "orderQuantity": "発注数",
-            "memo": "メモ",
+            "memo": "備考",
+            "notes": "特記事項",
+            "notesPlaceholder": "特記事項を入力...",
             "defaultPackLabel": "パック",
             "none": "なし"
         },

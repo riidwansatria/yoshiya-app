@@ -60,6 +60,7 @@ export function PurchaseOrderForm({
     const t = useTranslations("kitchen.purchaseOrders")
     const [supplierName, setSupplierName] = useState(order.supplier_name)
     const [subject, setSubject] = useState(order.subject || t("defaultSubject"))
+    const [notes, setNotes] = useState(order.notes ?? "")
     const [orderDate, setOrderDate] = useState(order.order_date.slice(0, 10))
     const [status, setStatus] = useState<PurchaseOrderStatus>(order.status)
     const [lines, setLines] = useState<PurchaseOrderLine[]>(order.lines)
@@ -95,6 +96,7 @@ export function PurchaseOrderForm({
             const headerResult = await updatePurchaseOrderHeader(restaurantId, order.id, {
                 supplier_name: supplierName,
                 subject,
+                notes,
                 order_date: orderDate,
                 status,
             })
@@ -222,6 +224,19 @@ export function PurchaseOrderForm({
                         </Link>
                     </Button>
                 </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5 rounded-md border p-3">
+                <label htmlFor="purchase-order-notes" className="text-sm font-medium">
+                    {t("notes")}
+                </label>
+                <Textarea
+                    id="purchase-order-notes"
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder={t("notesPlaceholder")}
+                    className="min-h-16 resize-none"
+                />
             </div>
 
             <div className="flex items-end gap-2 rounded-md border p-3">
