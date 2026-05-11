@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition, Fragm
 import { useRouter } from 'next/navigation';
 
 import { Ingredient } from '@/lib/queries/ingredients';
+import type { Vendor } from '@/lib/queries/vendors';
 import { RecipeComponent } from '@/lib/queries/components';
 import { useTranslations } from 'next-intl';
 import {
@@ -31,7 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { fetchDistinctCategories, fetchDistinctStores, fetchIngredientsListData } from '@/lib/queries/kitchen';
+import { fetchDistinctCategories, fetchIngredientsListData } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 
@@ -53,13 +54,13 @@ function formatPackageDisplay(
 
 export function IngredientsTable({
     initialData,
-    initialStores,
+    vendors,
     initialCategories,
     components,
     restaurantId,
 }: {
     initialData: Ingredient[];
-    initialStores: string[];
+    vendors: Vendor[];
     initialCategories: string[];
     components: RecipeComponent[];
     restaurantId: string;
@@ -73,7 +74,6 @@ export function IngredientsTable({
     const [search, setSearch] = useState('');
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [ingredients, setIngredients] = useState(initialData);
-    const [stores, setStores] = useState(initialStores);
     const [categories, setCategories] = useState(initialCategories);
     const [componentsState, setComponentsState] = useState(components);
     const [, startTransition] = useTransition();
@@ -99,15 +99,13 @@ export function IngredientsTable({
     }, [deletingIngredient, ingredients]);
 
     const refetchListData = useCallback(async () => {
-        const [nextData, nextStores, nextCategories] = await Promise.all([
+        const [nextData, nextCategories] = await Promise.all([
             fetchIngredientsListData(supabase, restaurantId),
-            fetchDistinctStores(supabase),
             fetchDistinctCategories(supabase),
         ]);
         startTransition(() => {
             setIngredients(nextData.ingredients);
             setComponentsState(nextData.components);
-            setStores(nextStores);
             setCategories(nextCategories);
         });
     }, [restaurantId, supabase]);
@@ -166,7 +164,7 @@ export function IngredientsTable({
             i.name.toLowerCase().includes(q) ||
             i.unit.toLowerCase().includes(q) ||
             (i.category ?? '').toLowerCase().includes(q) ||
-            (i.store ?? '').toLowerCase().includes(q) ||
+            (vendors.find((v) => v.id === i.vendor_id)?.name ?? '').toLowerCase().includes(q) ||
             (i.package_label ?? '').toLowerCase().includes(q) ||
             (i.package_size?.toString() ?? '').includes(q) ||
             (componentUsageByIngredientId.get(i.id) ?? []).some((usage) =>
@@ -310,7 +308,7 @@ export function IngredientsTable({
                                             <TableCell>{ingredient.unit}</TableCell>
                                             <TableCell>{formatPackageDisplay(ingredient, t)}</TableCell>
                                             <TableCell>{ingredient.category || t('common.none')}</TableCell>
-                                            <TableCell>{ingredient.store || t('common.none')}</TableCell>
+                                            <TableCell>{vendors.find((v) => v.id === ingredient.vendor_id)?.name ?? t('common.none')}</TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -391,7 +389,7 @@ export function IngredientsTable({
             <AddIngredientDialog
                 open={isAddOpen}
                 onOpenChange={setIsAddOpen}
-                stores={stores}
+                vendors={vendors}
                 categories={categories}
             />
             {deletingIngredient && (

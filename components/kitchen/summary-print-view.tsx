@@ -39,7 +39,8 @@ type IngredientSummaryRow = {
     name: string;
     unit: string;
     category: string;
-    store: string | null;
+    vendor_id: string | null;
+    vendor_name: string | null;
     total_quantity: number;
     package_size: number | null;
     package_label: string | null;
@@ -83,16 +84,16 @@ function getLocalIsoDate() {
     return `${year}-${month}-${day}`;
 }
 
-function groupIngredientRowsByStore(
+function groupIngredientRowsByVendor(
     rows: Row<IngredientSummaryRow>[],
     fallbackLabel: string
 ): IngredientSummaryGroup[] {
     const groups = new Map<string, IngredientSummaryGroup>();
 
     for (const row of rows) {
-        const store = toSafeText(row.original.store).trim();
-        const key = store || '__none__';
-        const label = store || fallbackLabel;
+        const vendorName = toSafeText(row.original.vendor_name).trim();
+        const key = row.original.vendor_id ?? '__none__';
+        const label = vendorName || fallbackLabel;
         const group = groups.get(key);
 
         if (group) {
@@ -186,7 +187,8 @@ export function SummaryPrintView({
                 package_label: row.original.package_label,
                 order_quantity: row.original.packages_needed,
                 memo: null,
-            }))
+            })),
+            group.key !== '__none__' ? group.key : null
         );
         setCreatingPurchaseOrderFor(null);
 
@@ -364,7 +366,7 @@ export function SummaryPrintView({
         enableRowSelection: false,
     });
 
-    const ingredientGroups = groupIngredientRowsByStore(
+    const ingredientGroups = groupIngredientRowsByVendor(
         ingredientsTable.getRowModel().rows,
         tCommon('none')
     );

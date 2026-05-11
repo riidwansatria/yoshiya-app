@@ -29,6 +29,7 @@
             "language": "言語",
             "menuTags": "メニュータグ",
             "purchaseOrders": "発注書",
+            "vendors": "仕入先",
             "staff": "スタッフ管理"
         },
         "language": {
@@ -84,6 +85,29 @@
             "save": "保存",
             "saving": "保存中...",
             "saveSuccess": "発注書設定を保存しました"
+        },
+        "vendors": {
+            "title": "仕入先",
+            "description": "発注書に使用する仕入先情報を管理します。",
+            "columnName": "名称",
+            "columnEmail": "EMAIL",
+            "columnTel": "TEL",
+            "columnFax": "FAX",
+            "addName": "名称を入力...",
+            "addEmail": "EMAIL",
+            "addTel": "TEL",
+            "addFax": "FAX",
+            "emptyState": "仕入先はまだありません。",
+            "addSuccess": "仕入先を追加しました。",
+            "addFailed": "仕入先の追加に失敗しました。",
+            "updateSuccess": "仕入先を更新しました。",
+            "deleteSuccess": "仕入先を削除しました。",
+            "deleteFailed": "仕入先の削除に失敗しました。",
+            "deleteConfirmTitle": "仕入先を削除しますか？",
+            "deleteConfirmBody": "「{name}」を削除しますか？この操作は取り消せません。",
+            "openMenu": "メニューを開く",
+            "cancel": "キャンセル",
+            "deleteAction": "削除"
         },
         "staff": {
             "description": "アカウント作成、スタッフ情報の編集、配役表示の切り替えを行います。"
@@ -279,11 +303,11 @@
             "title": "発注書",
             "detailTitle": "発注書を編集",
             "documentNo": "発注No.",
-            "supplierLabel": "購入先",
+            "supplierLabel": "仕入先",
             "subjectLabel": "件名",
             "defaultSubject": "発注書",
-            "supplierPlaceholder": "購入先を入力...",
-            "supplierColumn": "購入先",
+            "supplierPlaceholder": "仕入先を入力...",
+            "supplierColumn": "仕入先",
             "orderDate": "発注日",
             "status": "ステータス",
             "statusDraft": "下書き",
@@ -318,7 +342,10 @@
             "notes": "特記事項",
             "notesPlaceholder": "特記事項を入力...",
             "defaultPackLabel": "パック",
-            "none": "なし"
+            "none": "なし",
+            "vendorLabel": "仕入先",
+            "vendorPlaceholder": "仕入先を検索...",
+            "vendorEmpty": "該当する仕入先がありません。"
         },
         "orders": {
             "title": "日次注文入力",
@@ -371,7 +398,8 @@
             "collapseAll": "すべて閉じる",
             "none": "-",
             "used": "使用中",
-            "openMenu": "メニューを開く"
+            "openMenu": "メニューを開く",
+            "noResults": "該当する結果がありません。"
         },
         "ingredients": {
             "searchPlaceholder": "食材を検索...",
@@ -383,6 +411,7 @@
             "addTitle": "食材を追加",
             "addDescription": "食材マスタに新しい食材を追加します。",
             "editTitle": "食材を編集",
+            "editDescription": "食材マスタの内容を編集します。",
             "deleteTitle": "食材を削除",
             "deleteDescription": "{name} を削除してもよろしいですか？この操作は元に戻せません。",
             "saveButton": "食材を保存",
@@ -409,13 +438,13 @@
                 "packageSize": "例: 10、500、1000",
                 "packageLabel": "例: パック、袋、箱"
             },
-            "storeOptional": "購入先（任意）",
-            "storeLabel": "購入先",
-            "storeHint": "この食材の購入先です。"
+            "storeOptional": "仕入先（任意）",
+            "storeLabel": "仕入先",
+            "storeHint": "この食材の仕入先です。"
         },
         "storeCombobox": {
-            "searchPlaceholder": "購入先を検索または追加...",
-            "empty": "該当する購入先がありません。",
+            "searchPlaceholder": "仕入先を検索または追加...",
+            "empty": "該当する仕入先がありません。",
             "createNamed": "「{name}」を追加"
         },
         "categoryCombobox": {

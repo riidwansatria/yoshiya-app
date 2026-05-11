@@ -1,4 +1,4 @@
-export type SettingsSection = "language" | "staff" | "menu-tags" | "purchase-orders"
+export type SettingsSection = "language" | "staff" | "menu-tags" | "purchase-orders" | "vendors"
 
 export interface StaffRecord {
     id: string
@@ -19,7 +19,7 @@ export function resolveSettingsSection(
         return userRole === "manager" ? "staff" : "language"
     }
 
-    if (normalizedSection === "menu-tags" || normalizedSection === "purchase-orders") {
+    if (normalizedSection === "menu-tags" || normalizedSection === "purchase-orders" || normalizedSection === "vendors") {
         return normalizedSection
     }
 

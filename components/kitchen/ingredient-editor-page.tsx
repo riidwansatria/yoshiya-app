@@ -4,16 +4,17 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import type { Ingredient } from '@/lib/queries/ingredients';
+import type { Vendor } from '@/lib/queries/vendors';
 import { IngredientEditor } from './ingredient-editor';
 
 export function IngredientEditorPage({
     ingredient,
-    stores,
+    vendors,
     categories,
     restaurantId,
 }: {
     ingredient: Ingredient;
-    stores: string[];
+    vendors: Vendor[];
     categories: string[];
     restaurantId: string;
 }) {
@@ -34,7 +35,7 @@ export function IngredientEditorPage({
                 <div className="rounded-md border p-6">
                     <IngredientEditor
                         ingredient={ingredient}
-                        stores={stores}
+                        vendors={vendors}
                         categories={categories}
                         presentation="page"
                         onCancel={handleClose}

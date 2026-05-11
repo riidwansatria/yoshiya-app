@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { Ingredient } from '@/lib/queries/ingredients';
+import type { Vendor } from '@/lib/queries/vendors';
 import { createIngredient, deleteIngredient } from '@/lib/actions/ingredients';
 import {
     Dialog,
@@ -28,13 +29,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { CategoryCombobox } from './category-combobox';
-import { StoreCombobox } from './store-combobox';
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from '@/components/ui/combobox';
 
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     unit: z.string(),
     category: z.string().optional(),
-    store: z.string().optional(),
+    vendor_id: z.string().optional(),
     package_size: z.string().optional().refine((value) => {
         const trimmed = (value ?? '').trim();
 
@@ -53,14 +61,14 @@ export function AddIngredientDialog({
     open,
     onOpenChange,
     initialName = '',
-    stores = [],
+    vendors = [],
     categories = [],
     onSuccess,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initialName?: string;
-    stores?: string[];
+    vendors?: Vendor[];
     categories?: string[];
     onSuccess?: (ingredient: Ingredient) => void;
 }) {
@@ -72,7 +80,7 @@ export function AddIngredientDialog({
             name: initialName,
             unit: '',
             category: '',
-            store: '',
+            vendor_id: '',
             package_size: '',
             package_label: '',
         },
@@ -84,7 +92,7 @@ export function AddIngredientDialog({
                 name: initialName,
                 unit: '',
                 category: '',
-                store: '',
+                vendor_id: '',
                 package_size: '',
                 package_label: '',
             });
@@ -100,7 +108,7 @@ export function AddIngredientDialog({
                 name: data.name,
                 unit: data.unit,
                 category: data.category,
-                store: data.store,
+                vendor_id: data.vendor_id || null,
                 package_size: trimmedPackageSize ? Number(trimmedPackageSize) : null,
                 package_label: data.package_label,
             });
@@ -179,20 +187,33 @@ export function AddIngredientDialog({
                         />
                         <FormField
                             control={form.control}
-                            name="store"
+                            name="vendor_id"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>{t('ingredients.storeOptional')}</FormLabel>
                                     <FormControl>
-                                        <StoreCombobox
-                                            value={field.value || ''}
-                                            onValueChange={(val) => field.onChange(val)}
-                                            stores={stores}
-                                        />
+                                        <Combobox
+                                            value={vendors.find((v) => v.id === field.value) ?? null}
+                                            onValueChange={(vendor) => {
+                                                field.onChange(vendor?.id ?? '');
+                                            }}
+                                            items={vendors}
+                                            itemToStringLabel={(v) => v.name}
+                                            autoHighlight
+                                        >
+                                            <ComboboxInput showClear={!!field.value} />
+                                            <ComboboxContent>
+                                                <ComboboxEmpty>{t('common.noResults')}</ComboboxEmpty>
+                                                <ComboboxList>
+                                                    {(vendor) => (
+                                                        <ComboboxItem key={vendor.id} value={vendor}>
+                                                            {vendor.name}
+                                                        </ComboboxItem>
+                                                    )}
+                                                </ComboboxList>
+                                            </ComboboxContent>
+                                        </Combobox>
                                     </FormControl>
-                                    <p className="text-xs text-muted-foreground">
-                                        {t('ingredients.storeHint')}
-                                    </p>
                                     <FormMessage />
                                 </FormItem>
                             )}

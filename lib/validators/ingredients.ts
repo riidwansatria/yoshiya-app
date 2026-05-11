@@ -2,7 +2,7 @@ export type IngredientPayload = {
     name: string;
     unit: string;
     category?: string | null;
-    store?: string | null;
+    vendor_id?: string | null;
     package_size?: number | null;
     package_label?: string | null;
 }
@@ -14,7 +14,7 @@ export function normalizeIngredientPayload(data: IngredientPayload) {
         name: data.name.trim(),
         unit: data.unit.trim(),
         category: data.category?.trim() ? data.category.trim() : null,
-        store: data.store?.trim() ? data.store.trim() : null,
+        vendor_id: data.vendor_id ?? null,
         package_size: packageSize,
         package_label: data.package_label?.trim() ? data.package_label.trim() : null,
     }

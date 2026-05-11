@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 
 import { IngredientEditorPage } from '@/components/kitchen/ingredient-editor-page';
-import { getDistinctCategories, getDistinctStores, getIngredientById } from '@/lib/queries/ingredients';
+import { getDistinctCategories, getIngredientById } from '@/lib/queries/ingredients';
+import { getVendors } from '@/lib/queries/vendors';
 
 export default async function IngredientDetailPage({
     params,
@@ -9,9 +10,9 @@ export default async function IngredientDetailPage({
     params: Promise<{ restaurant: string; id: string }>;
 }) {
     const { restaurant, id } = await params;
-    const [ingredient, stores, categories] = await Promise.all([
+    const [ingredient, vendors, categories] = await Promise.all([
         getIngredientById(id),
-        getDistinctStores(),
+        getVendors(),
         getDistinctCategories(),
     ]);
 
@@ -19,5 +20,5 @@ export default async function IngredientDetailPage({
         notFound();
     }
 
-    return <IngredientEditorPage ingredient={ingredient} stores={stores} categories={categories} restaurantId={restaurant} />;
+    return <IngredientEditorPage ingredient={ingredient} vendors={vendors} categories={categories} restaurantId={restaurant} />;
 }

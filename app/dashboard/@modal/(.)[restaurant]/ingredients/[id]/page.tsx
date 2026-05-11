@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 
 import { IngredientEditorModal } from '@/components/kitchen/ingredient-editor-modal';
-import { getDistinctCategories, getDistinctStores, getIngredientById } from '@/lib/queries/ingredients';
+import { getDistinctCategories, getIngredientById } from '@/lib/queries/ingredients';
+import { getVendors } from '@/lib/queries/vendors';
 
 export default async function IngredientModalRoute({
     params,
@@ -9,9 +10,9 @@ export default async function IngredientModalRoute({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const [ingredient, stores, categories] = await Promise.all([
+    const [ingredient, vendors, categories] = await Promise.all([
         getIngredientById(id),
-        getDistinctStores(),
+        getVendors(),
         getDistinctCategories(),
     ]);
 
@@ -19,5 +20,5 @@ export default async function IngredientModalRoute({
         notFound();
     }
 
-    return <IngredientEditorModal ingredient={ingredient} stores={stores} categories={categories} />;
+    return <IngredientEditorModal ingredient={ingredient} vendors={vendors} categories={categories} />;
 }

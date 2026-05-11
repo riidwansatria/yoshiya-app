@@ -5,7 +5,8 @@ export interface AggregatedIngredient {
     name: string;
     unit: string;
     category: string;
-    store: string | null;
+    vendor_id: string | null;
+    vendor_name: string | null;
     total_quantity: number;
     package_size: number | null;
     package_label: string | null;
@@ -50,7 +51,7 @@ export async function getIngredientsSummary(
               name,
               unit,
               category,
-                            store,
+              vendor_id,
               package_size,
               package_label
             )
@@ -70,7 +71,7 @@ export async function getIngredientsSummary(
         name: string;
         unit: string;
         category: string | null;
-        store: string | null;
+        vendor_id: string | null;
         package_size: number | null;
         package_label: string | null;
     }
@@ -84,6 +85,10 @@ export async function getIngredientsSummary(
         yield_servings: number | null;
         component_ingredients: RawComponentIngredientObj[] | null;
     }
+
+    // 3a. Fetch vendor names for lookup
+    const { data: vendors } = await supabase.from('vendors').select('id, name');
+    const vendorNameById = new Map<string, string>((vendors ?? []).map((v) => [v.id, v.name]));
 
     const aggregatedMap = new Map<string, AggregatedIngredient>();
 
@@ -124,7 +129,8 @@ export async function getIngredientsSummary(
                         name: ingredient.name,
                         unit: ingredient.unit,
                         category: ingredient.category || 'Uncategorized',
-                        store: ingredient.store,
+                        vendor_id: ingredient.vendor_id,
+                        vendor_name: ingredient.vendor_id ? (vendorNameById.get(ingredient.vendor_id) ?? null) : null,
                         total_quantity: ingredientAmount,
                         package_size: ingredient.package_size,
                         package_label: ingredient.package_label,

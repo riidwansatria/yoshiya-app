@@ -3,8 +3,8 @@ import { getTranslations } from "next-intl/server"
 
 import { Page, PageContent, PageHeader, PageHeaderHeading, PageTitle } from "@/components/layout/page"
 import { PurchaseOrdersList } from "@/components/kitchen/purchase-order/purchase-orders-list"
-import { getDistinctStores } from "@/lib/queries/ingredients"
 import { getPurchaseOrders } from "@/lib/queries/purchase-orders"
+import { getVendors } from "@/lib/queries/vendors"
 
 export default async function PurchaseOrdersPage({
     params,
@@ -13,9 +13,9 @@ export default async function PurchaseOrdersPage({
 }) {
     const { restaurant } = await params
     const t = await getTranslations("kitchen.purchaseOrders")
-    const [orders, stores] = await Promise.all([
+    const [orders, vendors] = await Promise.all([
         getPurchaseOrders(),
-        getDistinctStores(),
+        getVendors(),
     ])
 
     return (
@@ -29,7 +29,7 @@ export default async function PurchaseOrdersPage({
                 <PurchaseOrdersList
                     restaurantId={restaurant}
                     orders={orders}
-                    stores={stores}
+                    vendors={vendors}
                     today={format(new Date(), "yyyy-MM-dd")}
                 />
             </PageContent>

@@ -3,6 +3,7 @@
 import * as React from "react"
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
 import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
+import type { Vendor } from "@/lib/queries/vendors"
 import type { SettingsSection, StaffRecord } from "./types"
 
 type SettingsContextValue = {
@@ -25,6 +26,7 @@ type SettingsProviderProps = {
     purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
     userRole?: string | null
+    vendors: Vendor[]
 }
 
 export function SettingsProvider({
@@ -33,6 +35,7 @@ export function SettingsProvider({
     purchaseOrderSettings,
     staff,
     userRole,
+    vendors,
 }: SettingsProviderProps) {
     const [isOpen, setIsOpen] = React.useState(false)
     const [section, setSection] = React.useState<SettingsSection>("language")
@@ -54,6 +57,7 @@ export function SettingsProvider({
                     purchaseOrderSettings={purchaseOrderSettings}
                     staff={staff}
                     userRole={userRole}
+                    vendors={vendors}
                     onClose={() => setIsOpen(false)}
                 />
             )}

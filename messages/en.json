@@ -29,6 +29,7 @@
             "language": "Language",
             "menuTags": "Menu Tags",
             "purchaseOrders": "Purchase Orders",
+            "vendors": "Vendors",
             "staff": "Staff Management"
         },
         "language": {
@@ -84,6 +85,29 @@
             "save": "Save",
             "saving": "Saving...",
             "saveSuccess": "Purchase order settings saved"
+        },
+        "vendors": {
+            "title": "Vendors",
+            "description": "Manage vendor information used on purchase orders.",
+            "columnName": "Name",
+            "columnEmail": "Email",
+            "columnTel": "TEL",
+            "columnFax": "FAX",
+            "addName": "Enter name...",
+            "addEmail": "Email",
+            "addTel": "TEL",
+            "addFax": "FAX",
+            "emptyState": "No vendors yet.",
+            "addSuccess": "Vendor added.",
+            "addFailed": "Failed to add vendor.",
+            "updateSuccess": "Vendor updated.",
+            "deleteSuccess": "Vendor deleted.",
+            "deleteFailed": "Failed to delete vendor.",
+            "deleteConfirmTitle": "Delete vendor?",
+            "deleteConfirmBody": "Delete \"{name}\"? This cannot be undone.",
+            "openMenu": "Open menu",
+            "cancel": "Cancel",
+            "deleteAction": "Delete"
         },
         "staff": {
             "description": "Create accounts, edit staff details, and control assignment visibility."
@@ -318,7 +342,10 @@
             "notes": "Special Notes",
             "notesPlaceholder": "Enter special notes...",
             "defaultPackLabel": "pack",
-            "none": "None"
+            "none": "None",
+            "vendorLabel": "Vendor",
+            "vendorPlaceholder": "Search vendor...",
+            "vendorEmpty": "No vendors found."
         },
         "orders": {
             "title": "Daily Orders Input",
@@ -371,7 +398,8 @@
             "collapseAll": "Collapse All",
             "none": "-",
             "used": "used",
-            "openMenu": "Open menu"
+            "openMenu": "Open menu",
+            "noResults": "No results found."
         },
         "ingredients": {
             "searchPlaceholder": "Search ingredients...",
@@ -383,6 +411,7 @@
             "addTitle": "Add Ingredient",
             "addDescription": "Add a new ingredient to the master list.",
             "editTitle": "Edit Ingredient",
+            "editDescription": "Update this ingredient's details in the master list.",
             "deleteTitle": "Delete Ingredient",
             "deleteDescription": "Are you sure you want to delete {name}? This action cannot be undone.",
             "saveButton": "Save Ingredient",

@@ -1,15 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { FileText, Globe, Tag, UserCog, X } from "lucide-react"
+import { Building2, FileText, Globe, Tag, UserCog, X } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
 import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
+import type { Vendor } from "@/lib/queries/vendors"
 import { MenuTagsTable } from "@/components/settings/menu-tags-table"
 import { PurchaseOrderSettingsForm } from "@/components/settings/purchase-order-settings-form"
 import { StaffTable } from "@/components/settings/staff-table"
+import { VendorsTable } from "@/components/settings/vendors-table"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -46,6 +48,7 @@ type SettingsShellProps = {
     purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
     userRole?: string | null
+    vendors: Vendor[]
 }
 
 type SettingsNavItem = {
@@ -61,6 +64,7 @@ export function SettingsShell({
     purchaseOrderSettings,
     staff,
     userRole,
+    vendors,
 }: SettingsShellProps) {
     const locale = useLocale()
     const router = useRouter()
@@ -90,6 +94,12 @@ export function SettingsShell({
             icon: FileText,
             id: "purchase-orders",
             label: t("sections.purchaseOrders"),
+        },
+        {
+            description: t("vendors.description"),
+            icon: Building2,
+            id: "vendors",
+            label: t("sections.vendors"),
         },
     ]
 
@@ -233,6 +243,10 @@ export function SettingsShell({
 
                         {activeSection === "purchase-orders" ? (
                             <PurchaseOrderSettingsForm settings={purchaseOrderSettings} />
+                        ) : null}
+
+                        {activeSection === "vendors" ? (
+                            <VendorsTable data={vendors} />
                         ) : null}
 
                         {activeSection === "staff" && userRole === "manager" ? (

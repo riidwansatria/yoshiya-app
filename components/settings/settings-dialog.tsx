@@ -13,6 +13,7 @@ import { SettingsShell } from "./settings-shell"
 import type { SettingsSection, StaffRecord } from "./types"
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
 import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
+import type { Vendor } from "@/lib/queries/vendors"
 
 type SettingsDialogProps = {
     initialSection: SettingsSection
@@ -21,6 +22,7 @@ type SettingsDialogProps = {
     purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
     userRole?: string | null
+    vendors: Vendor[]
 }
 
 export function SettingsDialog({
@@ -30,6 +32,7 @@ export function SettingsDialog({
     purchaseOrderSettings,
     staff,
     userRole,
+    vendors,
 }: SettingsDialogProps) {
     const t = useTranslations("settings")
 
@@ -50,6 +53,7 @@ export function SettingsDialog({
                     purchaseOrderSettings={purchaseOrderSettings}
                     staff={staff}
                     userRole={userRole}
+                    vendors={vendors}
                 />
             </DialogContent>
         </Dialog>

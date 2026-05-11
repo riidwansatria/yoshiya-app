@@ -117,7 +117,8 @@ async function touchPurchaseOrder(purchaseOrderId: string) {
 export async function createBlankPurchaseOrder(
     restaurantId: string,
     supplierName: string,
-    orderDate: string
+    orderDate: string,
+    vendorId?: string | null
 ) {
     const supplier = normalizeRequiredText(supplierName);
     if (!supplier) return { error: 'Supplier name is required' };
@@ -134,6 +135,7 @@ export async function createBlankPurchaseOrder(
             order_date: orderDate,
             status: 'draft',
             source_type: 'blank',
+            vendor_id: vendorId ?? null,
         })
         .select('id')
         .single();
@@ -151,7 +153,8 @@ export async function createPurchaseOrderFromSummary(
     restaurantId: string,
     supplierName: string,
     orderDate: string,
-    lines: PurchaseOrderLineInput[]
+    lines: PurchaseOrderLineInput[],
+    vendorId?: string | null
 ) {
     const supplier = normalizeRequiredText(supplierName);
     if (!supplier) return { error: 'Supplier name is required' };
@@ -169,6 +172,7 @@ export async function createPurchaseOrderFromSummary(
             order_date: orderDate,
             status: 'draft',
             source_type: 'summary',
+            vendor_id: vendorId ?? null,
         })
         .select('id')
         .single();

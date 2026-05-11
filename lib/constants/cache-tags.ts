@@ -5,4 +5,5 @@ export const CACHE_TAGS = {
     MENU_TAGS: 'menu-tags',
     PURCHASE_ORDERS: 'purchase-orders',
     PURCHASE_ORDER_SETTINGS: 'purchase-order-settings',
+    VENDORS: 'vendors',
 } as const

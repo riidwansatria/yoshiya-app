@@ -30,6 +30,8 @@ export interface PurchaseOrder {
     subject: string;
     notes: string | null;
     document_no: string;
+    vendor_id: string | null;
+    recipient_email: string | null;
     order_date: string;
     status: PurchaseOrderStatus;
     source_type: PurchaseOrderSourceType;

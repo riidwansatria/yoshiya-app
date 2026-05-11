@@ -8,6 +8,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 
 import type { Ingredient } from '@/lib/queries/ingredients';
+import type { Vendor } from '@/lib/queries/vendors';
 import { updateIngredient } from '@/lib/actions/ingredients';
 import { createClient } from '@/lib/supabase/client';
 import { fetchIngredientById } from '@/lib/queries/kitchen';
@@ -16,7 +17,14 @@ import { mergeUntouchedFields } from '@/lib/kitchen/realtime-merge';
 
 import { RealtimeSyncBanner } from './realtime-sync-banner';
 import { CategoryCombobox } from './category-combobox';
-import { StoreCombobox } from './store-combobox';
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from '@/components/ui/combobox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -32,7 +40,7 @@ const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     unit: z.string(),
     category: z.string().optional(),
-    store: z.string().optional(),
+    vendor_id: z.string().optional(),
     package_size: z.string().optional().refine((value) => {
         const trimmed = (value ?? '').trim();
 
@@ -42,7 +50,7 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-const INGREDIENT_SYNC_FIELDS = ['name', 'unit', 'category', 'store', 'package_size', 'package_label'] as const;
+const INGREDIENT_SYNC_FIELDS = ['name', 'unit', 'category', 'vendor_id', 'package_size', 'package_label'] as const;
 type IngredientSyncField = (typeof INGREDIENT_SYNC_FIELDS)[number];
 
 function toIngredientFormValues(ingredient: Ingredient): FormValues {
@@ -50,7 +58,7 @@ function toIngredientFormValues(ingredient: Ingredient): FormValues {
         name: ingredient.name,
         unit: ingredient.unit,
         category: ingredient.category || '',
-        store: ingredient.store || '',
+        vendor_id: ingredient.vendor_id || '',
         package_size: ingredient.package_size?.toString() || '',
         package_label: ingredient.package_label || '',
     };
@@ -58,14 +66,14 @@ function toIngredientFormValues(ingredient: Ingredient): FormValues {
 
 export function IngredientEditor({
     ingredient,
-    stores,
+    vendors,
     categories,
     presentation,
     onCancel,
     onSaved,
 }: {
     ingredient: Ingredient;
-    stores: string[];
+    vendors: Vendor[];
     categories: string[];
     presentation: 'page' | 'modal';
     onCancel: () => void;
@@ -90,7 +98,7 @@ export function IngredientEditor({
         name: t('common.name'),
         unit: t('common.unit'),
         category: t('common.category'),
-        store: t('ingredients.storeOptional'),
+        vendor_id: t('ingredients.storeLabel'),
         package_size: t('ingredients.packageSizeOptional'),
         package_label: t('ingredients.packageLabelOptional'),
     } satisfies Record<IngredientSyncField, string>;
@@ -122,7 +130,7 @@ export function IngredientEditor({
             name: form.getValues('name'),
             unit: form.getValues('unit'),
             category: form.getValues('category'),
-            store: form.getValues('store'),
+            vendor_id: form.getValues('vendor_id'),
             package_size: form.getValues('package_size'),
             package_label: form.getValues('package_label'),
         };
@@ -130,7 +138,7 @@ export function IngredientEditor({
             name: remoteFormValues.name,
             unit: remoteFormValues.unit,
             category: remoteFormValues.category,
-            store: remoteFormValues.store,
+            vendor_id: remoteFormValues.vendor_id,
             package_size: remoteFormValues.package_size,
             package_label: remoteFormValues.package_label,
         };
@@ -142,7 +150,7 @@ export function IngredientEditor({
                 name: !!dirtyFields.name,
                 unit: !!dirtyFields.unit,
                 category: !!dirtyFields.category,
-                store: !!dirtyFields.store,
+                vendor_id: !!dirtyFields.vendor_id,
                 package_size: !!dirtyFields.package_size,
                 package_label: !!dirtyFields.package_label,
             },
@@ -167,7 +175,7 @@ export function IngredientEditor({
         dirtyFields.name,
         dirtyFields.package_label,
         dirtyFields.package_size,
-        dirtyFields.store,
+        dirtyFields.vendor_id,
         dirtyFields.unit,
         form,
         ingredient.id,
@@ -221,7 +229,7 @@ export function IngredientEditor({
                 name: data.name,
                 unit: data.unit,
                 category: data.category,
-                store: data.store,
+                vendor_id: data.vendor_id || null,
                 package_size: trimmedPackageSize ? Number(trimmedPackageSize) : null,
                 package_label: data.package_label,
             });
@@ -281,8 +289,8 @@ export function IngredientEditor({
                                     <span>{latestRemoteIngredient.category || t('common.none')}</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <span className="font-medium">{t('ingredients.storeOptional')}</span>
-                                    <span>{latestRemoteIngredient.store || t('common.none')}</span>
+                                    <span className="font-medium">{t('ingredients.storeLabel')}</span>
+                                    <span>{vendors.find((v) => v.id === latestRemoteIngredient.vendor_id)?.name ?? t('common.none')}</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <span className="font-medium">{t('ingredients.packageSizeOptional')}</span>
@@ -341,20 +349,33 @@ export function IngredientEditor({
                 />
                 <FormField
                     control={form.control}
-                    name="store"
+                    name="vendor_id"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>{t('ingredients.storeOptional')}</FormLabel>
+                            <FormLabel>{t('ingredients.storeLabel')}</FormLabel>
                             <FormControl>
-                                <StoreCombobox
-                                    value={field.value || ''}
-                                    onValueChange={(val) => field.onChange(val)}
-                                    stores={stores}
-                                />
+                                <Combobox
+                                    value={vendors.find((v) => v.id === field.value) ?? null}
+                                    onValueChange={(vendor) => {
+                                        field.onChange(vendor?.id ?? '');
+                                    }}
+                                    items={vendors}
+                                    itemToStringLabel={(v) => v.name}
+                                    autoHighlight
+                                >
+                                    <ComboboxInput showClear={!!field.value} />
+                                    <ComboboxContent>
+                                        <ComboboxEmpty>{t('common.noResults')}</ComboboxEmpty>
+                                        <ComboboxList>
+                                            {(vendor) => (
+                                                <ComboboxItem key={vendor.id} value={vendor}>
+                                                    {vendor.name}
+                                                </ComboboxItem>
+                                            )}
+                                        </ComboboxList>
+                                    </ComboboxContent>
+                                </Combobox>
                             </FormControl>
-                            <p className="text-xs text-muted-foreground">
-                                {t('ingredients.storeHint')}
-                            </p>
                             <FormMessage />
                         </FormItem>
                     )}

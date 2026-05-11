@@ -12,6 +12,7 @@ import {
     deletePurchaseOrder,
 } from "@/lib/actions/purchase-orders"
 import type { PurchaseOrderListItem } from "@/lib/queries/purchase-orders"
+import type { Vendor } from "@/lib/queries/vendors"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
 import {
     Table,
@@ -34,7 +43,7 @@ import {
 interface PurchaseOrdersListProps {
     restaurantId: string
     orders: PurchaseOrderListItem[]
-    stores: string[]
+    vendors: Vendor[]
     today: string
 }
 
@@ -45,19 +54,19 @@ function formatDate(value: string) {
 export function PurchaseOrdersList({
     restaurantId,
     orders,
-    stores,
+    vendors,
     today,
 }: PurchaseOrdersListProps) {
     const router = useRouter()
     const locale = useLocale()
     const t = useTranslations("kitchen.purchaseOrders")
-    const [supplierName, setSupplierName] = useState("")
+    const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
     const [orderDate, setOrderDate] = useState(today)
     const [isPending, startTransition] = useTransition()
 
     const createBlank = () => {
         startTransition(async () => {
-            const result = await createBlankPurchaseOrder(restaurantId, supplierName, orderDate)
+            const result = await createBlankPurchaseOrder(restaurantId, selectedVendor?.name ?? "", orderDate, selectedVendor?.id ?? null)
             if (result.error) {
                 toast.error(result.error)
                 return
@@ -83,21 +92,28 @@ export function PurchaseOrdersList({
         <div className="flex h-full min-h-0 flex-col gap-4">
             <div className="flex flex-col gap-3 rounded-md border p-3 md:flex-row md:items-end">
                 <div className="flex flex-1 flex-col gap-1.5">
-                    <label htmlFor="purchase-order-supplier" className="text-sm font-medium">
-                        {t("supplierLabel")}
+                    <label htmlFor="purchase-order-vendor" className="text-sm font-medium">
+                        {t("vendorLabel")}
                     </label>
-                    <Input
-                        id="purchase-order-supplier"
-                        list="purchase-order-suppliers"
-                        value={supplierName}
-                        onChange={(event) => setSupplierName(event.target.value)}
-                        placeholder={t("supplierPlaceholder")}
-                    />
-                    <datalist id="purchase-order-suppliers">
-                        {stores.map((store) => (
-                            <option key={store} value={store} />
-                        ))}
-                    </datalist>
+                    <Combobox
+                        value={selectedVendor}
+                        onValueChange={setSelectedVendor}
+                        items={vendors}
+                        itemToStringLabel={(v) => v.name}
+                        autoHighlight
+                    >
+                        <ComboboxInput placeholder={t("vendorPlaceholder")} showClear={!!selectedVendor} />
+                        <ComboboxContent>
+                            <ComboboxEmpty>{t("vendorEmpty")}</ComboboxEmpty>
+                            <ComboboxList>
+                                {(vendor) => (
+                                    <ComboboxItem key={vendor.id} value={vendor}>
+                                        {vendor.name}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
                 </div>
                 <div className="flex flex-col gap-1.5">
                     <label htmlFor="purchase-order-date" className="text-sm font-medium">
@@ -113,7 +129,7 @@ export function PurchaseOrdersList({
                 <Button
                     type="button"
                     onClick={createBlank}
-                    disabled={isPending || !supplierName.trim() || !orderDate}
+                    disabled={isPending || !selectedVendor || !orderDate}
                 >
                     <Plus />
                     {t("newBlank")}

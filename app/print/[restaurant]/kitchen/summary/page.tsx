@@ -53,24 +53,19 @@ export default async function KitchenSummaryPrintPage({
   const hasComponents = components.length > 0
   const hasMenus = menus.length > 0
 
-  const ingredientsByStore = allIngredients.reduce<Record<string, AggregatedIngredient[]>>(
+  const ingredientsByVendor = allIngredients.reduce<Record<string, AggregatedIngredient[]>>(
     (acc, item) => {
-      const store = item.store?.trim() || ""
-      const storeKey = store || "__none__"
-
-      if (!acc[storeKey]) {
-        acc[storeKey] = []
-      }
-
-      acc[storeKey].push(item)
+      const key = item.vendor_id ?? "__none__"
+      if (!acc[key]) acc[key] = []
+      acc[key].push(item)
       return acc
     },
     {},
   )
 
-  const storeKeys = Object.keys(ingredientsByStore).sort((a, b) => {
-    const aLabel = a === "__none__" ? "" : a
-    const bLabel = b === "__none__" ? "" : b
+  const vendorKeys = Object.keys(ingredientsByVendor).sort((a, b) => {
+    const aLabel = a === "__none__" ? "" : (ingredientsByVendor[a][0]?.vendor_name ?? "")
+    const bLabel = b === "__none__" ? "" : (ingredientsByVendor[b][0]?.vendor_name ?? "")
     return aLabel.localeCompare(bLabel)
   })
 
@@ -119,17 +114,17 @@ export default async function KitchenSummaryPrintPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {storeKeys.map((storeKey) => (
-                  <Fragment key={storeKey}>
+                {vendorKeys.map((vendorKey) => (
+                  <Fragment key={vendorKey}>
                     <TableRow className="break-after-avoid bg-muted hover:bg-muted">
                       <TableCell
                         colSpan={5}
                         className="px-2 py-2 text-sm font-medium text-muted-foreground/70"
                       >
-                        {storeKey === "__none__" ? tCommon("none") : storeKey}
+                        {vendorKey === "__none__" ? tCommon("none") : (ingredientsByVendor[vendorKey][0]?.vendor_name ?? tCommon("none"))}
                       </TableCell>
                     </TableRow>
-                    {ingredientsByStore[storeKey].map((item) => {
+                    {ingredientsByVendor[vendorKey].map((item) => {
                       const hasPack =
                         item.packages_needed !== null && item.package_size != null
                       const category = item.category?.trim() || ""

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 
 import { cn } from '@/lib/utils';
 import { Ingredient } from '@/lib/queries/ingredients';
+import type { Vendor } from '@/lib/queries/vendors';
 import {
     Combobox,
     ComboboxContent,
@@ -20,6 +21,7 @@ interface IngredientComboboxProps {
     value: string;
     onValueChange: (value: string) => void;
     ingredients: Ingredient[];
+    vendors?: Vendor[];
     /** IDs of ingredients already used in other rows — these are dimmed */
     usedIds?: Set<string>;
     /** Called when a new ingredient is created, so parent can add it to the list */
@@ -30,6 +32,7 @@ export function IngredientCombobox({
     value,
     onValueChange,
     ingredients,
+    vendors = [],
     usedIds = new Set(),
     onNewIngredient,
 }: IngredientComboboxProps) {
@@ -42,14 +45,6 @@ export function IngredientCombobox({
     const isNonEmptyString = (text: string | null | undefined): text is string => {
         return typeof text === 'string' && text.trim().length > 0;
     };
-
-    const stores = Array.from(
-        new Set(
-            ingredients
-                .map((ingredient) => ingredient.store)
-                .filter(isNonEmptyString)
-        )
-    );
 
     const categories = Array.from(
         new Set(
@@ -143,7 +138,7 @@ export function IngredientCombobox({
                 open={showCreate}
                 onOpenChange={setShowCreate}
                 initialName={pendingName}
-                stores={stores}
+                vendors={vendors}
                 categories={categories}
                 onSuccess={(newIngredient) => {
                     onNewIngredient?.(newIngredient);
