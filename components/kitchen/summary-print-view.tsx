@@ -177,16 +177,14 @@ export function SummaryPrintView({
             restaurantId,
             group.label,
             getLocalIsoDate(),
+            rangeFrom,
+            rangeTo,
             group.rows.map((row) => ({
                 ingredient_id: row.original.ingredient_id,
                 item_name: row.original.name,
                 unit: row.original.unit,
                 category: row.original.category,
-                needed_quantity: row.original.total_quantity,
-                package_size: row.original.package_size,
-                package_label: row.original.package_label,
                 order_quantity: row.original.packages_needed,
-                memo: null,
             })),
             group.key !== '__none__' ? group.key : null
         );

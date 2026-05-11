@@ -35,6 +35,8 @@ export interface PurchaseOrder {
     order_date: string;
     status: PurchaseOrderStatus;
     source_type: PurchaseOrderSourceType;
+    source_date_from: string | null;
+    source_date_to: string | null;
     created_at: string;
     updated_at: string;
 }

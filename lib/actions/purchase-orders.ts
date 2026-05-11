@@ -21,6 +21,7 @@ export interface PurchaseOrderLineInput {
 
 export interface PurchaseOrderLineUpdateInput {
     id: string;
+    ingredient_id?: string | null;
     item_name: string;
     order_quantity: number | null;
     memo: string | null;
@@ -149,17 +150,27 @@ export async function createBlankPurchaseOrder(
     return { success: true, id: data.id as string };
 }
 
+export interface SummaryIngredientInput {
+    ingredient_id: string;
+    item_name: string;
+    unit: string | null;
+    category: string | null;
+    order_quantity: number | null;
+}
+
 export async function createPurchaseOrderFromSummary(
     restaurantId: string,
     supplierName: string,
     orderDate: string,
-    lines: PurchaseOrderLineInput[],
+    dateFrom: string,
+    dateTo: string,
+    ingredients: SummaryIngredientInput[],
     vendorId?: string | null
 ) {
     const supplier = normalizeRequiredText(supplierName);
     if (!supplier) return { error: 'Supplier name is required' };
     if (!orderDate) return { error: 'Order date is required' };
-    if (lines.length === 0) return { error: 'No lines to create' };
+    if (!dateFrom || !dateTo) return { error: 'Date range is required' };
 
     const supabase = await createClient();
     const documentNo = await generateDocumentNo(supabase, orderDate);
@@ -172,6 +183,8 @@ export async function createPurchaseOrderFromSummary(
             order_date: orderDate,
             status: 'draft',
             source_type: 'summary',
+            source_date_from: dateFrom,
+            source_date_to: dateTo,
             vendor_id: vendorId ?? null,
         })
         .select('id')
@@ -183,26 +196,25 @@ export async function createPurchaseOrderFromSummary(
     }
 
     const orderId = order.id as string;
-    const lineRows = lines.map((line, index) => ({
-        purchase_order_id: orderId,
-        ingredient_id: line.ingredient_id ?? null,
-        item_name: normalizeRequiredText(line.item_name),
-        unit: normalizeOptionalText(line.unit),
-        category: normalizeOptionalText(line.category),
-        needed_quantity: normalizeNumber(line.needed_quantity),
-        package_size: normalizeNumber(line.package_size),
-        package_label: normalizeOptionalText(line.package_label),
-        order_quantity: normalizeNumber(line.order_quantity),
-        memo: normalizeOptionalText(line.memo),
-        sort_order: index,
-    }));
 
-    const { error: linesError } = await supabase.from('purchase_order_lines').insert(lineRows);
+    if (ingredients.length > 0) {
+        const lineRows = ingredients.map((ing, index) => ({
+            purchase_order_id: orderId,
+            ingredient_id: ing.ingredient_id,
+            item_name: normalizeRequiredText(ing.item_name),
+            unit: normalizeOptionalText(ing.unit),
+            category: normalizeOptionalText(ing.category),
+            order_quantity: normalizeNumber(ing.order_quantity),
+            sort_order: index,
+        }));
 
-    if (linesError) {
-        console.error('[createPurchaseOrderFromSummary] Failed to create purchase order lines', linesError);
-        await supabase.from('purchase_orders').delete().eq('id', orderId);
-        return { error: 'Failed to create purchase order lines' };
+        const { error: linesError } = await supabase.from('purchase_order_lines').insert(lineRows);
+
+        if (linesError) {
+            console.error('[createPurchaseOrderFromSummary] Failed to create purchase order lines', linesError);
+            await supabase.from('purchase_orders').delete().eq('id', orderId);
+            return { error: 'Failed to create purchase order lines' };
+        }
     }
 
     revalidatePurchaseOrders(restaurantId, orderId);
@@ -219,6 +231,9 @@ export async function updatePurchaseOrderHeader(
         notes?: string | null;
         order_date: string;
         status: PurchaseOrderStatus;
+        source_date_from?: string | null;
+        source_date_to?: string | null;
+        source_type?: 'manual' | 'summary';
     }
 ) {
     const supplier = normalizeRequiredText(values.supplier_name);
@@ -237,6 +252,9 @@ export async function updatePurchaseOrderHeader(
             notes: normalizeOptionalText(values.notes),
             order_date: values.order_date,
             status: values.status,
+            source_date_from: values.source_date_from !== undefined ? values.source_date_from : undefined,
+            source_date_to: values.source_date_to !== undefined ? values.source_date_to : undefined,
+            source_type: values.source_type !== undefined ? values.source_type : undefined,
         })
         .eq('id', id);
 
@@ -257,14 +275,20 @@ export async function updatePurchaseOrderLines(
     const supabase = await createClient();
 
     for (const line of lines) {
-        const { error } = await supabase
-            .from('purchase_order_lines')
-            .update({
+const updateData: any = {
                 item_name: normalizeRequiredText(line.item_name),
                 order_quantity: normalizeNumber(line.order_quantity),
                 memo: normalizeOptionalText(line.memo),
                 sort_order: line.sort_order,
-            })
+            };
+
+            if (line.ingredient_id !== undefined) {
+                updateData.ingredient_id = line.ingredient_id;
+            }
+
+            const { error } = await supabase
+                .from('purchase_order_lines')
+                .update(updateData)
             .eq('id', line.id)
             .eq('purchase_order_id', purchaseOrderId);
 
