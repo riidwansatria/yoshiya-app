@@ -14,7 +14,7 @@ export default async function PurchaseOrdersPage({
     const { restaurant } = await params
     const t = await getTranslations("kitchen.purchaseOrders")
     const [orders, stores] = await Promise.all([
-        getPurchaseOrders(restaurant),
+        getPurchaseOrders(),
         getDistinctStores(),
     ])
 

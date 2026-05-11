@@ -47,14 +47,12 @@ const DEFAULT_PURCHASE_ORDER_SUBJECT = '発注書';
 
 async function generateDocumentNo(
     supabase: Awaited<ReturnType<typeof createClient>>,
-    restaurantId: string,
     orderDate: string
 ): Promise<string> {
     const year = orderDate.slice(0, 4);
     const { data } = await supabase
         .from('purchase_orders')
         .select('document_no')
-        .eq('restaurant_id', restaurantId)
         .gte('order_date', `${year}-01-01`)
         .lte('order_date', `${year}-12-31`)
         .not('document_no', 'is', null);
@@ -126,11 +124,10 @@ export async function createBlankPurchaseOrder(
     if (!orderDate) return { error: 'Order date is required' };
 
     const supabase = await createClient();
-    const documentNo = await generateDocumentNo(supabase, restaurantId, orderDate);
+    const documentNo = await generateDocumentNo(supabase, orderDate);
     const { data, error } = await supabase
         .from('purchase_orders')
         .insert({
-            restaurant_id: restaurantId,
             supplier_name: supplier,
             subject: DEFAULT_PURCHASE_ORDER_SUBJECT,
             document_no: documentNo,
@@ -162,11 +159,10 @@ export async function createPurchaseOrderFromSummary(
     if (lines.length === 0) return { error: 'No lines to create' };
 
     const supabase = await createClient();
-    const documentNo = await generateDocumentNo(supabase, restaurantId, orderDate);
+    const documentNo = await generateDocumentNo(supabase, orderDate);
     const { data: order, error: orderError } = await supabase
         .from('purchase_orders')
         .insert({
-            restaurant_id: restaurantId,
             supplier_name: supplier,
             subject: DEFAULT_PURCHASE_ORDER_SUBJECT,
             document_no: documentNo,
@@ -236,7 +232,6 @@ export async function updatePurchaseOrderHeader(
             order_date: values.order_date,
             status: values.status,
         })
-        .eq('restaurant_id', restaurantId)
         .eq('id', id);
 
     if (error) {
@@ -353,7 +348,6 @@ export async function deletePurchaseOrder(restaurantId: string, id: string) {
     const { error } = await supabase
         .from('purchase_orders')
         .delete()
-        .eq('restaurant_id', restaurantId)
         .eq('id', id);
 
     if (error) {

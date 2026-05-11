@@ -83,7 +83,7 @@ export default async function PurchaseOrderPrintPage({
   const dateLocale = localeCode === "ja" ? ja : enUS
   const t = await getTranslations("kitchen.purchaseOrders")
   const [order, settings] = await Promise.all([
-    getPurchaseOrderById(restaurant, id),
+    getPurchaseOrderById(id),
     getPurchaseOrderSettings(restaurant),
   ])
 

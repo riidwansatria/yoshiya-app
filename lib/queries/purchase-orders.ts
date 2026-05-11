@@ -26,7 +26,6 @@ export interface PurchaseOrderLine {
 
 export interface PurchaseOrder {
     id: string;
-    restaurant_id: string;
     supplier_name: string;
     subject: string;
     notes: string | null;
@@ -81,12 +80,11 @@ function mapListRow(row: PurchaseOrderLineCountRow): PurchaseOrderListItem {
 }
 
 export const getPurchaseOrders = unstable_cache(
-    async (restaurantId: string): Promise<PurchaseOrderListItem[]> => {
+    async (): Promise<PurchaseOrderListItem[]> => {
         const supabase = createCacheClient();
         const { data, error } = await supabase
             .from('purchase_orders')
             .select('*, purchase_order_lines(count)')
-            .eq('restaurant_id', restaurantId)
             .order('updated_at', { ascending: false });
 
         if (error) {
@@ -96,7 +94,7 @@ export const getPurchaseOrders = unstable_cache(
 
         return ((data ?? []) as PurchaseOrderLineCountRow[]).map(mapListRow);
     },
-    ['purchase-orders-by-restaurant'],
+    ['purchase-orders'],
     { tags: [CACHE_TAGS.PURCHASE_ORDERS], revalidate: 3600 }
 );
 
@@ -139,14 +137,12 @@ export async function getPurchaseOrderSettings(
 
 
 export async function getPurchaseOrderById(
-    restaurantId: string,
     id: string
 ): Promise<PurchaseOrderDetail | null> {
     const supabase = await createClient();
     const { data, error } = await supabase
         .from('purchase_orders')
         .select('*, purchase_order_lines(*)')
-        .eq('restaurant_id', restaurantId)
         .eq('id', id)
         .single();
 
