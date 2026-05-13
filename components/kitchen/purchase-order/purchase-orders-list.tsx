@@ -68,6 +68,12 @@ const documentNoOrSupplierFilterFn: FilterFn<PurchaseOrderListItem> = (row, _col
 }
 documentNoOrSupplierFilterFn.autoRemove = (value) => !value
 
+const supplierFilterFn: FilterFn<PurchaseOrderListItem> = (row, _columnId, filterValue: string[]) => {
+    if (!filterValue?.length) return true
+    return filterValue.includes(row.original.supplier_name)
+}
+supplierFilterFn.autoRemove = (value: string[]) => !value?.length
+
 export function PurchaseOrdersList({
     restaurantId,
     orders,
@@ -122,9 +128,15 @@ export function PurchaseOrdersList({
             },
             {
                 accessorKey: "supplier_name",
-                enableColumnFilter: false,
+                enableColumnFilter: true,
+                filterFn: supplierFilterFn,
                 meta: {
                     label: t("supplierColumn"),
+                    variant: "multiSelect",
+                    options: Array.from(new Set(orders.map((o) => o.supplier_name))).map((name) => ({
+                        label: name,
+                        value: name,
+                    })),
                 },
                 header: ({ column }) => (
                     <DataTableColumnHeader column={column} label={t("supplierColumn")} />
@@ -233,7 +245,7 @@ export function PurchaseOrdersList({
                 },
             },
         ],
-        [locale, removeOrder, restaurantId, t]
+        [locale, orders, removeOrder, restaurantId, t]
     )
 
     // eslint-disable-next-line react-hooks/incompatible-library
