@@ -85,9 +85,10 @@
             "save": "Save",
             "saving": "Saving...",
             "saveSuccess": "Purchase order settings saved",
+            "bccEmail": "BCC Email Address",
             "emailBodyTemplate": "Email Body Template",
             "emailBodyTemplatePlaceholder": "Leave blank to use the default template",
-            "emailBodyTemplatePlaceholders": "Available placeholders: {supplierName}, {documentNo}, {orderDate}, {subject}, {senderCompanyName}, {contactPerson}"
+            "emailBodyTemplatePlaceholders": "Available placeholders: '{supplierName}', '{documentNo}', '{orderDate}', '{subject}', '{senderCompanyName}', '{contactPerson}'"
         },
         "vendors": {
             "title": "Vendors",

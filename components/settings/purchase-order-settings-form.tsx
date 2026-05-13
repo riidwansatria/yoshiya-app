@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { updatePurchaseOrderSettings } from "@/lib/actions/purchase-orders"
+import { DEFAULT_EMAIL_BODY_TEMPLATE } from "@/lib/email/templates"
 import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,9 +34,10 @@ type FormState = {
     show_email: boolean
     show_contact_person: boolean
     email_body_template: string
+    bcc_email: string
 }
 
-type TextField = Extract<keyof FormState, "company_name" | "postal_code" | "address" | "tel" | "fax" | "email" | "contact_person" | "email_body_template">
+type TextField = Extract<keyof FormState, "company_name" | "postal_code" | "address" | "tel" | "fax" | "email" | "contact_person" | "email_body_template" | "bcc_email">
 type ToggleField = Extract<keyof FormState, "show_postal_code" | "show_address" | "show_tel" | "show_fax" | "show_email" | "show_contact_person">
 
 const DEFAULT_SETTINGS: FormState = {
@@ -52,7 +54,8 @@ const DEFAULT_SETTINGS: FormState = {
     show_fax: true,
     show_email: true,
     show_contact_person: true,
-    email_body_template: "",
+    email_body_template: DEFAULT_EMAIL_BODY_TEMPLATE,
+    bcc_email: "",
 }
 
 function toFormState(settings: PurchaseOrderSettings | undefined): FormState {
@@ -72,7 +75,8 @@ function toFormState(settings: PurchaseOrderSettings | undefined): FormState {
         show_fax: settings.show_fax,
         show_email: settings.show_email,
         show_contact_person: settings.show_contact_person,
-        email_body_template: settings.email_body_template ?? "",
+        email_body_template: settings.email_body_template ?? DEFAULT_EMAIL_BODY_TEMPLATE,
+        bcc_email: settings.bcc_email ?? "",
     }
 }
 
@@ -230,6 +234,16 @@ export function PurchaseOrderSettingsForm({ settings }: PurchaseOrderSettingsFor
                                 onChange={(event) => updateField("contact_person", event.target.value)}
                             />
                         </label>
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <label className="text-sm font-medium">{t("bccEmail")}</label>
+                        <Input
+                            type="email"
+                            value={form.bcc_email}
+                            onChange={(event) => updateField("bcc_email", event.target.value)}
+                            placeholder="bcc@example.com"
+                        />
                     </div>
 
                     <div className="grid gap-1.5">

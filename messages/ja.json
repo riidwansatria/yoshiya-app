@@ -85,9 +85,10 @@
             "save": "保存",
             "saving": "保存中...",
             "saveSuccess": "発注書設定を保存しました",
+            "bccEmail": "BCC メールアドレス",
             "emailBodyTemplate": "メール本文テンプレート",
             "emailBodyTemplatePlaceholder": "空白の場合はデフォルトのテンプレートを使用します",
-            "emailBodyTemplatePlaceholders": "使用できるプレースホルダー：{supplierName}、{documentNo}、{orderDate}、{subject}、{senderCompanyName}、{contactPerson}"
+            "emailBodyTemplatePlaceholders": "使用できるプレースホルダー：'{supplierName}'、'{documentNo}'、'{orderDate}'、'{subject}'、'{senderCompanyName}'、'{contactPerson}'"
         },
         "vendors": {
             "title": "仕入先",

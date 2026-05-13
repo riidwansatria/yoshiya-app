@@ -68,6 +68,7 @@ export interface PurchaseOrderSettings {
     show_email: boolean;
     show_contact_person: boolean;
     email_body_template: string | null;
+    bcc_email: string | null;
     created_at: string;
     updated_at: string;
 }

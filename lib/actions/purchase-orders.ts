@@ -7,6 +7,7 @@ import { revalidatePath, updateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { REVALIDATE_PATHS } from '@/lib/constants/routes';
 import { resend } from '@/lib/email/resend';
+import { DEFAULT_EMAIL_BODY_TEMPLATE } from '@/lib/email/templates';
 import { generatePurchaseOrderPdf } from '@/lib/pdf/purchase-order-pdf';
 import { getPurchaseOrderById, getPurchaseOrderSettings } from '@/lib/queries/purchase-orders';
 import { createClient } from '@/lib/supabase/server';
@@ -53,6 +54,7 @@ export interface PurchaseOrderSettingsInput {
     show_email: boolean;
     show_contact_person: boolean;
     email_body_template?: string | null;
+    bcc_email?: string | null;
 }
 
 const DEFAULT_PURCHASE_ORDER_SUBJECT = '発注書';
@@ -486,6 +488,7 @@ export async function updatePurchaseOrderSettings(
                 show_email: values.show_email,
                 show_contact_person: values.show_contact_person,
                 email_body_template: normalizeOptionalText(values.email_body_template),
+                bcc_email: normalizeOptionalText(values.bcc_email),
             },
             { onConflict: 'restaurant_id' }
         );
@@ -499,19 +502,6 @@ export async function updatePurchaseOrderSettings(
     return { success: true };
 }
 
-const DEFAULT_EMAIL_BODY_TEMPLATE = `{supplierName} 御中
-
-いつもお世話になっております。
-{senderCompanyName} より下記の発注書をお送りします。
-
-件名：{subject}
-発注No.：{documentNo}
-発注日：{orderDate}
-
-添付のPDFをご確認ください。
-
-{senderCompanyName}
-{contactPerson}`.trim()
 
 function buildEmailBody(template: string, vars: Record<string, string>): string {
     return Object.entries(vars).reduce(
@@ -564,6 +554,7 @@ export async function sendPurchaseOrderEmail(
     const { error: sendError } = await resend.emails.send({
         from,
         to: recipientEmail,
+        ...(settings?.bcc_email ? { bcc: settings.bcc_email } : {}),
         subject: order.subject,
         text: body,
         attachments: [
