@@ -1,9 +1,14 @@
 'use server';
 
+import { format, parseISO } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { revalidatePath, updateTag } from 'next/cache';
 
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { REVALIDATE_PATHS } from '@/lib/constants/routes';
+import { resend } from '@/lib/email/resend';
+import { generatePurchaseOrderPdf } from '@/lib/pdf/purchase-order-pdf';
+import { getPurchaseOrderById, getPurchaseOrderSettings } from '@/lib/queries/purchase-orders';
 import { createClient } from '@/lib/supabase/server';
 import type { PurchaseOrderStatus } from '@/lib/queries/purchase-orders';
 
@@ -47,6 +52,7 @@ export interface PurchaseOrderSettingsInput {
     show_fax: boolean;
     show_email: boolean;
     show_contact_person: boolean;
+    email_body_template?: string | null;
 }
 
 const DEFAULT_PURCHASE_ORDER_SUBJECT = '発注書';
@@ -479,6 +485,7 @@ export async function updatePurchaseOrderSettings(
                 show_fax: values.show_fax,
                 show_email: values.show_email,
                 show_contact_person: values.show_contact_person,
+                email_body_template: normalizeOptionalText(values.email_body_template),
             },
             { onConflict: 'restaurant_id' }
         );
@@ -490,4 +497,93 @@ export async function updatePurchaseOrderSettings(
 
     revalidatePurchaseOrderSettings(restaurantId);
     return { success: true };
+}
+
+const DEFAULT_EMAIL_BODY_TEMPLATE = `{supplierName} 御中
+
+いつもお世話になっております。
+{senderCompanyName} より下記の発注書をお送りします。
+
+件名：{subject}
+発注No.：{documentNo}
+発注日：{orderDate}
+
+添付のPDFをご確認ください。
+
+{senderCompanyName}
+{contactPerson}`.trim()
+
+function buildEmailBody(template: string, vars: Record<string, string>): string {
+    return Object.entries(vars).reduce(
+        (body, [key, value]) => body.replaceAll(`{${key}}`, value),
+        template
+    )
+}
+
+export async function sendPurchaseOrderEmail(
+    restaurantId: string,
+    orderId: string,
+    recipientEmail: string
+): Promise<{ success?: boolean; error?: string }> {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+        return { error: 'Invalid email address' }
+    }
+
+    const [order, settings] = await Promise.all([
+        getPurchaseOrderById(orderId),
+        getPurchaseOrderSettings(restaurantId),
+    ])
+
+    if (!order) {
+        return { error: 'Purchase order not found' }
+    }
+
+    let pdfBuffer: Buffer
+    try {
+        pdfBuffer = await generatePurchaseOrderPdf(order, settings)
+    } catch (err) {
+        console.error('[sendPurchaseOrderEmail] PDF generation failed', err)
+        return { error: 'Failed to generate PDF' }
+    }
+
+    const senderCompanyName = settings?.company_name ?? 'よしや'
+    const contactPerson = settings?.contact_person ?? ''
+    const formattedDate = format(parseISO(order.order_date), 'yyyy年M月d日', { locale: ja })
+
+    const template = settings?.email_body_template ?? DEFAULT_EMAIL_BODY_TEMPLATE
+    const body = buildEmailBody(template, {
+        supplierName: order.supplier_name,
+        subject: order.subject,
+        documentNo: order.document_no,
+        orderDate: formattedDate,
+        senderCompanyName,
+        contactPerson,
+    })
+
+    const from = process.env.RESEND_FROM_EMAIL ?? 'orders@example.com'
+    const { error: sendError } = await resend.emails.send({
+        from,
+        to: recipientEmail,
+        subject: order.subject,
+        text: body,
+        attachments: [
+            {
+                filename: `${order.document_no}.pdf`,
+                content: pdfBuffer,
+            },
+        ],
+    })
+
+    if (sendError) {
+        console.error('[sendPurchaseOrderEmail] Resend error', sendError)
+        return { error: 'Failed to send email' }
+    }
+
+    const supabase = await createClient()
+    await supabase
+        .from('purchase_orders')
+        .update({ recipient_email: recipientEmail })
+        .eq('id', orderId)
+
+    return { success: true }
 }

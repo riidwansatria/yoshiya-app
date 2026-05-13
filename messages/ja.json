@@ -84,7 +84,10 @@
             "contactPerson": "担当者",
             "save": "保存",
             "saving": "保存中...",
-            "saveSuccess": "発注書設定を保存しました"
+            "saveSuccess": "発注書設定を保存しました",
+            "emailBodyTemplate": "メール本文テンプレート",
+            "emailBodyTemplatePlaceholder": "空白の場合はデフォルトのテンプレートを使用します",
+            "emailBodyTemplatePlaceholders": "使用できるプレースホルダー：{supplierName}、{documentNo}、{orderDate}、{subject}、{senderCompanyName}、{contactPerson}"
         },
         "vendors": {
             "title": "仕入先",
@@ -328,6 +331,11 @@
             "deleteAction": "削除",
             "saveAction": "保存",
             "sendAction": "送信",
+            "sendDialogTitle": "発注書を送信",
+            "sendRecipientEmail": "送信先メールアドレス",
+            "sendCancel": "キャンセル",
+            "sendPending": "送信中...",
+            "sendSuccess": "発注書を送信しました。",
             "emptyState": "発注書はまだありません。",
             "createSuccess": "発注書を作成しました。",
             "deleteSuccess": "発注書を削除しました。",

@@ -84,7 +84,10 @@
             "contactPerson": "Contact Person",
             "save": "Save",
             "saving": "Saving...",
-            "saveSuccess": "Purchase order settings saved"
+            "saveSuccess": "Purchase order settings saved",
+            "emailBodyTemplate": "Email Body Template",
+            "emailBodyTemplatePlaceholder": "Leave blank to use the default template",
+            "emailBodyTemplatePlaceholders": "Available placeholders: {supplierName}, {documentNo}, {orderDate}, {subject}, {senderCompanyName}, {contactPerson}"
         },
         "vendors": {
             "title": "Vendors",
@@ -328,6 +331,11 @@
             "deleteAction": "Delete",
             "saveAction": "Save",
             "sendAction": "Send",
+            "sendDialogTitle": "Send Purchase Order",
+            "sendRecipientEmail": "Recipient Email",
+            "sendCancel": "Cancel",
+            "sendPending": "Sending...",
+            "sendSuccess": "Purchase order sent.",
             "emptyState": "No purchase orders yet.",
             "createSuccess": "Purchase order created.",
             "deleteSuccess": "Purchase order deleted.",

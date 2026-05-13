@@ -67,6 +67,7 @@ export interface PurchaseOrderSettings {
     show_fax: boolean;
     show_email: boolean;
     show_contact_person: boolean;
+    email_body_template: string | null;
     created_at: string;
     updated_at: string;
 }

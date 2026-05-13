@@ -11,6 +11,7 @@ import {
     updatePurchaseOrderHeader,
     updatePurchaseOrderLines,
 } from "@/lib/actions/purchase-orders"
+import { SendPurchaseOrderDialog } from "@/components/kitchen/purchase-order/send-purchase-order-dialog"
 import type {
     PurchaseOrderDetail,
     PurchaseOrderLine,
@@ -139,6 +140,7 @@ export function PurchaseOrderForm({
     const [lines, setLines] = useState<PurchaseOrderLine[]>(order.lines)
     const [appendIngredient, setAppendIngredient] = useState<Ingredient | null>(null)
     const [showOtherVendors, setShowOtherVendors] = useState(false)
+    const [sendDialogOpen, setSendDialogOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
 
     const { currentGroup, otherGroups } = useMemo(() => {
@@ -334,7 +336,7 @@ export function PurchaseOrderForm({
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                    <Button type="button" variant="outline" disabled>
+                    <Button type="button" variant="outline" onClick={() => setSendDialogOpen(true)} disabled={!selectedVendor}>
                         <Send />
                         {t("sendAction")}
                     </Button>
@@ -351,7 +353,7 @@ export function PurchaseOrderForm({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                                <Link href={`/print/${restaurantId}/kitchen/purchase-orders/${order.id}?locale=${locale}`} target="_blank">
+                                <Link href={`/api/kitchen/purchase-orders/${order.id}/pdf?restaurant=${restaurantId}`} target="_blank">
                                     <Printer />
                                     {t("printAction")}
                                 </Link>
@@ -720,6 +722,15 @@ export function PurchaseOrderForm({
             </div>
         </div>
             </PageContent>
+            <SendPurchaseOrderDialog
+                restaurantId={restaurantId}
+                orderId={order.id}
+                subject={subject}
+                documentNo={order.document_no}
+                initialEmail={selectedVendor?.email ?? order.recipient_email ?? ""}
+                open={sendDialogOpen}
+                onOpenChange={setSendDialogOpen}
+            />
         </Page>
     )
 }

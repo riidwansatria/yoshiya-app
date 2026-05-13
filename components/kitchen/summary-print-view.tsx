@@ -184,7 +184,7 @@ export function SummaryPrintView({
                 item_name: row.original.name,
                 unit: row.original.unit,
                 category: row.original.category,
-                order_quantity: row.original.packages_needed,
+                order_quantity: row.original.packages_needed ?? row.original.total_quantity,
             })),
             group.key !== '__none__' ? group.key : null
         );

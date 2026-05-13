@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 
 interface PurchaseOrderSettingsFormProps {
     settings: PurchaseOrderSettings[]
@@ -31,9 +32,10 @@ type FormState = {
     show_fax: boolean
     show_email: boolean
     show_contact_person: boolean
+    email_body_template: string
 }
 
-type TextField = Extract<keyof FormState, "company_name" | "postal_code" | "address" | "tel" | "fax" | "email" | "contact_person">
+type TextField = Extract<keyof FormState, "company_name" | "postal_code" | "address" | "tel" | "fax" | "email" | "contact_person" | "email_body_template">
 type ToggleField = Extract<keyof FormState, "show_postal_code" | "show_address" | "show_tel" | "show_fax" | "show_email" | "show_contact_person">
 
 const DEFAULT_SETTINGS: FormState = {
@@ -50,6 +52,7 @@ const DEFAULT_SETTINGS: FormState = {
     show_fax: true,
     show_email: true,
     show_contact_person: true,
+    email_body_template: "",
 }
 
 function toFormState(settings: PurchaseOrderSettings | undefined): FormState {
@@ -69,6 +72,7 @@ function toFormState(settings: PurchaseOrderSettings | undefined): FormState {
         show_fax: settings.show_fax,
         show_email: settings.show_email,
         show_contact_person: settings.show_contact_person,
+        email_body_template: settings.email_body_template ?? "",
     }
 }
 
@@ -226,6 +230,17 @@ export function PurchaseOrderSettingsForm({ settings }: PurchaseOrderSettingsFor
                                 onChange={(event) => updateField("contact_person", event.target.value)}
                             />
                         </label>
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <label className="text-sm font-medium">{t("emailBodyTemplate")}</label>
+                        <Textarea
+                            value={form.email_body_template}
+                            onChange={(event) => updateField("email_body_template", event.target.value)}
+                            placeholder={t("emailBodyTemplatePlaceholder")}
+                            className="min-h-40 resize-y font-mono text-xs"
+                        />
+                        <p className="text-xs text-muted-foreground">{t("emailBodyTemplatePlaceholders")}</p>
                     </div>
 
                     <div className="rounded-md border bg-muted/30 p-3 text-sm">
