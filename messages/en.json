@@ -327,6 +327,7 @@
             "printAction": "Print",
             "deleteAction": "Delete",
             "saveAction": "Save",
+            "sendAction": "Send",
             "emptyState": "No purchase orders yet.",
             "createSuccess": "Purchase order created.",
             "deleteSuccess": "Purchase order deleted.",
@@ -354,7 +355,9 @@
             "vendorLabel": "Vendor",
             "vendorEmailLabel": "Email",
             "vendorPlaceholder": "Search vendor...",
-            "vendorEmpty": "No vendors found."
+            "vendorEmpty": "No vendors found.",
+            "showMore": "Show {count} more items",
+            "hideMore": "Hide"
         },
         "orders": {
             "title": "Daily Orders Input",

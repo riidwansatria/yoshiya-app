@@ -327,6 +327,7 @@
             "printAction": "印刷",
             "deleteAction": "削除",
             "saveAction": "保存",
+            "sendAction": "送信",
             "emptyState": "発注書はまだありません。",
             "createSuccess": "発注書を作成しました。",
             "deleteSuccess": "発注書を削除しました。",
@@ -354,7 +355,9 @@
             "vendorLabel": "仕入先",
             "vendorEmailLabel": "メール",
             "vendorPlaceholder": "仕入先を検索...",
-            "vendorEmpty": "該当する仕入先がありません。"
+            "vendorEmpty": "該当する仕入先がありません。",
+            "showMore": "他 {count} 件表示",
+            "hideMore": "閉じる"
         },
         "orders": {
             "title": "日次注文入力",

@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Info, Printer, Save, Trash2 } from "lucide-react"
+import { Info, Mail, MoreHorizontal, Phone, Printer, Save, Send, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLocale, useTranslations } from "next-intl"
 
@@ -20,6 +20,8 @@ import type { Ingredient } from "@/lib/queries/ingredients"
 import type { Vendor } from "@/lib/queries/vendors"
 import type { AggregatedIngredient } from "@/lib/queries/ingredients-summary"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import {
     Combobox,
     ComboboxContent,
@@ -28,7 +30,21 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import {
+    Page,
+    PageActions,
+    PageContent,
+    PageHeader,
+    PageHeaderHeading,
+    PageTitle,
+} from "@/components/layout/page"
 import {
     Select,
     SelectContent,
@@ -122,7 +138,29 @@ export function PurchaseOrderForm({
     const [localSourceDateTo, setLocalSourceDateTo] = useState(sourceDateTo ?? "")
     const [lines, setLines] = useState<PurchaseOrderLine[]>(order.lines)
     const [appendIngredient, setAppendIngredient] = useState<Ingredient | null>(null)
+    const [showOtherVendors, setShowOtherVendors] = useState(false)
     const [isPending, startTransition] = useTransition()
+
+    const { currentGroup, otherGroups } = useMemo(() => {
+        const groups = new Map<string, { vendorName: string; vendorId: string | null; items: AggregatedIngredient[] }>()
+        for (const ref of summaryReference ?? []) {
+            const key = ref.vendor_id ?? "__none__"
+            if (!groups.has(key)) {
+                groups.set(key, { vendorName: ref.vendor_name ?? "", vendorId: ref.vendor_id, items: [] })
+            }
+            groups.get(key)!.items.push(ref)
+        }
+        const sorted = Array.from(groups.values()).sort((a, b) => {
+            if (a.vendorId === selectedVendor?.id) return -1
+            if (b.vendorId === selectedVendor?.id) return 1
+            return a.vendorName.localeCompare(b.vendorName, locale)
+        })
+        const idx = sorted.findIndex((g) => g.vendorId === selectedVendor?.id)
+        return {
+            currentGroup: idx >= 0 ? sorted[idx] : null,
+            otherGroups: sorted.filter((_, i) => i !== idx),
+        }
+    }, [summaryReference, selectedVendor, locale])
 
     const sortedIngredients = useMemo(
         () => [...ingredients].sort((a, b) => a.name.localeCompare(b.name)),
@@ -276,42 +314,17 @@ export function PurchaseOrderForm({
     }
 
     return (
-        <div className="flex h-full min-h-0 flex-col gap-4">
-            <div className="flex flex-col gap-3 rounded-md border p-3 lg:flex-row lg:items-end">
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">{t("documentNo")}</label>
-                    <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
-                        {order.document_no}
-                    </div>
-                </div>
-                <div className="flex flex-1 flex-col gap-1.5">
-                    <label htmlFor="purchase-order-subject" className="text-sm font-medium">
-                        {t("subjectLabel")}
-                    </label>
-                    <Input
-                        id="purchase-order-subject"
-                        value={subject}
-                        onChange={(event) => setSubject(event.target.value)}
-                    />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                    <label htmlFor="purchase-order-date" className="text-sm font-medium">
-                        {t("orderDate")}
-                    </label>
-                    <Input
-                        id="purchase-order-date"
-                        type="date"
-                        value={orderDate}
-                        onChange={(event) => setOrderDate(event.target.value)}
-                    />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">{t("status")}</label>
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>{t("detailTitle")}</PageTitle>
+                </PageHeaderHeading>
+                <PageActions>
                     <Select
                         value={status}
                         onValueChange={(value) => setStatus(value as PurchaseOrderStatus)}
                     >
-                        <SelectTrigger className="w-36">
+                        <SelectTrigger className="w-28">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -321,212 +334,42 @@ export function PurchaseOrderForm({
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                </div>
-                <div className="flex gap-2">
+                    <Button type="button" variant="outline" disabled>
+                        <Send />
+                        {t("sendAction")}
+                    </Button>
                     <Button type="button" onClick={save} disabled={isPending || !selectedVendor}>
                         <Save />
                         {t("saveAction")}
                     </Button>
-                    <Button variant="outline" asChild>
-                        <Link href={`/print/${restaurantId}/kitchen/purchase-orders/${order.id}?locale=${locale}`} target="_blank">
-                            <Printer />
-                            {t("printAction")}
-                        </Link>
-                    </Button>
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5 rounded-md border p-3">
-                <label htmlFor="purchase-order-notes" className="text-sm font-medium">
-                    {t("notes")}
-                </label>
-                <Textarea
-                    id="purchase-order-notes"
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    placeholder={t("notesPlaceholder")}
-                    className="min-h-16 resize-none"
-                />
-            </div>
-
-            <div className="min-h-0 flex-1 flex flex-col lg:flex-row gap-4">
-                <div className="flex-1 overflow-auto rounded-md border min-w-0">
-                    <Table className="table-fixed">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-40">{t("ingredientName")}</TableHead>
-                                <TableHead>{t("itemName")}</TableHead>
-                                <TableHead className="w-18">{t("orderQuantity")}</TableHead>
-                                <TableHead className="w-28">{t("unit")}</TableHead>
-                                <TableHead className="w-64">{t("memo")}</TableHead>
-                                <TableHead className="w-10" />
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {lines.map((line) => {
-                                const ref = line.ingredient_id ? summaryLookup.get(line.ingredient_id) : undefined
-                                const packDisplay = getLinePackDisplay(line, t("defaultPackLabel"), ref)
-                                const printUnit = getLinePrintUnit(line)
-                                const defaultPrintUnit = getLineDefaultPrintUnit(line, ref)
-                                const showPackInfo = hasLinePackInfo(line, ref)
-                            return (
-                                <TableRow key={line.id}>
-                                    <TableCell>
-                                        <Combobox
-                                            value={sortedIngredients.find(i => i.id === line.ingredient_id) ?? null}
-                                            onValueChange={(ingredient) =>
-                                                ingredient
-                                                    ? updateLine(line.id, "ingredient_id", ingredient.id)
-                                                    : clearLineIngredient(line.id)
-                                            }
-                                            items={sortedIngredients}
-                                            itemToStringLabel={(ing) => ing.name}
-                                        >
-                                            <ComboboxInput
-                                                placeholder="—"
-                                                showClear={!!line.ingredient_id}
-                                            />
-                                            <ComboboxContent>
-                                                <ComboboxEmpty>{t("none")}</ComboboxEmpty>
-                                                <ComboboxList>
-                                                    {(ing) => (
-                                                        <ComboboxItem key={ing.id} value={ing}>
-                                                            {ing.name}
-                                                        </ComboboxItem>
-                                                    )}
-                                                </ComboboxList>
-                                            </ComboboxContent>
-                                        </Combobox>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            value={line.item_name}
-                                            onChange={(event) =>
-                                                updateLine(line.id, "item_name", event.target.value)
-                                            }
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            className="text-right tabular-nums"
-                                            value={numberInputValue(line.order_quantity)}
-                                            onChange={(event) =>
-                                                updateLine(line.id, "order_quantity", event.target.value)
-                                            }
-                                            onBlur={() => {
-                                                if (line.order_quantity !== null && line.order_quantity < 1) {
-                                                    updateLine(line.id, "order_quantity", "1")
-                                                }
-                                            }}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="relative">
-                                            <Input
-                                                value={printUnit}
-                                                placeholder={defaultPrintUnit}
-                                                onChange={(event) =>
-                                                    updateLine(line.id, "print_unit", event.target.value)
-                                                }
-                                                className={showPackInfo ? "pr-9" : undefined}
-                                            />
-                                            {showPackInfo ? (
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <button
-                                                            type="button"
-                                                            className="absolute right-2 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground/55 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                                        >
-                                                            <Info className="size-3.5" />
-                                                            <span className="sr-only">{packDisplay}</span>
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent sideOffset={4}>
-                                                        {packDisplay}
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            ) : null}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Textarea
-                                            value={line.memo ?? ""}
-                                            onChange={(event) =>
-                                                updateLine(line.id, "memo", event.target.value)
-                                            }
-                                            className="min-h-9 resize-none"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeLine(line.id)}
-                                            disabled={isPending}
-                                        >
-                                            <Trash2 />
-                                            <span className="sr-only">{t("deleteLine")}</span>
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        })}
-                        {lines.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    {t("noLines")}
-                                </TableCell>
-                            </TableRow>
-                        )}
-                        <TableRow className="bg-muted/20 hover:bg-muted/30">
-                            <TableCell>
-                                <Combobox
-                                    value={appendIngredient}
-                                    onValueChange={(ingredient) => {
-                                        if (!ingredient) {
-                                            setAppendIngredient(null)
-                                            return
-                                        }
-                                        addLine(ingredient.id)
-                                        setAppendIngredient(null)
-                                    }}
-                                    items={sortedIngredients}
-                                    itemToStringLabel={(ing) => ing.name}
-                                >
-                                    <ComboboxInput
-                                        placeholder={t("addIngredient")}
-                                        showClear={false}
-                                    />
-                                    <ComboboxContent>
-                                        <ComboboxEmpty>{t("none")}</ComboboxEmpty>
-                                        <ComboboxList>
-                                            {(ing) => (
-                                                <ComboboxItem key={ing.id} value={ing}>
-                                                    {ing.name}
-                                                </ComboboxItem>
-                                            )}
-                                        </ComboboxList>
-                                    </ComboboxContent>
-                                </Combobox>
-                            </TableCell>
-                            <TableCell />
-                            <TableCell />
-                            <TableCell />
-                            <TableCell />
-                            <TableCell />
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="w-full lg:w-72 flex-shrink-0 flex flex-col gap-4 overflow-hidden rounded-md border bg-muted/30">
-                <div className="p-3 pb-0 flex flex-col gap-3">
-                    <div className="text-sm font-semibold">{t("liveNeededMetrics")}</div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="outline" size="icon">
+                                <MoreHorizontal />
+                                <span className="sr-only">More actions</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                                <Link href={`/print/${restaurantId}/kitchen/purchase-orders/${order.id}?locale=${locale}`} target="_blank">
+                                    <Printer />
+                                    {t("printAction")}
+                                </Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </PageActions>
+            </PageHeader>
+            <PageContent className="flex flex-col gap-4 overflow-hidden">
+            <div className="flex flex-wrap items-start gap-3 rounded-md border p-3 shrink-0">
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-xs text-muted-foreground">
+                        <label className="text-sm font-medium">{t("documentNo")}</label>
+                        <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
+                            {order.document_no}
+                        </div>
+                    </div>
+                    <div className="flex min-w-44 flex-[1.4] flex-col gap-1.5">
+                        <label className="text-sm font-semibold">
                             {t("supplierLabel")}
                         </label>
                         <Combobox
@@ -540,44 +383,264 @@ export function PurchaseOrderForm({
                                 id="purchase-order-supplier"
                                 placeholder={t("vendorPlaceholder")}
                                 showClear={!!selectedVendor}
-                                className="h-8 text-xs"
                             />
                             <ComboboxContent>
                                 <ComboboxEmpty>{t("vendorEmpty")}</ComboboxEmpty>
                                 <ComboboxList>
                                     {(vendor) => (
-                                        <ComboboxItem key={vendor.id} value={vendor} className="text-xs">
+                                        <ComboboxItem key={vendor.id} value={vendor}>
                                             {vendor.name}
                                         </ComboboxItem>
                                     )}
                                 </ComboboxList>
                             </ComboboxContent>
                         </Combobox>
+                        {(selectedVendor?.email || selectedVendor?.tel) && (
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                {selectedVendor.email && (
+                                    <span className="flex items-center gap-1">
+                                        <Mail className="size-3 shrink-0" />
+                                        {selectedVendor.email}
+                                    </span>
+                                )}
+                                {selectedVendor.tel && (
+                                    <span className="flex items-center gap-1">
+                                        <Phone className="size-3 shrink-0" />
+                                        {selectedVendor.tel}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex min-w-36 flex-1 flex-col gap-1.5">
+                        <label htmlFor="purchase-order-subject" className="text-sm font-medium">
+                            {t("subjectLabel")}
+                        </label>
+                        <Input
+                            id="purchase-order-subject"
+                            value={subject}
+                            onChange={(event) => setSubject(event.target.value)}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                        <label htmlFor="purchase-order-date" className="text-sm font-medium">
+                            {t("orderDate")}
+                        </label>
+                        <DatePicker
+                            value={orderDate}
+                            onChange={setOrderDate}
+                            locale={locale === "ja" ? "ja" : "en"}
+                            className="h-9"
+                        />
+                    </div>
+                </div>
+
+            <div className="min-h-0 flex-1 flex flex-col lg:flex-row gap-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-3">
+                    <div className="min-h-0 flex-1 overflow-auto rounded-md border">
+                        <Table className="table-fixed">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-40">{t("ingredientName")}</TableHead>
+                                    <TableHead>{t("itemName")}</TableHead>
+                                    <TableHead className="w-18">{t("orderQuantity")}</TableHead>
+                                    <TableHead className="w-28">{t("unit")}</TableHead>
+                                    <TableHead className="w-64">{t("memo")}</TableHead>
+                                    <TableHead className="w-10" />
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {lines.map((line) => {
+                                    const ref = line.ingredient_id ? summaryLookup.get(line.ingredient_id) : undefined
+                                    const packDisplay = getLinePackDisplay(line, t("defaultPackLabel"), ref)
+                                    const printUnit = getLinePrintUnit(line)
+                                    const defaultPrintUnit = getLineDefaultPrintUnit(line, ref)
+                                    const showPackInfo = hasLinePackInfo(line, ref)
+                                return (
+                                    <TableRow key={line.id}>
+                                        <TableCell>
+                                            <Combobox
+                                                value={sortedIngredients.find(i => i.id === line.ingredient_id) ?? null}
+                                                onValueChange={(ingredient) =>
+                                                    ingredient
+                                                        ? updateLine(line.id, "ingredient_id", ingredient.id)
+                                                        : clearLineIngredient(line.id)
+                                                }
+                                                items={sortedIngredients}
+                                                itemToStringLabel={(ing) => ing.name}
+                                            >
+                                                <ComboboxInput
+                                                    placeholder="—"
+                                                    showClear={!!line.ingredient_id}
+                                                />
+                                                <ComboboxContent>
+                                                    <ComboboxEmpty>{t("none")}</ComboboxEmpty>
+                                                    <ComboboxList>
+                                                        {(ing) => (
+                                                            <ComboboxItem key={ing.id} value={ing}>
+                                                                {ing.name}
+                                                            </ComboboxItem>
+                                                        )}
+                                                    </ComboboxList>
+                                                </ComboboxContent>
+                                            </Combobox>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                value={line.item_name}
+                                                onChange={(event) =>
+                                                    updateLine(line.id, "item_name", event.target.value)
+                                                }
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                className="text-right tabular-nums"
+                                                value={numberInputValue(line.order_quantity)}
+                                                onChange={(event) =>
+                                                    updateLine(line.id, "order_quantity", event.target.value)
+                                                }
+                                                onBlur={() => {
+                                                    if (line.order_quantity !== null && line.order_quantity < 1) {
+                                                        updateLine(line.id, "order_quantity", "1")
+                                                    }
+                                                }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="relative">
+                                                <Input
+                                                    value={printUnit}
+                                                    placeholder={defaultPrintUnit}
+                                                    onChange={(event) =>
+                                                        updateLine(line.id, "print_unit", event.target.value)
+                                                    }
+                                                    className={showPackInfo ? "pr-9" : undefined}
+                                                />
+                                                {showPackInfo ? (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <button
+                                                                type="button"
+                                                                className="absolute right-2 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground/55 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                            >
+                                                                <Info className="size-3.5" />
+                                                                <span className="sr-only">{packDisplay}</span>
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent sideOffset={4}>
+                                                            {packDisplay}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                ) : null}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Textarea
+                                                value={line.memo ?? ""}
+                                                onChange={(event) =>
+                                                    updateLine(line.id, "memo", event.target.value)
+                                                }
+                                                className="min-h-9 resize-none"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeLine(line.id)}
+                                                disabled={isPending}
+                                            >
+                                                <Trash2 />
+                                                <span className="sr-only">{t("deleteLine")}</span>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                            {lines.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">
+                                        {t("noLines")}
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            <TableRow className="bg-muted/20 hover:bg-muted/30">
+                                <TableCell>
+                                    <Combobox
+                                        value={appendIngredient}
+                                        onValueChange={(ingredient) => {
+                                            if (!ingredient) {
+                                                setAppendIngredient(null)
+                                                return
+                                            }
+                                            addLine(ingredient.id)
+                                            setAppendIngredient(null)
+                                        }}
+                                        items={sortedIngredients}
+                                        itemToStringLabel={(ing) => ing.name}
+                                    >
+                                        <ComboboxInput
+                                            placeholder={t("addIngredient")}
+                                            showClear={false}
+                                        />
+                                        <ComboboxContent>
+                                            <ComboboxEmpty>{t("none")}</ComboboxEmpty>
+                                            <ComboboxList>
+                                                {(ing) => (
+                                                    <ComboboxItem key={ing.id} value={ing}>
+                                                        {ing.name}
+                                                    </ComboboxItem>
+                                                )}
+                                            </ComboboxList>
+                                        </ComboboxContent>
+                                    </Combobox>
+                                </TableCell>
+                                <TableCell />
+                                <TableCell />
+                                <TableCell />
+                                <TableCell />
+                                <TableCell />
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                     </div>
 
-                    <div className="flex gap-2">
-                        <div className="flex flex-1 flex-col gap-1.5">
-                            <label className="text-xs text-muted-foreground">
-                                {t("sourceDateFrom")}
-                            </label>
-                            <Input
-                                type="date"
-                                className="h-8 text-xs px-2"
-                                value={localSourceDateFrom}
-                                onChange={(event) => setLocalSourceDateFrom(event.target.value)}
-                            />
-                        </div>
-                        <div className="flex flex-1 flex-col gap-1.5">
-                            <label className="text-xs text-muted-foreground">
-                                {t("sourceDateTo")}
-                            </label>
-                            <Input
-                                type="date"
-                                className="h-8 text-xs px-2"
-                                value={localSourceDateTo}
-                                onChange={(event) => setLocalSourceDateTo(event.target.value)}
-                            />
-                        </div>
+                    <div className="flex shrink-0 flex-col gap-1.5 rounded-md border p-3">
+                        <label htmlFor="purchase-order-notes" className="text-sm font-medium">
+                            {t("notes")}
+                        </label>
+                        <Textarea
+                            id="purchase-order-notes"
+                            value={notes}
+                            onChange={(event) => setNotes(event.target.value)}
+                            placeholder={t("notesPlaceholder")}
+                            className="min-h-16 resize-none"
+                        />
+                    </div>
+                </div>
+                <div className="w-full lg:w-72 flex-shrink-0 flex flex-col gap-4 overflow-hidden rounded-md border bg-muted/30">
+                <div className="p-3 pb-0 flex flex-col gap-3">
+                    <div className="text-sm font-semibold">{t("liveNeededMetrics")}</div>
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs text-muted-foreground">
+                            {t("sourceDateFrom")} / {t("sourceDateTo")}
+                        </label>
+                        <DateRangePicker
+                            from={localSourceDateFrom}
+                            to={localSourceDateTo}
+                            onChange={(from, to) => {
+                                setLocalSourceDateFrom(from)
+                                setLocalSourceDateTo(to)
+                            }}
+                            locale={locale === "ja" ? "ja" : "en"}
+                            className="h-8 w-full px-2 text-xs"
+                        />
                     </div>
                 </div>
 
@@ -590,17 +653,60 @@ export function PurchaseOrderForm({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {summaryReference && summaryReference.length > 0 ? (
-                                summaryReference.map((ref) => (
-                                    <TableRow key={ref.ingredient_id}>
-                                        <TableCell className="font-medium text-xs py-2">
-                                            {ref.name}
-                                        </TableCell>
-                                        <TableCell className="text-right tabular-nums text-xs py-2">
-                                            {ref.total_quantity} {ref.unit}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                            {currentGroup || otherGroups.length > 0 ? (
+                                <>
+                                    {currentGroup ? currentGroup.items.map((ref) => (
+                                        <TableRow key={ref.ingredient_id}>
+                                            <TableCell className="font-medium text-xs py-2">
+                                                <div className="min-w-0">
+                                                    <div className="truncate">{ref.name}</div>
+                                                    {ref.vendor_name ? (
+                                                        <div className="truncate text-[11px] font-normal text-muted-foreground">
+                                                            {ref.vendor_name}
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums text-xs py-2">
+                                                {ref.total_quantity} {ref.unit}
+                                            </TableCell>
+                                        </TableRow>
+                                    )) : null}
+                                    {otherGroups.length > 0 ? (
+                                        <>
+                                            <TableRow>
+                                                <TableCell colSpan={2} className="py-1 px-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowOtherVendors((v) => !v)}
+                                                        className="flex w-full items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                                    >
+                                                        {showOtherVendors ? t("hideMore") : t("showMore", { count: otherGroups.reduce((s, g) => s + g.items.length, 0) })}
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                            {showOtherVendors ? otherGroups.flatMap((group) =>
+                                                group.items.map((ref) => (
+                                                    <TableRow key={ref.ingredient_id}>
+                                                        <TableCell className="font-medium text-xs py-2">
+                                                            <div className="min-w-0">
+                                                                <div className="truncate">{ref.name}</div>
+                                                                {ref.vendor_name ? (
+                                                                    <div className="truncate text-[11px] font-normal text-muted-foreground">
+                                                                        {ref.vendor_name}
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums text-xs py-2">
+                                                            {ref.total_quantity} {ref.unit}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : null}
+                                        </>
+                                    ) : null}
+                                </>
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={2} className="h-24 text-center text-xs text-muted-foreground">
@@ -613,6 +719,7 @@ export function PurchaseOrderForm({
                 </div>
             </div>
         </div>
-    </div>
+            </PageContent>
+        </Page>
     )
 }
