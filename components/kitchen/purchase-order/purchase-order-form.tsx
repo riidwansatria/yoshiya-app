@@ -3,13 +3,11 @@
 import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Printer, Save, Trash2 } from "lucide-react"
+import { Info, Printer, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useLocale, useTranslations } from "next-intl"
 
 import {
-    addIngredientToPurchaseOrder,
-    deletePurchaseOrderLine,
     updatePurchaseOrderHeader,
     updatePurchaseOrderLines,
 } from "@/lib/actions/purchase-orders"
@@ -48,6 +46,11 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface PurchaseOrderFormProps {
     restaurantId: string
@@ -61,6 +64,37 @@ interface PurchaseOrderFormProps {
 
 function numberInputValue(value: number | null) {
     return value === null ? "" : String(value)
+}
+
+function getLinePrintUnit(line: PurchaseOrderLine) {
+    return line.package_size ? line.package_label ?? "" : line.unit ?? ""
+}
+
+function getLineDefaultPrintUnit(
+    line: PurchaseOrderLine,
+    ref?: AggregatedIngredient
+) {
+    if (ref?.package_size) return ref.package_label ?? ""
+    if (ref) return ref.unit ?? ""
+    if (line.package_size) return line.default_package_label ?? line.package_label ?? ""
+    return line.default_unit ?? line.unit ?? ""
+}
+
+function hasLinePackInfo(line: PurchaseOrderLine, ref?: AggregatedIngredient) {
+    return Boolean(ref?.package_size ?? line.default_package_size ?? line.package_size)
+}
+
+function getLinePackDisplay(
+    line: PurchaseOrderLine,
+    defaultPackLabel: string,
+    ref?: AggregatedIngredient
+) {
+    const packageSize = ref?.package_size ?? line.default_package_size ?? line.package_size
+    const baseUnit = ref?.unit ?? line.default_unit ?? line.unit ?? ""
+    const packageLabel = ref?.package_label ?? line.default_package_label ?? line.package_label ?? defaultPackLabel
+
+    if (packageSize) return `× ${packageSize}${baseUnit} ${packageLabel}`
+    return baseUnit || "—"
 }
 
 export function PurchaseOrderForm({
@@ -87,7 +121,7 @@ export function PurchaseOrderForm({
     const [localSourceDateFrom, setLocalSourceDateFrom] = useState(sourceDateFrom ?? "")
     const [localSourceDateTo, setLocalSourceDateTo] = useState(sourceDateTo ?? "")
     const [lines, setLines] = useState<PurchaseOrderLine[]>(order.lines)
-    const [selectedIngredientId, setSelectedIngredientId] = useState("")
+    const [appendIngredient, setAppendIngredient] = useState<Ingredient | null>(null)
     const [isPending, startTransition] = useTransition()
 
     const sortedIngredients = useMemo(
@@ -102,13 +136,14 @@ export function PurchaseOrderForm({
 
     const updateLine = (
         lineId: string,
-        field: "item_name" | "order_quantity" | "memo" | "ingredient_id",
+        field: "item_name" | "order_quantity" | "memo" | "ingredient_id" | "print_unit",
         value: string | null
     ) => {
         setLines((current) =>
             current.map((line) => {
                 if (line.id !== lineId) return line
                 if (field === "order_quantity") {
+                    if (value && !/^\d+$/.test(value)) return line
                     return {
                         ...line,
                         order_quantity: value === "" || value === null ? null : Number(value),
@@ -124,7 +159,16 @@ export function PurchaseOrderForm({
                         category: selectedIngredient?.category ?? line.category,
                         package_size: selectedIngredient?.package_size ?? line.package_size,
                         package_label: selectedIngredient?.package_label ?? line.package_label,
+                        default_unit: selectedIngredient?.unit ?? null,
+                        default_package_size: selectedIngredient?.package_size ?? null,
+                        default_package_label: selectedIngredient?.package_label ?? null,
                     }
+                }
+                if (field === "print_unit") {
+                    if (line.package_size) {
+                        return { ...line, package_label: value || null }
+                    }
+                    return { ...line, unit: value || null }
                 }
                 return { ...line, [field]: value }
             })
@@ -138,12 +182,23 @@ export function PurchaseOrderForm({
                 return {
                     ...line,
                     ingredient_id: null,
+                    unit: null,
+                    package_size: null,
+                    package_label: null,
+                    default_unit: null,
+                    default_package_size: null,
+                    default_package_label: null,
                 }
             })
         )
     }
 
     const save = () => {
+        if (lines.some((line) => line.order_quantity !== null && line.order_quantity < 1)) {
+            toast.error(t("orderQuantityMinError"))
+            return
+        }
+
         startTransition(async () => {
             const headerResult = await updatePurchaseOrderHeader(restaurantId, order.id, {
                 supplier_name: selectedVendor?.name ?? "",
@@ -165,9 +220,14 @@ export function PurchaseOrderForm({
                 restaurantId,
                 order.id,
                 lines.map((line, index) => ({
-                    id: line.id,
+                    id: line.id.startsWith("new-") ? undefined : line.id,
                     ingredient_id: line.ingredient_id,
                     item_name: line.item_name,
+                    unit: line.unit,
+                    category: line.category,
+                    needed_quantity: line.needed_quantity,
+                    package_size: line.package_size,
+                    package_label: line.package_label,
                     order_quantity: line.order_quantity,
                     memo: line.memo,
                     sort_order: index,
@@ -183,36 +243,36 @@ export function PurchaseOrderForm({
         })
     }
 
-    const addLine = () => {
-        startTransition(async () => {
-            const result = await addIngredientToPurchaseOrder(
-                restaurantId,
-                order.id,
-                selectedIngredientId,
-                lines.length
-            )
-            if (result.error) {
-                toast.error(result.error)
-                return
-            }
-            toast.success(t("addLineSuccess"))
-            setLines((current) => [...current, result.line as PurchaseOrderLine])
-            setSelectedIngredientId("")
-            router.refresh()
-        })
+    const addLine = (ingredientId: string) => {
+        const selectedIngredient = ingredients.find((ingredient) => ingredient.id === ingredientId)
+        if (!selectedIngredient) return
+
+        const now = new Date().toISOString()
+        const newLine: PurchaseOrderLine = {
+            id: `new-${crypto.randomUUID()}`,
+            purchase_order_id: order.id,
+            ingredient_id: selectedIngredient.id,
+            item_name: selectedIngredient.name,
+            unit: selectedIngredient.unit,
+            category: selectedIngredient.category,
+            needed_quantity: null,
+            package_size: selectedIngredient.package_size,
+            package_label: selectedIngredient.package_label,
+            default_unit: selectedIngredient.unit,
+            default_package_size: selectedIngredient.package_size,
+            default_package_label: selectedIngredient.package_label,
+            order_quantity: null,
+            memo: null,
+            sort_order: lines.length,
+            created_at: now,
+            updated_at: now,
+        }
+
+        setLines((current) => [...current, newLine])
     }
 
     const removeLine = (lineId: string) => {
-        startTransition(async () => {
-            const result = await deletePurchaseOrderLine(restaurantId, order.id, lineId)
-            if (result.error) {
-                toast.error(result.error)
-                return
-            }
-            toast.success(t("deleteLineSuccess"))
-            setLines((current) => current.filter((line) => line.id !== lineId))
-            router.refresh()
-        })
+        setLines((current) => current.filter((line) => line.id !== lineId))
     }
 
     return (
@@ -289,83 +349,54 @@ export function PurchaseOrderForm({
                 />
             </div>
 
-            <div className="flex items-end gap-2 rounded-md border p-3">
-                <div className="flex flex-1 flex-col gap-1.5">
-                    <label className="text-sm font-medium">{t("addIngredient")}</label>
-                    <Select value={selectedIngredientId} onValueChange={setSelectedIngredientId}>
-                        <SelectTrigger>
-                            <SelectValue placeholder={t("ingredientPlaceholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                {sortedIngredients.map((ingredient) => (
-                                    <SelectItem key={ingredient.id} value={ingredient.id}>
-                                        {ingredient.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addLine}
-                    disabled={isPending || !selectedIngredientId}
-                >
-                    <Plus />
-                    {t("addLine")}
-                </Button>
-            </div>
-
             <div className="min-h-0 flex-1 flex flex-col lg:flex-row gap-4">
                 <div className="flex-1 overflow-auto rounded-md border min-w-0">
-                    <Table>
+                    <Table className="table-fixed">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{t("ingredientName")}</TableHead>
+                                <TableHead className="w-40">{t("ingredientName")}</TableHead>
                                 <TableHead>{t("itemName")}</TableHead>
-                                <TableHead>{t("pack")}</TableHead>
-                                <TableHead className="w-32 text-right">{t("orderQuantity")}</TableHead>
+                                <TableHead className="w-18">{t("orderQuantity")}</TableHead>
+                                <TableHead className="w-28">{t("unit")}</TableHead>
                                 <TableHead className="w-64">{t("memo")}</TableHead>
-                                <TableHead className="w-[70px]" />
+                                <TableHead className="w-10" />
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {lines.map((line) => {
                                 const ref = line.ingredient_id ? summaryLookup.get(line.ingredient_id) : undefined
-                                const packDisplay = ref?.package_size
-                                ? `× ${ref.package_size}${ref.unit} ${ref.package_label || t("defaultPackLabel")}`
-                                : line.package_size
-                                ? `× ${line.package_size}${line.unit ?? ""} ${line.package_label || t("defaultPackLabel")}`
-                                : "—"
+                                const packDisplay = getLinePackDisplay(line, t("defaultPackLabel"), ref)
+                                const printUnit = getLinePrintUnit(line)
+                                const defaultPrintUnit = getLineDefaultPrintUnit(line, ref)
+                                const showPackInfo = hasLinePackInfo(line, ref)
                             return (
                                 <TableRow key={line.id}>
                                     <TableCell>
-                                        <Select
-                                            value={line.ingredient_id ?? "unassigned"}
-                                            onValueChange={(value) => 
-                                                value === "unassigned" 
-                                                    ? clearLineIngredient(line.id)
-                                                    : updateLine(line.id, "ingredient_id", value)
+                                        <Combobox
+                                            value={sortedIngredients.find(i => i.id === line.ingredient_id) ?? null}
+                                            onValueChange={(ingredient) =>
+                                                ingredient
+                                                    ? updateLine(line.id, "ingredient_id", ingredient.id)
+                                                    : clearLineIngredient(line.id)
                                             }
+                                            items={sortedIngredients}
+                                            itemToStringLabel={(ing) => ing.name}
                                         >
-                                            <SelectTrigger className="w-full min-w-32 border-0 shadow-none px-1 h-8 focus:ring-0">
-                                                <SelectValue placeholder="—" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value="unassigned" className="text-muted-foreground italic">
-                                                        {t("none")}
-                                                    </SelectItem>
-                                                    {sortedIngredients.map((ing) => (
-                                                        <SelectItem key={ing.id} value={ing.id}>
+                                            <ComboboxInput
+                                                placeholder="—"
+                                                showClear={!!line.ingredient_id}
+                                            />
+                                            <ComboboxContent>
+                                                <ComboboxEmpty>{t("none")}</ComboboxEmpty>
+                                                <ComboboxList>
+                                                    {(ing) => (
+                                                        <ComboboxItem key={ing.id} value={ing}>
                                                             {ing.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
+                                                        </ComboboxItem>
+                                                    )}
+                                                </ComboboxList>
+                                            </ComboboxContent>
+                                        </Combobox>
                                     </TableCell>
                                     <TableCell>
                                         <Input
@@ -375,19 +406,50 @@ export function PurchaseOrderForm({
                                             }
                                         />
                                     </TableCell>
-                                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                                        {packDisplay}
-                                    </TableCell>
                                     <TableCell>
                                         <Input
-                                            type="number"
-                                            inputMode="decimal"
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
                                             className="text-right tabular-nums"
                                             value={numberInputValue(line.order_quantity)}
                                             onChange={(event) =>
                                                 updateLine(line.id, "order_quantity", event.target.value)
                                             }
+                                            onBlur={() => {
+                                                if (line.order_quantity !== null && line.order_quantity < 1) {
+                                                    updateLine(line.id, "order_quantity", "1")
+                                                }
+                                            }}
                                         />
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="relative">
+                                            <Input
+                                                value={printUnit}
+                                                placeholder={defaultPrintUnit}
+                                                onChange={(event) =>
+                                                    updateLine(line.id, "print_unit", event.target.value)
+                                                }
+                                                className={showPackInfo ? "pr-9" : undefined}
+                                            />
+                                            {showPackInfo ? (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <button
+                                                            type="button"
+                                                            className="absolute right-2 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground/55 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                                        >
+                                                            <Info className="size-3.5" />
+                                                            <span className="sr-only">{packDisplay}</span>
+                                                        </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent sideOffset={4}>
+                                                        {packDisplay}
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ) : null}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         <Textarea
@@ -420,6 +482,43 @@ export function PurchaseOrderForm({
                                 </TableCell>
                             </TableRow>
                         )}
+                        <TableRow className="bg-muted/20 hover:bg-muted/30">
+                            <TableCell>
+                                <Combobox
+                                    value={appendIngredient}
+                                    onValueChange={(ingredient) => {
+                                        if (!ingredient) {
+                                            setAppendIngredient(null)
+                                            return
+                                        }
+                                        addLine(ingredient.id)
+                                        setAppendIngredient(null)
+                                    }}
+                                    items={sortedIngredients}
+                                    itemToStringLabel={(ing) => ing.name}
+                                >
+                                    <ComboboxInput
+                                        placeholder={t("addIngredient")}
+                                        showClear={false}
+                                    />
+                                    <ComboboxContent>
+                                        <ComboboxEmpty>{t("none")}</ComboboxEmpty>
+                                        <ComboboxList>
+                                            {(ing) => (
+                                                <ComboboxItem key={ing.id} value={ing}>
+                                                    {ing.name}
+                                                </ComboboxItem>
+                                            )}
+                                        </ComboboxList>
+                                    </ComboboxContent>
+                                </Combobox>
+                            </TableCell>
+                            <TableCell />
+                            <TableCell />
+                            <TableCell />
+                            <TableCell />
+                            <TableCell />
+                        </TableRow>
                     </TableBody>
                 </Table>
             </div>

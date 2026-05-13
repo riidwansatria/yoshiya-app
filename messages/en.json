@@ -344,6 +344,8 @@
             "neededQuantity": "Needed",
             "pack": "Pack",
             "orderQuantity": "Order Qty",
+            "orderQuantityMinError": "Order quantity must be at least 1.",
+            "unit": "Unit",
             "memo": "Notes",
             "notes": "Special Notes",
             "notesPlaceholder": "Enter special notes...",

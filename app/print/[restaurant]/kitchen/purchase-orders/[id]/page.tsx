@@ -1,6 +1,5 @@
 import { format, parseISO } from "date-fns"
 import { enUS, ja } from "date-fns/locale"
-import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 
 import { AutoPrint } from "@/components/print/auto-print"
@@ -45,10 +44,9 @@ function getPrintUnit(
     package_size?: number | null
     package_label?: string | null
     unit?: string | null
-  },
-  defaultPackLabel: string,
+  }
 ) {
-  if (line.package_size) return line.package_label || defaultPackLabel
+  if (line.package_size) return line.package_label || (line.unit ?? "")
   return line.unit ?? ""
 }
 
@@ -81,7 +79,6 @@ export default async function PurchaseOrderPrintPage({
   const resolvedSearchParams = await searchParams
   const localeCode = resolvedSearchParams.locale === "ja" ? "ja" : "en"
   const dateLocale = localeCode === "ja" ? ja : enUS
-  const t = await getTranslations("kitchen.purchaseOrders")
   const [order, settings] = await Promise.all([
     getPurchaseOrderById(id),
     getPurchaseOrderSettings(restaurant),
@@ -184,7 +181,7 @@ export default async function PurchaseOrderPrintPage({
                     {isEmpty ? "" : formatNumber(getPrintQuantity(line))}
                   </td>
                   <td className="border border-foreground/80 px-2 py-1 text-center">
-                    {isEmpty ? "" : getPrintUnit(line, t("defaultPackLabel"))}
+                    {isEmpty ? "" : getPrintUnit(line)}
                   </td>
                   <td className="border border-foreground/80 px-2 py-1 text-muted-foreground">
                     {line.memo ?? ""}

@@ -17,6 +17,9 @@ export interface PurchaseOrderLine {
     needed_quantity: number | null;
     package_size: number | null;
     package_label: string | null;
+    default_unit?: string | null;
+    default_package_size?: number | null;
+    default_package_label?: string | null;
     order_quantity: number | null;
     memo: string | null;
     sort_order: number;
@@ -72,8 +75,12 @@ type PurchaseOrderLineCountRow = PurchaseOrder & {
     purchase_order_lines?: { count: number }[];
 };
 
+type PurchaseOrderLineRow = PurchaseOrderLine & {
+    ingredient?: { package_size: number | null; package_label: string | null; unit: string | null } | null;
+};
+
 type PurchaseOrderDetailRow = PurchaseOrder & {
-    purchase_order_lines?: PurchaseOrderLine[];
+    purchase_order_lines?: PurchaseOrderLineRow[];
 };
 
 function mapListRow(row: PurchaseOrderLineCountRow): PurchaseOrderListItem {
@@ -146,7 +153,7 @@ export async function getPurchaseOrderById(
     const supabase = await createClient();
     const { data, error } = await supabase
         .from('purchase_orders')
-        .select('*, purchase_order_lines(*)')
+        .select('*, purchase_order_lines(*, ingredient:ingredient_id(package_size, package_label, unit))')
         .eq('id', id)
         .single();
 
@@ -161,6 +168,20 @@ export async function getPurchaseOrderById(
         lines: (row.purchase_order_lines ?? []).sort((a, b) => {
             if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
             return a.created_at.localeCompare(b.created_at);
+        }).map((line) => {
+            const defaultPackageSize = line.ingredient?.package_size ?? line.package_size;
+            const defaultPackageLabel = line.ingredient?.package_label ?? null;
+            const defaultUnit = line.ingredient?.unit ?? null;
+
+            return {
+                ...line,
+                package_size: defaultPackageSize,
+                package_label: line.package_label ?? defaultPackageLabel,
+                unit: line.unit ?? defaultUnit,
+                default_package_size: defaultPackageSize,
+                default_package_label: defaultPackageLabel,
+                default_unit: defaultUnit,
+            };
         }),
     };
 }

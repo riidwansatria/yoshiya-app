@@ -20,9 +20,14 @@ export interface PurchaseOrderLineInput {
 }
 
 export interface PurchaseOrderLineUpdateInput {
-    id: string;
+    id?: string;
     ingredient_id?: string | null;
     item_name: string;
+    unit: string | null;
+    category?: string | null;
+    needed_quantity?: number | null;
+    package_size?: number | null;
+    package_label: string | null;
     order_quantity: number | null;
     memo: string | null;
     sort_order: number;
@@ -273,24 +278,83 @@ export async function updatePurchaseOrderLines(
     lines: PurchaseOrderLineUpdateInput[]
 ) {
     const supabase = await createClient();
+    const { data: existingRows, error: existingError } = await supabase
+        .from('purchase_order_lines')
+        .select('id')
+        .eq('purchase_order_id', purchaseOrderId);
+
+    if (existingError) {
+        console.error('[updatePurchaseOrderLines] Failed to fetch existing lines', existingError);
+        return { error: 'Failed to update purchase order lines' };
+    }
+
+    const incomingIds = new Set(lines.map((line) => line.id).filter((id): id is string => Boolean(id)));
+    const deletedIds = ((existingRows ?? []) as { id: string }[])
+        .map((row) => row.id)
+        .filter((id) => !incomingIds.has(id));
+
+    if (deletedIds.length > 0) {
+        const { error: deleteError } = await supabase
+            .from('purchase_order_lines')
+            .delete()
+            .eq('purchase_order_id', purchaseOrderId)
+            .in('id', deletedIds);
+
+        if (deleteError) {
+            console.error('[updatePurchaseOrderLines] Failed to delete removed lines', deleteError);
+            return { error: 'Failed to update purchase order lines' };
+        }
+    }
 
     for (const line of lines) {
-const updateData: any = {
-                item_name: normalizeRequiredText(line.item_name),
-                order_quantity: normalizeNumber(line.order_quantity),
-                memo: normalizeOptionalText(line.memo),
-                sort_order: line.sort_order,
-            };
+        if (line.order_quantity !== null && line.order_quantity < 1) {
+            return { error: 'Order quantity must be at least 1' };
+        }
 
-            if (line.ingredient_id !== undefined) {
-                updateData.ingredient_id = line.ingredient_id;
-            }
+        const itemName = normalizeRequiredText(line.item_name);
+        if (!itemName) {
+            return { error: 'Item name is required' };
+        }
 
-            const { error } = await supabase
+        const updateData: {
+            item_name: string;
+            unit: string | null;
+            category: string | null;
+            needed_quantity: number | null;
+            package_size: number | null;
+            package_label: string | null;
+            order_quantity: number | null;
+            memo: string | null;
+            sort_order: number;
+            ingredient_id?: string | null;
+        } = {
+            item_name: itemName,
+            unit: normalizeOptionalText(line.unit),
+            category: normalizeOptionalText(line.category),
+            needed_quantity: normalizeNumber(line.needed_quantity),
+            package_size: normalizeNumber(line.package_size),
+            package_label: normalizeOptionalText(line.package_label),
+            order_quantity: normalizeNumber(line.order_quantity),
+            memo: normalizeOptionalText(line.memo),
+            sort_order: line.sort_order,
+        };
+
+        if (line.ingredient_id !== undefined) {
+            updateData.ingredient_id = line.ingredient_id;
+        }
+
+        const { error } = line.id
+            ? await supabase
                 .from('purchase_order_lines')
                 .update(updateData)
-            .eq('id', line.id)
-            .eq('purchase_order_id', purchaseOrderId);
+                .eq('id', line.id)
+                .eq('purchase_order_id', purchaseOrderId)
+            : await supabase
+                .from('purchase_order_lines')
+                .insert({
+                    purchase_order_id: purchaseOrderId,
+                    ...updateData,
+                });
 
         if (error) {
             console.error('[updatePurchaseOrderLines] Failed to update line', error);
