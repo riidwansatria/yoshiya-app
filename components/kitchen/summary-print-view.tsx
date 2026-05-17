@@ -19,7 +19,7 @@ import { DataTableColumnHeader } from '@/components/dice-ui/data-table/data-tabl
 import { DataTableSortList } from '@/components/dice-ui/data-table/data-table-sort-list';
 import { DataTableToolbar } from '@/components/dice-ui/data-table/data-table-toolbar';
 import { Button } from '@/components/ui/button';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Table,
@@ -392,12 +392,18 @@ export function SummaryPrintView({
     return (
         <div className="flex flex-col h-full space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center border-b pb-4 shrink-0">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
                     <label className="font-semibold whitespace-nowrap">{t('targetDate')}:</label>
-                    <DateRangePicker
-                        from={rangeFrom}
-                        to={rangeTo}
-                        onChange={handleRangeChange}
+                    <DatePicker
+                        value={rangeFrom}
+                        onChange={(newFrom) => handleRangeChange(newFrom, newFrom > rangeTo ? newFrom : rangeTo)}
+                        locale={locale === 'ja' ? 'ja' : 'en'}
+                        disabled={isNavigating}
+                    />
+                    <span className="text-muted-foreground">—</span>
+                    <DatePicker
+                        value={rangeTo}
+                        onChange={(newTo) => handleRangeChange(newTo < rangeFrom ? newTo : rangeFrom, newTo)}
                         locale={locale === 'ja' ? 'ja' : 'en'}
                         disabled={isNavigating}
                     />
