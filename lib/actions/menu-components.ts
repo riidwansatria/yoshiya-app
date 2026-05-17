@@ -4,10 +4,12 @@ import { updateTag } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+import { requirePermission } from '@/lib/auth/server';
 export async function updateMenuComponents(
     menuId: string,
     components: { component_id: string; qty_per_order: number }[]
 ) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
 
     const { error: deleteError } = await supabase

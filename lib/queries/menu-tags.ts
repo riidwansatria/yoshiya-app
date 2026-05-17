@@ -1,26 +1,24 @@
-import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 
-import { createCacheClient } from '@/lib/supabase/cache';
+import { createClient } from '@/lib/supabase/server';
 import type { MenuTag, MenuTagWithCount, TagMenu } from '@/lib/types/kitchen';
 import { fetchMenuTags as fetchKitchenMenuTags } from './kitchen';
 
 export type { MenuTag, MenuTagWithCount, TagMenu } from '@/lib/types/kitchen';
 
-export const getMenuTags = unstable_cache(
+export const getMenuTags = cache(
     async (): Promise<MenuTag[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenMenuTags(supabase);
-    },
-    ['menu-tags'],
-    { tags: ['menu-tags'], revalidate: 3600 }
+    }
 );
 
 type AssignmentRow = { menu_id: string; menus: TagMenu[] | TagMenu | null };
 type MenuTagWithAssignments = MenuTag & { menu_tag_assignments: AssignmentRow[] | null };
 
-export const getMenuTagsWithCount = unstable_cache(
+export const getMenuTagsWithCount = cache(
     async (): Promise<MenuTagWithCount[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('menu_tags')
             .select('id, label, label_en, kind, created_at, updated_at, menu_tag_assignments(menu_id, menus(id, name, restaurant_id))')
@@ -46,7 +44,5 @@ export const getMenuTagsWithCount = unstable_cache(
 
             return { ...tag, menu_count: menus.length, menus };
         });
-    },
-    ['menu-tags-with-count'],
-    { tags: ['menu-tags'], revalidate: 3600 }
+    }
 );

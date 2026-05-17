@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath, updateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { REVALIDATE_PATHS } from '@/lib/constants/routes';
+import { requirePermission } from '@/lib/auth/server';
 
 type MenuFields = {
     name: string;
@@ -34,6 +35,7 @@ function normalizeMenuFields(data: MenuFields) {
 }
 
 export async function createMenu(data: MenuCreatePayload) {
+    await requirePermission('menus', 'menus.create');
     const supabase = await createClient();
     const payload = {
         restaurant_id: data.restaurant_id,
@@ -67,6 +69,7 @@ export async function updateMenu(
     id: string,
     data: MenuFields
 ) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
     const updatePayload = normalizeMenuFields(data);
 
@@ -91,6 +94,7 @@ export async function updateMenu(
 }
 
 export async function deleteMenu(id: string) {
+    await requirePermission('menus', 'menus.delete');
     const supabase = await createClient();
 
     // Menu components are cascade deleted if FK constraint allows, 
@@ -108,6 +112,7 @@ export async function deleteMenu(id: string) {
 }
 
 export async function duplicateMenu(id: string) {
+    await requirePermission('menus', 'menus.create');
     const supabase = await createClient();
 
     // Fetch the original menu

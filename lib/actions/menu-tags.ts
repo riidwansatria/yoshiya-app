@@ -11,6 +11,7 @@ import {
     normalizeMenuTagLabel,
     normalizeMenuTagLookupLabel,
 } from '@/lib/utils/menu-tags';
+import { requirePermission } from '@/lib/auth/server';
 
 function normalizeOptionalLabel(value: string | null | undefined): string | null {
     if (!value) return null;
@@ -44,6 +45,7 @@ function invalidateCaches() {
 }
 
 export async function createMenuTag(label: string, options: { labelEn?: string; kind: MenuTagKind }) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
     const normalized = normalizeMenuTagLabel(label);
 
@@ -98,6 +100,7 @@ export async function updateMenuTag(
     tagId: string,
     updates: { label?: string; labelEn?: string | null; kind?: MenuTagKind }
 ) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
 
     const { data: existingTags, error: existingError } = await supabase
@@ -169,6 +172,7 @@ export async function updateMenuTag(
 }
 
 export async function deleteMenuTag(tagId: string) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -187,6 +191,7 @@ export async function deleteMenuTag(tagId: string) {
 }
 
 export async function updateMenuTags(menuId: string, tagIds: string[]) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
     const nextTagIds = dedupeMenuTagIds(tagIds);
 

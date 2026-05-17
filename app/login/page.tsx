@@ -36,7 +36,7 @@ export default function LoginPage() {
                 console.error('Login error:', error)
                 setError('ユーザー名またはパスワードが正しくありません')
             } else {
-                router.push('/dashboard/banquet/schedule')
+                router.push('/dashboard')
                 router.refresh()
             }
         } catch (err) {

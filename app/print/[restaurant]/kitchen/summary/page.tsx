@@ -18,6 +18,7 @@ import {
   type AggregatedIngredient,
   getIngredientsSummary,
 } from "@/lib/queries/ingredients-summary"
+import { requirePagePermission } from "@/lib/auth/server"
 
 function isUncategorizedCategory(category: string) {
   return category.trim().toLowerCase() === "uncategorized"
@@ -31,6 +32,7 @@ export default async function KitchenSummaryPrintPage({
   searchParams: Promise<{ from?: string; to?: string; locale?: string }>
 }) {
   const { restaurant } = await params
+  await requirePagePermission("kitchen", "kitchen.read")
   const resolvedSearchParams = await searchParams
 
   const today = format(new Date(), "yyyy-MM-dd")

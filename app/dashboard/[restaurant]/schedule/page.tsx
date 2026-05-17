@@ -7,6 +7,7 @@ import { getVenuesWithConcurrent } from "@/lib/queries/venues"
 import { format } from "date-fns"
 import { getTranslations } from "next-intl/server"
 import { redirect } from "next/navigation"
+import { requirePagePermission } from "@/lib/auth/server"
 
 export default async function SchedulePage({
     params,
@@ -17,6 +18,7 @@ export default async function SchedulePage({
 }) {
     const { restaurant } = await params
     const { date } = await searchParams
+    await requirePagePermission("reservations", "reservations.read")
 
     if (!date) {
         const today = format(new Date(), 'yyyy-MM-dd')

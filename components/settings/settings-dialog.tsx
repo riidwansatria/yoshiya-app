@@ -21,7 +21,7 @@ type SettingsDialogProps = {
     onClose: () => void
     purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
-    userRole?: string | null
+    allowedSections: SettingsSection[]
     vendors: Vendor[]
 }
 
@@ -31,7 +31,7 @@ export function SettingsDialog({
     onClose,
     purchaseOrderSettings,
     staff,
-    userRole,
+    allowedSections,
     vendors,
 }: SettingsDialogProps) {
     const t = useTranslations("settings")
@@ -52,7 +52,7 @@ export function SettingsDialog({
                     menuTags={menuTags}
                     purchaseOrderSettings={purchaseOrderSettings}
                     staff={staff}
-                    userRole={userRole}
+                    allowedSections={allowedSections}
                     vendors={vendors}
                 />
             </DialogContent>

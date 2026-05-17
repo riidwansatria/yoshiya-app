@@ -1,12 +1,10 @@
-import { unstable_cache } from 'next/cache';
-import { createClient } from '@supabase/supabase-js';
+import { cache } from 'react';
 
-export const getVenues = unstable_cache(
+import { createClient } from '@/lib/supabase/server';
+
+export const getVenues = cache(
     async (restaurantId: string) => {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        const supabase = await createClient();
 
         const { data, error } = await supabase
             .from('venues')
@@ -20,16 +18,11 @@ export const getVenues = unstable_cache(
         }
 
         return data;
-    },
-    ['venues'],
-    { tags: ['venues'], revalidate: 3600 }
+    }
 );
 
 export const getVenuesWithConcurrent = async (restaurantId: string) => {
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('venues')

@@ -7,12 +7,14 @@ import {
     buildDashboardKitchenSummaryPath,
     REVALIDATE_PATHS,
 } from '@/lib/constants/routes';
+import { requirePermission } from '@/lib/auth/server';
 
 export async function saveDailyOrders(
     restaurantId: string,
     targetDate: string,
     orders: { menu_id: string; quantity: number; notes?: string }[]
 ) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     // First, delete existing orders for this specific date and restaurant

@@ -6,12 +6,16 @@ import { getUsers } from '@/lib/queries/users'
 import { revalidatePath } from 'next/cache'
 import { getVenues } from '@/lib/queries/venues'
 import { REVALIDATE_PATHS } from '@/lib/constants/routes'
+import { requirePermission, unauthorizedResult } from '@/lib/auth/server'
 
 export async function getStaffList() {
     try {
+        await requirePermission('reservations', 'reservations.update')
         const users = await getUsers()
         return { success: true, data: users }
     } catch (error) {
+        const unauthorized = unauthorizedResult(error)
+        if (unauthorized) return { success: false, ...unauthorized, data: [] }
         console.error('Failed to fetch staff:', error)
         return { success: false, data: [] }
     }
@@ -19,9 +23,12 @@ export async function getStaffList() {
 
 export async function getBookingDetails(id: string) {
     try {
+        await requirePermission('reservations', 'reservations.read')
         const booking = await getReservationById(id)
         return { success: true, data: booking }
     } catch (error) {
+        const unauthorized = unauthorizedResult(error)
+        if (unauthorized) return { success: false, ...unauthorized }
         console.error('Failed to fetch booking:', error)
         return { success: false, error: 'Failed to fetch booking details' }
     }
@@ -55,6 +62,7 @@ export async function updateBooking(
     }
 ) {
     try {
+        await requirePermission('reservations', 'reservations.update')
         const supabase = await createClient()
 
         // Build the update payload, only including defined fields
@@ -157,6 +165,8 @@ export async function updateBooking(
         revalidatePath(REVALIDATE_PATHS.DASHBOARD_PAGE)
         return { success: true }
     } catch (error) {
+        const unauthorized = unauthorizedResult(error)
+        if (unauthorized) return { success: false, ...unauthorized }
         console.error('Failed to update booking:', error)
         return { success: false, error: 'Failed to update booking' }
     }
@@ -191,6 +201,7 @@ export async function createBooking(
     }
 ) {
     try {
+        await requirePermission('reservations', 'reservations.create')
         const supabase = await createClient()
 
         const insertPayload: Record<string, unknown> = {
@@ -255,6 +266,8 @@ export async function createBooking(
         revalidatePath(REVALIDATE_PATHS.DASHBOARD_PAGE)
         return { success: true, data: { id: created.id } }
     } catch (error) {
+        const unauthorized = unauthorizedResult(error)
+        if (unauthorized) return { success: false, ...unauthorized }
         console.error('Failed to create booking:', error)
         return { success: false, error: 'Failed to create booking' }
     }
@@ -262,9 +275,12 @@ export async function createBooking(
 
 export async function getVenueList(restaurantId: string) {
     try {
+        await requirePermission('reservations', 'reservations.read')
         const venues = await getVenues(restaurantId)
         return { success: true, data: venues }
     } catch (error) {
+        const unauthorized = unauthorizedResult(error)
+        if (unauthorized) return { success: false, ...unauthorized }
         console.error('Failed to fetch venues:', error)
         return { success: false, error: 'Failed to fetch venues' }
     }
@@ -272,6 +288,7 @@ export async function getVenueList(restaurantId: string) {
 
 export async function deleteBooking(id: string) {
     try {
+        await requirePermission('reservations', 'reservations.delete')
         const supabase = await createClient()
 
         const { error } = await supabase
@@ -287,6 +304,8 @@ export async function deleteBooking(id: string) {
         revalidatePath(REVALIDATE_PATHS.DASHBOARD_PAGE)
         return { success: true }
     } catch (error) {
+        const unauthorized = unauthorizedResult(error)
+        if (unauthorized) return { success: false, ...unauthorized }
         console.error('Failed to delete booking:', error)
         return { success: false, error: 'Failed to delete booking' }
     }

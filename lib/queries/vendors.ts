@@ -1,6 +1,5 @@
-import { unstable_cache } from 'next/cache';
-import { CACHE_TAGS } from '@/lib/constants/cache-tags';
-import { createCacheClient } from '@/lib/supabase/cache';
+import { cache } from 'react';
+import { createClient } from '@/lib/supabase/server';
 
 export interface Vendor {
     id: string;
@@ -12,9 +11,9 @@ export interface Vendor {
     updated_at: string;
 }
 
-export const getVendors = unstable_cache(
+export const getVendors = cache(
     async (): Promise<Vendor[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('vendors')
             .select('*')
@@ -26,7 +25,5 @@ export const getVendors = unstable_cache(
         }
 
         return (data ?? []) as Vendor[];
-    },
-    ['vendors'],
-    { tags: [CACHE_TAGS.VENDORS], revalidate: 3600 }
+    }
 );

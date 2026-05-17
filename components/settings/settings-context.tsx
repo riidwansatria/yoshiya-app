@@ -4,7 +4,7 @@ import * as React from "react"
 import type { MenuTagWithCount } from "@/lib/queries/menu-tags"
 import type { PurchaseOrderSettings } from "@/lib/queries/purchase-orders"
 import type { Vendor } from "@/lib/queries/vendors"
-import type { SettingsSection, StaffRecord } from "./types"
+import { normalizeAllowedSettingsSections, type SettingsSection, type StaffRecord } from "./types"
 
 type SettingsContextValue = {
     open: (section?: SettingsSection) => void
@@ -25,7 +25,7 @@ type SettingsProviderProps = {
     menuTags: MenuTagWithCount[]
     purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
-    userRole?: string | null
+    allowedSections: SettingsSection[]
     vendors: Vendor[]
 }
 
@@ -34,16 +34,21 @@ export function SettingsProvider({
     menuTags,
     purchaseOrderSettings,
     staff,
-    userRole,
+    allowedSections,
     vendors,
 }: SettingsProviderProps) {
     const [isOpen, setIsOpen] = React.useState(false)
     const [section, setSection] = React.useState<SettingsSection>("language")
+    const normalizedAllowedSections = React.useMemo(
+        () => normalizeAllowedSettingsSections(allowedSections),
+        [allowedSections]
+    )
 
     const open = React.useCallback((s?: SettingsSection) => {
-        setSection(s ?? "language")
+        const requested = s ?? "language"
+        setSection(normalizedAllowedSections.includes(requested) ? requested : "language")
         setIsOpen(true)
-    }, [])
+    }, [normalizedAllowedSections])
 
     const contextValue = React.useMemo(() => ({ open }), [open])
 
@@ -56,7 +61,7 @@ export function SettingsProvider({
                     menuTags={menuTags}
                     purchaseOrderSettings={purchaseOrderSettings}
                     staff={staff}
-                    userRole={userRole}
+                    allowedSections={normalizedAllowedSections}
                     vendors={vendors}
                     onClose={() => setIsOpen(false)}
                 />

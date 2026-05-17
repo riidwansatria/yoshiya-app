@@ -1,6 +1,6 @@
-import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 
-import { createCacheClient } from '@/lib/supabase/cache';
+import { createClient } from '@/lib/supabase/server';
 import type { Ingredient } from '@/lib/types/kitchen';
 import {
     fetchIngredientById as fetchKitchenIngredientById,
@@ -11,38 +11,30 @@ import {
 
 export type { Ingredient } from '@/lib/types/kitchen';
 
-export const getIngredients = unstable_cache(
+export const getIngredients = cache(
     async (): Promise<Ingredient[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenIngredients(supabase);
-    },
-    ['ingredients'],
-    { tags: ['ingredients'], revalidate: 3600 }
+    }
 );
 
-export const getIngredientById = unstable_cache(
+export const getIngredientById = cache(
     async (id: string): Promise<Ingredient | null> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenIngredientById(supabase, id);
-    },
-    ['ingredient-by-id'],
-    { tags: ['ingredients'], revalidate: 3600 }
+    }
 );
 
-export const getDistinctStores = unstable_cache(
+export const getDistinctStores = cache(
     async (): Promise<string[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenDistinctStores(supabase);
-    },
-    ['distinct-stores'],
-    { tags: ['ingredients'], revalidate: 3600 }
+    }
 );
 
-export const getDistinctCategories = unstable_cache(
+export const getDistinctCategories = cache(
     async (): Promise<string[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenDistinctCategories(supabase);
-    },
-    ['distinct-categories-v2'],
-    { tags: ['ingredients'], revalidate: 3600 }
+    }
 );

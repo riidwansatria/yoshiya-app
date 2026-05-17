@@ -8,6 +8,7 @@ import {
   getPurchaseOrderSettings,
   type PurchaseOrderSettings,
 } from "@/lib/queries/purchase-orders"
+import { requirePagePermission } from "@/lib/auth/server"
 
 const DEFAULT_SENDER = {
   company_name: "よしや",
@@ -76,6 +77,7 @@ export default async function PurchaseOrderPrintPage({
   searchParams: Promise<{ locale?: string }>
 }) {
   const { restaurant, id } = await params
+  await requirePagePermission("procurement", "procurement.read")
   const resolvedSearchParams = await searchParams
   const localeCode = resolvedSearchParams.locale === "ja" ? "ja" : "en"
   const dateLocale = localeCode === "ja" ? ja : enUS

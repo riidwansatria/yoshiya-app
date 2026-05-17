@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath, updateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { REVALIDATE_PATHS } from '@/lib/constants/routes';
+import { requirePermission } from '@/lib/auth/server';
 
 type ComponentFields = {
     name: string;
@@ -24,6 +25,7 @@ function normalizeComponentFields(data: ComponentFields) {
 }
 
 export async function createComponent(data: ComponentCreatePayload) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
     const payload = {
         restaurant_id: data.restaurant_id,
@@ -58,6 +60,7 @@ export async function updateComponent(
     id: string,
     data: ComponentFields
 ) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
     const payload = normalizeComponentFields(data);
 
@@ -83,6 +86,7 @@ export async function updateComponent(
 }
 
 export async function deleteComponent(id: string) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     const { error } = await supabase.from('components').delete().eq('id', id);
@@ -102,6 +106,7 @@ export async function updateComponentIngredients(
     componentId: string,
     ingredients: { ingredient_id: string; qty_per_serving: number }[]
 ) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     // Simple sync strategy: delete all old, insert new
@@ -141,6 +146,7 @@ export async function updateComponentIngredients(
 }
 
 export async function duplicateComponent(id: string) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     // Fetch original with ingredients

@@ -5,6 +5,7 @@ import { SummaryPrintView } from '@/components/kitchen/summary-print-view';
 import { format, isValid, parseISO } from 'date-fns';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
+import { requirePagePermission } from '@/lib/auth/server';
 
 function normalizeIsoDate(value: string | undefined, label: 'from' | 'to' | 'date') {
     if (!value) return undefined;
@@ -26,6 +27,7 @@ export default async function IngredientsSummaryPage({
     searchParams: Promise<{ date?: string; from?: string; to?: string }>;
 }) {
     const { restaurant } = await params;
+    await requirePagePermission('kitchen', 'kitchen.read');
     const resolvedSearchParams = await searchParams;
     const t = await getTranslations('kitchen.summary');
 

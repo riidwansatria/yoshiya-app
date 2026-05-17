@@ -11,17 +11,36 @@ export interface StaffRecord {
 
 export function resolveSettingsSection(
     section: string | string[] | undefined,
-    userRole?: string | null
+    allowedSections: SettingsSection[] = ["language"]
 ): SettingsSection {
     const normalizedSection = Array.isArray(section) ? section[0] : section
 
-    if (normalizedSection === "staff") {
-        return userRole === "manager" ? "staff" : "language"
+    if (
+        normalizedSection === "language" ||
+        normalizedSection === "staff" ||
+        normalizedSection === "menu-tags" ||
+        normalizedSection === "purchase-orders" ||
+        normalizedSection === "vendors"
+    ) {
+        return allowedSections.includes(normalizedSection) ? normalizedSection : "language"
     }
 
-    if (normalizedSection === "menu-tags" || normalizedSection === "purchase-orders" || normalizedSection === "vendors") {
-        return normalizedSection
+    if (allowedSections.includes("language")) {
+        return "language"
     }
 
-    return "language"
+    return allowedSections[0] ?? "language"
+}
+
+export function normalizeAllowedSettingsSections(
+    sections: SettingsSection[]
+): SettingsSection[] {
+    const normalized = Array.from(new Set(["language", ...sections]));
+    return normalized.filter((section): section is SettingsSection => {
+        return section === "language" ||
+            section === "staff" ||
+            section === "menu-tags" ||
+            section === "purchase-orders" ||
+            section === "vendors";
+    });
 }

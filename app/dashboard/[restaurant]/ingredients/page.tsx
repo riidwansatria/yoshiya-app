@@ -4,6 +4,7 @@ import { getVendors } from '@/lib/queries/vendors';
 import { IngredientsTable } from '@/components/kitchen/ingredients-table';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function IngredientsPage({
     params,
@@ -11,6 +12,7 @@ export default async function IngredientsPage({
     params: Promise<{ restaurant: string }>;
 }) {
     const { restaurant } = await params;
+    await requirePagePermission('kitchen', 'kitchen.read');
     const t = await getTranslations('kitchen');
     const [ingredients, vendors, categories, components] = await Promise.all([
         getIngredients(),

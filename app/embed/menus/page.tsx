@@ -3,8 +3,7 @@ import {
     type EmbedMenuFinderLocale,
     type MenuFinderClientLabels,
 } from '@/components/embed/menu-finder-client'
-import { fetchMenus } from '@/lib/queries/kitchen'
-import { createCacheClient } from '@/lib/supabase/cache'
+import { getPublicMenuFinderItems } from '@/lib/queries/public-menu-finder'
 import en from '@/messages/en.json'
 import ja from '@/messages/ja.json'
 
@@ -67,7 +66,7 @@ export default async function EmbedMenuFinderPage({
         normalizeRestaurant(getFirstQueryValue(resolvedSearchParams.restaurant)) ??
         DEFAULT_EMBED_RESTAURANT
 
-    const allMenus = await fetchMenus(createCacheClient(), restaurant, { includeTags: true })
+    const menus = await getPublicMenuFinderItems(restaurant)
 
     const m = embedMessages[locale]
     const labels: MenuFinderClientLabels = {
@@ -83,8 +82,6 @@ export default async function EmbedMenuFinderPage({
         priceColumn: m.priceColumn,
         noResults: m.noResults,
     }
-
-    const menus = allMenus.filter(menu => menu.is_public)
 
     return (
         <div className="p-4">

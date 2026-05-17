@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { LayoutList } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function MenusPage({
     params,
@@ -14,6 +15,7 @@ export default async function MenusPage({
     params: Promise<{ restaurant: string }>;
 }) {
     const { restaurant } = await params;
+    await requirePagePermission('menus', 'menus.read');
     const t = await getTranslations('kitchen');
     const [menus, availableTags] = await Promise.all([
         getMenus(restaurant, {

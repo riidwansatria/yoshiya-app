@@ -1,9 +1,11 @@
 import { TodayView } from "@/components/today/today-view"
 import { getReservations } from "@/lib/queries/reservations"
 import { format } from "date-fns"
+import { requirePagePermission } from "@/lib/auth/server"
 
 export default async function TodayPage({ params }: { params: Promise<{ restaurant: string }> }) {
     const { restaurant } = await params
+    await requirePagePermission("reservations", "reservations.read")
     const today = format(new Date(), 'yyyy-MM-dd')
 
     const [reservations] = await Promise.all([

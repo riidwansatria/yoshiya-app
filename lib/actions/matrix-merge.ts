@@ -9,6 +9,7 @@ import {
     buildDashboardMenusPath,
     REVALIDATE_PATHS,
 } from '@/lib/constants/routes';
+import { requirePermission } from '@/lib/auth/server';
 
 interface MenuMatrixChangeInput {
     menu_id: string;
@@ -26,6 +27,7 @@ export async function applyMenuMatrixChanges(
     restaurantId: string,
     changes: MenuMatrixChangeInput[]
 ) {
+    await requirePermission('menus', 'menus.update');
     const supabase = await createClient();
 
     const deletes = changes.filter((change) => change.uploadedValue === null);
@@ -78,6 +80,7 @@ export async function applyComponentMatrixChanges(
     restaurantId: string,
     changes: ComponentMatrixChangeInput[]
 ) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     const deletes = changes.filter((change) => change.uploadedValue === null);

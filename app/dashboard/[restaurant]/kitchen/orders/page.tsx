@@ -4,6 +4,7 @@ import { DailyOrdersForm } from '@/components/kitchen/daily-orders-form';
 import { format } from 'date-fns';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function DailyOrdersPage({
     params,
@@ -13,6 +14,7 @@ export default async function DailyOrdersPage({
     searchParams: Promise<{ date?: string }>;
 }) {
     const { restaurant } = await params;
+    await requirePagePermission('kitchen', 'kitchen.read');
     const resolvedSearchParams = await searchParams;
     const t = await getTranslations('kitchen.orders');
 

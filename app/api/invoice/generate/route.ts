@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import { getReservationById } from "@/lib/queries/reservations";
+import { isAuthorizationError, requirePermission } from "@/lib/auth/server";
 
 // We use adm-zip to work at the ZIP level instead of exceljs.
 // exceljs strips calcChain.xml and corrupts shared formulas on write,
@@ -10,6 +11,15 @@ import { getReservationById } from "@/lib/queries/reservations";
 import AdmZip from "adm-zip";
 
 export async function GET(req: NextRequest) {
+  try {
+    await requirePermission("reservations", "reservations.read");
+  } catch (error) {
+    if (isAuthorizationError(error)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    throw error;
+  }
+
   const searchParams = req.nextUrl.searchParams;
   const bookingId = searchParams.get("bookingId");
   const restaurantId = searchParams.get("restaurantId") || "yoshiya";

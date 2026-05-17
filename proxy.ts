@@ -17,7 +17,7 @@ export async function proxy(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
                     response = NextResponse.next({
                         request,
                     })
@@ -33,17 +33,24 @@ export async function proxy(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!user && request.nextUrl.pathname.startsWith('/api')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!user && (
+        request.nextUrl.pathname.startsWith('/dashboard') ||
+        request.nextUrl.pathname.startsWith('/print')
+    )) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
     if (user && request.nextUrl.pathname === '/login') {
-        return NextResponse.redirect(new URL('/dashboard/banquet/schedule', request.url))
+        return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     if (request.nextUrl.pathname === '/') {
         if (user) {
-            return NextResponse.redirect(new URL('/dashboard/banquet/schedule', request.url))
+            return NextResponse.redirect(new URL('/dashboard', request.url))
         } else {
             return NextResponse.redirect(new URL('/login', request.url))
         }
@@ -55,6 +62,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         '/dashboard/:path*',
+        '/print/:path*',
+        '/api/:path*',
         '/login',
         '/',
     ],

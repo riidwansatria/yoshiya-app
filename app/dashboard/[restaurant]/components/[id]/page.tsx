@@ -4,6 +4,7 @@ import { ComponentForm } from '@/components/kitchen/component-form';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent } from '@/components/layout/page';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function ComponentDetailPage({
     params,
@@ -12,6 +13,7 @@ export default async function ComponentDetailPage({
 }) {
     const { restaurant, id } = await params;
     const isNew = id === 'new';
+    await requirePagePermission('kitchen', isNew ? 'kitchen.update' : 'kitchen.read');
     const t = await getTranslations('kitchen');
 
     const [component, ingredients] = await Promise.all([

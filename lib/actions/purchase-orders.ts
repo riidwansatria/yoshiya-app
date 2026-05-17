@@ -12,6 +12,7 @@ import { generatePurchaseOrderPdf } from '@/lib/pdf/purchase-order-pdf';
 import { getPurchaseOrderById, getPurchaseOrderSettings } from '@/lib/queries/purchase-orders';
 import { createClient } from '@/lib/supabase/server';
 import type { PurchaseOrderStatus } from '@/lib/queries/purchase-orders';
+import { requirePermission } from '@/lib/auth/server';
 
 export interface PurchaseOrderLineInput {
     ingredient_id?: string | null;
@@ -134,6 +135,7 @@ export async function createBlankPurchaseOrder(
     orderDate: string,
     vendorId?: string | null
 ) {
+    await requirePermission('procurement', 'procurement.create');
     const supplier = normalizeRequiredText(supplierName);
     if (!supplier) return { error: 'Supplier name is required' };
     if (!orderDate) return { error: 'Order date is required' };
@@ -180,6 +182,7 @@ export async function createPurchaseOrderFromSummary(
     ingredients: SummaryIngredientInput[],
     vendorId?: string | null
 ) {
+    await requirePermission('procurement', 'procurement.create');
     const supplier = normalizeRequiredText(supplierName);
     if (!supplier) return { error: 'Supplier name is required' };
     if (!orderDate) return { error: 'Order date is required' };
@@ -249,6 +252,7 @@ export async function updatePurchaseOrderHeader(
         source_type?: 'manual' | 'summary';
     }
 ) {
+    await requirePermission('procurement', 'procurement.update');
     const supplier = normalizeRequiredText(values.supplier_name);
     const subject = normalizeRequiredText(values.subject);
     if (!supplier) return { error: 'Supplier name is required' };
@@ -285,6 +289,7 @@ export async function updatePurchaseOrderLines(
     purchaseOrderId: string,
     lines: PurchaseOrderLineUpdateInput[]
 ) {
+    await requirePermission('procurement', 'procurement.update');
     const supabase = await createClient();
     const { data: existingRows, error: existingError } = await supabase
         .from('purchase_order_lines')
@@ -381,6 +386,7 @@ export async function addIngredientToPurchaseOrder(
     ingredientId: string,
     sortOrder: number
 ) {
+    await requirePermission('procurement', 'procurement.update');
     if (!ingredientId) return { error: 'Ingredient is required' };
 
     const supabase = await createClient();
@@ -428,6 +434,7 @@ export async function deletePurchaseOrderLine(
     purchaseOrderId: string,
     lineId: string
 ) {
+    await requirePermission('procurement', 'procurement.update');
     const supabase = await createClient();
     const { error } = await supabase
         .from('purchase_order_lines')
@@ -446,6 +453,7 @@ export async function deletePurchaseOrderLine(
 }
 
 export async function deletePurchaseOrder(restaurantId: string, id: string) {
+    await requirePermission('procurement', 'procurement.delete');
     const supabase = await createClient();
     const { error } = await supabase
         .from('purchase_orders')
@@ -465,6 +473,7 @@ export async function updatePurchaseOrderSettings(
     restaurantId: string,
     values: PurchaseOrderSettingsInput
 ) {
+    await requirePermission('procurement', 'procurement.update');
     const companyName = normalizeRequiredText(values.company_name);
     if (!companyName) return { error: 'Company name is required' };
 
@@ -515,6 +524,7 @@ export async function sendPurchaseOrderEmail(
     orderId: string,
     recipientEmail: string
 ): Promise<{ success?: boolean; error?: string }> {
+    await requirePermission('procurement', 'procurement.update');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
         return { error: 'Invalid email address' }
     }

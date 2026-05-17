@@ -9,8 +9,10 @@ import {
     type IngredientPayload,
     validateIngredientPayload,
 } from '@/lib/validators/ingredients';
+import { requirePermission } from '@/lib/auth/server';
 
 export async function createIngredient(data: IngredientPayload) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
     const payload = normalizeIngredientPayload(data);
     const validationError = validateIngredientPayload(payload);
@@ -46,6 +48,7 @@ export async function updateIngredient(
     id: string,
     data: IngredientPayload
 ) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
     const payload = normalizeIngredientPayload(data);
     const validationError = validateIngredientPayload(payload);
@@ -71,6 +74,7 @@ export async function updateIngredient(
 }
 
 export async function deleteIngredient(id: string) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     const { error } = await supabase.from('ingredients').delete().eq('id', id);
@@ -87,6 +91,7 @@ export async function deleteIngredient(id: string) {
 }
 
 export async function duplicateIngredient(id: string) {
+    await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
 
     const { data: original, error: fetchError } = await supabase

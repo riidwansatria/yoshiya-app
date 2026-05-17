@@ -1,6 +1,6 @@
-import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 
-import { createCacheClient } from '@/lib/supabase/cache';
+import { createClient } from '@/lib/supabase/server';
 import type { Menu } from '@/lib/types/kitchen';
 import {
     fetchMenuById as fetchKitchenMenuById,
@@ -19,20 +19,16 @@ export interface GetMenusOptions {
     includeTags?: boolean;
 }
 
-export const getMenus = unstable_cache(
+export const getMenus = cache(
     async (restaurantId: string, options?: GetMenusOptions): Promise<Menu[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenMenus(supabase, restaurantId, options);
-    },
-    ['menus'],
-    { tags: ['menus'], revalidate: 3600 }
+    }
 );
 
-export const getMenuById = unstable_cache(
+export const getMenuById = cache(
     async (id: string): Promise<Menu | null> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         return fetchKitchenMenuById(supabase, id);
-    },
-    ['menu-by-id'],
-    { tags: ['menus'], revalidate: 3600 }
+    }
 );

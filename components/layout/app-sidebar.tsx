@@ -32,9 +32,9 @@ import {
 } from "@/components/ui/sidebar"
 import { RestaurantSwitcher } from "@/components/layout/app-sidebar-restaurant-switcher"
 import { NavUser } from "@/components/layout/app-sidebar-nav-user"
+import { canAccess, type UserAccess } from "@/lib/auth/access-control"
 
-export function AppSidebar({ userRole: _userRole, ...props }: React.ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
-    void _userRole
+export function AppSidebar({ access, ...props }: React.ComponentProps<typeof Sidebar> & { access?: UserAccess | null }) {
     const tNav = useTranslations('nav')
     const tKitchen = useTranslations('kitchen')
     const params = useParams()
@@ -49,26 +49,85 @@ export function AppSidebar({ userRole: _userRole, ...props }: React.ComponentPro
             url: `/dashboard/${restaurantId}/schedule`,
             icon: CalendarDays,
             active: pathname.includes('/schedule'),
+            module: "reservations" as const,
+            permission: "reservations.read" as const,
         },
         {
             title: tNav('bookings'),
             url: `/dashboard/${restaurantId}/bookings`,
             icon: CalendarCheck,
             active: pathname.includes('/bookings'),
+            module: "reservations" as const,
+            permission: "reservations.read" as const,
         },
         {
             title: tNav('today'),
             url: `/dashboard/${restaurantId}/today`,
             icon: ClipboardList,
             active: pathname.includes('/today'),
+            module: "reservations" as const,
+            permission: "reservations.read" as const,
         },
         {
             title: tNav('customers'),
             url: `/dashboard/customers`,
             icon: Users,
             active: pathname.includes('/customers'),
+            module: "reservations" as const,
+            permission: "reservations.read" as const,
         },
-    ]
+    ].filter((item) => canAccess(access, item.module, item.permission))
+
+    const kitchenItems = [
+        {
+            title: tKitchen('pages.ingredients'),
+            url: `/dashboard/${restaurantId}/ingredients`,
+            icon: Leaf,
+            active: pathname.includes('/ingredients'),
+            module: "kitchen" as const,
+            permission: "kitchen.read" as const,
+        },
+        {
+            title: tKitchen('pages.components'),
+            url: `/dashboard/${restaurantId}/components`,
+            icon: Salad,
+            active: pathname.includes('/components'),
+            module: "kitchen" as const,
+            permission: "kitchen.read" as const,
+        },
+        {
+            title: tKitchen('pages.menus'),
+            url: `/dashboard/${restaurantId}/menus`,
+            icon: BookOpen,
+            active: pathname.includes('/menus'),
+            module: "menus" as const,
+            permission: "menus.read" as const,
+        },
+        {
+            title: tNav('dailyOrders'),
+            url: `/dashboard/${restaurantId}/kitchen/orders`,
+            icon: ClipboardPen,
+            active: pathname.includes('/kitchen/orders'),
+            module: "kitchen" as const,
+            permission: "kitchen.read" as const,
+        },
+        {
+            title: tNav('summary'),
+            url: `/dashboard/${restaurantId}/kitchen/summary`,
+            icon: FilePieChart,
+            active: pathname.includes('/kitchen/summary'),
+            module: "kitchen" as const,
+            permission: "kitchen.read" as const,
+        },
+        {
+            title: tNav('purchaseOrders'),
+            url: `/dashboard/${restaurantId}/kitchen/purchase-orders`,
+            icon: FileText,
+            active: pathname.includes('/kitchen/purchase-orders'),
+            module: "procurement" as const,
+            permission: "procurement.read" as const,
+        },
+    ].filter((item) => canAccess(access, item.module, item.permission))
 
     return (
         <Sidebar collapsible="icon" variant="inset" {...props}>
@@ -91,85 +150,25 @@ export function AppSidebar({ userRole: _userRole, ...props }: React.ComponentPro
                     </SidebarMenu>
                 )}
 
-                <SidebarGroup>
-                    <SidebarGroupLabel>{tNav('kitchen')}</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.includes('/ingredients')}
-                                    tooltip={tKitchen('pages.ingredients')}
-                                >
-                                    <Link href={`/dashboard/${restaurantId}/ingredients`}>
-                                        <Leaf />
-                                        <span>{tKitchen('pages.ingredients')}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.includes('/components')}
-                                    tooltip={tKitchen('pages.components')}
-                                >
-                                    <Link href={`/dashboard/${restaurantId}/components`}>
-                                        <Salad />
-                                        <span>{tKitchen('pages.components')}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.includes('/menus')}
-                                    tooltip={tKitchen('pages.menus')}
-                                >
-                                    <Link href={`/dashboard/${restaurantId}/menus`}>
-                                        <BookOpen />
-                                        <span>{tKitchen('pages.menus')}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.includes('/kitchen/orders')}
-                                    tooltip={tNav('dailyOrders')}
-                                >
-                                    <Link href={`/dashboard/${restaurantId}/kitchen/orders`}>
-                                        <ClipboardPen />
-                                        <span>{tNav('dailyOrders')}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.includes('/kitchen/summary')}
-                                    tooltip={tNav('summary')}
-                                >
-                                    <Link href={`/dashboard/${restaurantId}/kitchen/summary`}>
-                                        <FilePieChart />
-                                        <span>{tNav('summary')}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname.includes('/kitchen/purchase-orders')}
-                                    tooltip={tNav('purchaseOrders')}
-                                >
-                                    <Link href={`/dashboard/${restaurantId}/kitchen/purchase-orders`}>
-                                        <FileText />
-                                        <span>{tNav('purchaseOrders')}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                {kitchenItems.length > 0 && (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>{tNav('kitchen')}</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {kitchenItems.map((item) => (
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton asChild isActive={item.active} tooltip={item.title}>
+                                            <Link href={item.url}>
+                                                <item.icon />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                )}
 
             </SidebarContent>
             <SidebarFooter>

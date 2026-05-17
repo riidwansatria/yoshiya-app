@@ -6,6 +6,7 @@ import { PlusCircle, LayoutList } from 'lucide-react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function ComponentsPage({
     params,
@@ -13,6 +14,7 @@ export default async function ComponentsPage({
     params: Promise<{ restaurant: string }>;
 }) {
     const { restaurant } = await params;
+    await requirePagePermission('kitchen', 'kitchen.read');
     const t = await getTranslations('kitchen');
     const [components, menus] = await Promise.all([
         getComponents(restaurant),

@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { generatePurchaseOrderPdf } from "@/lib/pdf/purchase-order-pdf"
 import { getPurchaseOrderById, getPurchaseOrderSettings } from "@/lib/queries/purchase-orders"
+import { isAuthorizationError, requirePermission } from "@/lib/auth/server"
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    try {
+        await requirePermission("procurement", "procurement.read")
+    } catch (error) {
+        if (isAuthorizationError(error)) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+        throw error
+    }
+
     const { id } = await params
     const restaurantId = req.nextUrl.searchParams.get("restaurant")
 

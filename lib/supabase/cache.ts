@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
  *
  * `unstable_cache` functions run outside the request context, so they cannot
  * read cookies or headers. This client skips session/cookie handling and
- * relies on public-read RLS policies for cached reads.
+ * Use only for curated public RPCs/views such as the menu finder embed.
  *
  * Never use this for writes or for data that is user-scoped.
  */

@@ -1,7 +1,5 @@
-import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 
-import { CACHE_TAGS } from '@/lib/constants/cache-tags';
-import { createCacheClient } from '@/lib/supabase/cache';
 import { createClient } from '@/lib/supabase/server';
 
 export type PurchaseOrderStatus = 'draft' | 'done';
@@ -92,9 +90,9 @@ function mapListRow(row: PurchaseOrderLineCountRow): PurchaseOrderListItem {
     };
 }
 
-export const getPurchaseOrders = unstable_cache(
+export const getPurchaseOrders = cache(
     async (): Promise<PurchaseOrderListItem[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('purchase_orders')
             .select('*, purchase_order_lines(count)')
@@ -106,14 +104,12 @@ export const getPurchaseOrders = unstable_cache(
         }
 
         return ((data ?? []) as PurchaseOrderLineCountRow[]).map(mapListRow);
-    },
-    ['purchase-orders'],
-    { tags: [CACHE_TAGS.PURCHASE_ORDERS], revalidate: 3600 }
+    }
 );
 
-export const getAllPurchaseOrderSettings = unstable_cache(
+export const getAllPurchaseOrderSettings = cache(
     async (): Promise<PurchaseOrderSettings[]> => {
-        const supabase = createCacheClient();
+        const supabase = await createClient();
         const { data, error } = await supabase
             .from('purchase_order_settings')
             .select('*')
@@ -125,9 +121,7 @@ export const getAllPurchaseOrderSettings = unstable_cache(
         }
 
         return (data ?? []) as PurchaseOrderSettings[];
-    },
-    ['purchase-order-settings-all'],
-    { tags: [CACHE_TAGS.PURCHASE_ORDER_SETTINGS], revalidate: 3600 }
+    }
 );
 
 export async function getPurchaseOrderSettings(

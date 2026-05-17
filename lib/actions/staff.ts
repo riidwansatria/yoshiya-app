@@ -2,8 +2,9 @@
 
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
-import { getUserRole } from "@/lib/queries/users"
 import { REVALIDATE_PATHS } from "@/lib/constants/routes"
+import { requirePermission } from "@/lib/auth/server"
+import { isAppModule, isAppRole, type AppModule, type AppRole } from "@/lib/auth/access-control"
 
 function getSupabaseAdminClient() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -26,11 +27,8 @@ function getSupabaseAdminClient() {
 }
 
 export async function toggleAssignable(userId: string, isAssignable: boolean) {
+    await requirePermission('staff_management', 'staff.manage')
     const supabaseAdmin = getSupabaseAdminClient()
-    const role = await getUserRole()
-    if (role !== 'manager') {
-        throw new Error('Unauthorized')
-    }
 
     const { error } = await supabaseAdmin
         .from('users')
@@ -42,11 +40,8 @@ export async function toggleAssignable(userId: string, isAssignable: boolean) {
 }
 
 export async function removeStaff(userId: string) {
+    await requirePermission('staff_management', 'staff.manage')
     const supabaseAdmin = getSupabaseAdminClient()
-    const role = await getUserRole()
-    if (role !== 'manager') {
-        throw new Error('Unauthorized')
-    }
 
     // 1. Soft delete in DB
     const { error } = await supabaseAdmin
@@ -87,11 +82,8 @@ export async function removeStaff(userId: string) {
 }
 
 export async function addStaff(data: { name: string, username: string, password: string }) {
+    await requirePermission('staff_management', 'staff.manage')
     const supabaseAdmin = getSupabaseAdminClient()
-    const role = await getUserRole()
-    if (role !== 'manager') {
-        throw new Error('Unauthorized')
-    }
 
     const email = `${data.username}@yoshiya.internal`
 
@@ -124,15 +116,18 @@ export async function addStaff(data: { name: string, username: string, password:
         })
 
     if (dbError) throw dbError
+
+    const { error: moduleError } = await supabaseAdmin
+        .from('user_modules')
+        .insert({ user_id: authData.user.id, module: 'reservations' })
+
+    if (moduleError) throw moduleError
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }
 
 export async function updateStaff(userId: string, data: { name: string, password?: string }) {
+    await requirePermission('staff_management', 'staff.manage')
     const supabaseAdmin = getSupabaseAdminClient()
-    const role = await getUserRole()
-    if (role !== 'manager') {
-        throw new Error('Unauthorized')
-    }
 
     // 1. Update DB
     const { error } = await supabaseAdmin
@@ -149,6 +144,44 @@ export async function updateStaff(userId: string, data: { name: string, password
             password: trimmedPassword
         })
         if (authError) throw authError
+    }
+
+    revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
+}
+
+export async function updateStaffAccess(
+    userId: string,
+    data: { role: AppRole; modules: AppModule[] }
+) {
+    await requirePermission('staff_management', 'staff.manage')
+
+    if (!isAppRole(data.role)) {
+        throw new Error('Invalid role')
+    }
+
+    const modules = Array.from(new Set(data.modules)).filter(isAppModule)
+    const supabaseAdmin = getSupabaseAdminClient()
+
+    const { error: userError } = await supabaseAdmin
+        .from('users')
+        .update({ role: data.role })
+        .eq('id', userId)
+
+    if (userError) throw userError
+
+    const { error: deleteError } = await supabaseAdmin
+        .from('user_modules')
+        .delete()
+        .eq('user_id', userId)
+
+    if (deleteError) throw deleteError
+
+    if (modules.length > 0) {
+        const { error: insertError } = await supabaseAdmin
+            .from('user_modules')
+            .insert(modules.map((module) => ({ user_id: userId, module })))
+
+        if (insertError) throw insertError
     }
 
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)

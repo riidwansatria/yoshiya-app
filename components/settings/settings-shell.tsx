@@ -40,14 +40,14 @@ import {
     SidebarProvider,
 } from "@/components/ui/sidebar"
 
-import type { SettingsSection, StaffRecord } from "./types"
+import { resolveSettingsSection, type SettingsSection, type StaffRecord } from "./types"
 
 type SettingsShellProps = {
     initialSection: SettingsSection
     menuTags: MenuTagWithCount[]
     purchaseOrderSettings: PurchaseOrderSettings[]
     staff: StaffRecord[]
-    userRole?: string | null
+    allowedSections: SettingsSection[]
     vendors: Vendor[]
 }
 
@@ -63,20 +63,22 @@ export function SettingsShell({
     menuTags,
     purchaseOrderSettings,
     staff,
-    userRole,
+    allowedSections,
     vendors,
 }: SettingsShellProps) {
     const locale = useLocale()
     const router = useRouter()
     const t = useTranslations("settings")
-    const [activeSection, setActiveSection] = React.useState<SettingsSection>(initialSection)
+    const [activeSection, setActiveSection] = React.useState<SettingsSection>(() =>
+        resolveSettingsSection(initialSection, allowedSections)
+    )
     const [isPending, startTransition] = React.useTransition()
 
     React.useEffect(() => {
-        setActiveSection(initialSection)
-    }, [initialSection])
+        setActiveSection(resolveSettingsSection(initialSection, allowedSections))
+    }, [allowedSections, initialSection])
 
-    const navigationItems: SettingsNavItem[] = [
+    const navigationItems: SettingsNavItem[] = ([
         {
             description: t("language.description"),
             icon: Globe,
@@ -101,9 +103,9 @@ export function SettingsShell({
             id: "vendors",
             label: t("sections.vendors"),
         },
-    ]
+    ] satisfies SettingsNavItem[]).filter((item) => allowedSections.includes(item.id))
 
-    if (userRole === "manager") {
+    if (allowedSections.includes("staff")) {
         navigationItems.push({
             description: t("staff.description"),
             icon: UserCog,
@@ -116,6 +118,7 @@ export function SettingsShell({
         navigationItems.find((item) => item.id === activeSection) ?? navigationItems[0]
 
     const handleSectionChange = (nextSection: SettingsSection) => {
+        if (!allowedSections.includes(nextSection)) return
         if (nextSection === activeSection) return
         setActiveSection(nextSection)
     }
@@ -237,19 +240,19 @@ export function SettingsShell({
                             </Card>
                         ) : null}
 
-                        {activeSection === "menu-tags" ? (
+                        {activeSection === "menu-tags" && allowedSections.includes("menu-tags") ? (
                             <MenuTagsTable data={menuTags} />
                         ) : null}
 
-                        {activeSection === "purchase-orders" ? (
+                        {activeSection === "purchase-orders" && allowedSections.includes("purchase-orders") ? (
                             <PurchaseOrderSettingsForm settings={purchaseOrderSettings} />
                         ) : null}
 
-                        {activeSection === "vendors" ? (
+                        {activeSection === "vendors" && allowedSections.includes("vendors") ? (
                             <VendorsTable data={vendors} />
                         ) : null}
 
-                        {activeSection === "staff" && userRole === "manager" ? (
+                        {activeSection === "staff" && allowedSections.includes("staff") ? (
                             <StaffTable data={staff} />
                         ) : null}
                     </div>

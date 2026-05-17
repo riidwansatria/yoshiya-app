@@ -6,6 +6,7 @@ import { getPurchaseOrderById } from "@/lib/queries/purchase-orders"
 import { getIngredientsSummary } from "@/lib/queries/ingredients-summary"
 import { getVendors } from "@/lib/queries/vendors"
 import type { AggregatedIngredient } from "@/lib/queries/ingredients-summary"
+import { requirePagePermission } from "@/lib/auth/server"
 
 export default async function PurchaseOrderDetailPage({
     params,
@@ -13,6 +14,7 @@ export default async function PurchaseOrderDetailPage({
     params: Promise<{ restaurant: string; id: string }>
 }) {
     const { restaurant, id } = await params
+    await requirePagePermission("procurement", id === "new" ? "procurement.create" : "procurement.read")
     const [order, ingredients, vendors] = await Promise.all([
         getPurchaseOrderById(id),
         getIngredients(),

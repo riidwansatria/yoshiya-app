@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { createClient } from '@/lib/supabase/server';
+import { requirePermission } from '@/lib/auth/server';
 
 function normalizeRequiredText(value: string) {
     return value.trim();
@@ -24,6 +25,7 @@ export async function createVendor(values: {
     tel?: string | null;
     fax?: string | null;
 }) {
+    await requirePermission('procurement', 'procurement.create');
     const name = normalizeRequiredText(values.name);
     if (!name) return { error: 'Vendor name is required' };
 
@@ -52,6 +54,7 @@ export async function updateVendor(
     id: string,
     values: { name?: string; email?: string | null; tel?: string | null; fax?: string | null }
 ) {
+    await requirePermission('procurement', 'procurement.update');
     const supabase = await createClient();
     const update: Record<string, unknown> = {};
 
@@ -76,6 +79,7 @@ export async function updateVendor(
 }
 
 export async function deleteVendor(id: string) {
+    await requirePermission('procurement', 'procurement.delete');
     const supabase = await createClient();
     const { error } = await supabase.from('vendors').delete().eq('id', id);
 

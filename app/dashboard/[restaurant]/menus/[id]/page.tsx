@@ -8,6 +8,7 @@ import { Page, PageHeader, PageHeaderHeading, PageTitle, PageContent, PageFooter
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { MenuFormProvider, MenuFormSubmitButton } from '@/components/kitchen/menu-form-context';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function MenuDetailPage({
     params,
@@ -16,6 +17,7 @@ export default async function MenuDetailPage({
 }) {
     const { restaurant, id } = await params;
     const isNew = id === 'new';
+    await requirePagePermission('menus', isNew ? 'menus.create' : 'menus.read');
     const t = await getTranslations('kitchen');
 
     const [menu, components, availableTags] = await Promise.all([

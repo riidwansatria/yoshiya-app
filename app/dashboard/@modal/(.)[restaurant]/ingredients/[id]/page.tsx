@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { IngredientEditorModal } from '@/components/kitchen/ingredient-editor-modal';
 import { getDistinctCategories, getIngredientById } from '@/lib/queries/ingredients';
 import { getVendors } from '@/lib/queries/vendors';
+import { requirePagePermission } from '@/lib/auth/server';
 
 export default async function IngredientModalRoute({
     params,
@@ -10,6 +11,7 @@ export default async function IngredientModalRoute({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
+    await requirePagePermission('kitchen', 'kitchen.read');
     const [ingredient, vendors, categories] = await Promise.all([
         getIngredientById(id),
         getVendors(),
