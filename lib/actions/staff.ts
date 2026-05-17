@@ -125,23 +125,29 @@ export async function addStaff(data: { name: string, username: string, password:
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }
 
-export async function updateStaff(userId: string, data: { name: string, password?: string }) {
+export async function updateStaff(userId: string, data: { name: string, username?: string, password?: string }) {
     await requirePermission('staff_management', 'staff.manage')
     const supabaseAdmin = getSupabaseAdminClient()
+    const trimmedUsername = data.username?.trim().toLowerCase()
+    const email = trimmedUsername ? `${trimmedUsername}@yoshiya.internal` : undefined
 
     // 1. Update DB
     const { error } = await supabaseAdmin
         .from('users')
-        .update({ name: data.name })
+        .update({
+            name: data.name,
+            ...(email ? { email } : {}),
+        })
         .eq('id', userId)
 
     if (error) throw error
 
-    // 2. Update Auth if password provided
+    // 2. Update Auth if username or password provided
     const trimmedPassword = data.password?.trim()
-    if (trimmedPassword && trimmedPassword !== '') {
+    if (email || (trimmedPassword && trimmedPassword !== '')) {
         const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-            password: trimmedPassword
+            ...(email ? { email, email_confirm: true } : {}),
+            ...(trimmedPassword && trimmedPassword !== '' ? { password: trimmedPassword } : {}),
         })
         if (authError) throw authError
     }

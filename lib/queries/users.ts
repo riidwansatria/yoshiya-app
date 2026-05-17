@@ -2,6 +2,16 @@ import { cache } from 'react';
 
 import { createClient } from '@/lib/supabase/server';
 
+type StaffRow = {
+    id: string;
+    name: string;
+    role: string;
+    email: string | null;
+    is_assignable: boolean;
+    deleted_at: string | null;
+    user_modules?: { module: string }[] | null;
+};
+
 export const getUsers = cache(async () => {
     const supabase = await createClient();
 
@@ -44,7 +54,7 @@ export const getAllStaff = cache(async () => {
 
     const { data, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, name, role, email, is_assignable, deleted_at, user_modules(module)')
         .is('deleted_at', null)
         .order('name', { ascending: true });
 
@@ -53,5 +63,8 @@ export const getAllStaff = cache(async () => {
         return [];
     }
 
-    return data;
+    return ((data ?? []) as StaffRow[]).map(({ user_modules, ...user }) => ({
+        ...user,
+        modules: (user_modules ?? []).map((row) => row.module),
+    }));
 });

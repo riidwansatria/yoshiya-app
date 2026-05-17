@@ -7,6 +7,7 @@ export interface StaffRecord {
     email: string | null
     is_assignable: boolean
     deleted_at: string | null
+    modules: string[]
 }
 
 export function resolveSettingsSection(

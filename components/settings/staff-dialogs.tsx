@@ -8,6 +8,7 @@ import { Loader2, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
+import { MODULES, ROLES, isAppModule, isAppRole, type AppModule, type AppRole } from "@/lib/auth/access-control"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -28,7 +29,34 @@ import {
     FormDescription,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { addStaff, removeStaff, updateStaff } from "@/lib/actions/staff"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { addStaff, removeStaff, updateStaff, updateStaffAccess } from "@/lib/actions/staff"
+
+const ROLE_LABELS: Record<AppRole, string> = {
+    admin: "Admin",
+    owner: "Owner",
+    manager: "Manager",
+    staff: "Staff",
+}
+
+const MODULE_LABELS: Record<AppModule, string> = {
+    reservations: "Reservations",
+    kitchen: "Kitchen",
+    procurement: "Procurement",
+    skewer_shop: "Skewer shop",
+    menus: "Menus",
+    reports: "Reports",
+    staff_management: "Staff management",
+    settings: "Settings",
+}
 
 const addStaffSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -189,6 +217,7 @@ export function RemoveStaffDialog({ open, onOpenChange, staff }: RemoveStaffDial
 
 const editStaffSchema = z.object({
     name: z.string().min(1, "Name is required"),
+    username: z.string().min(3, "Username must be at least 3 characters").regex(/^[a-zA-Z0-9_]+$/, "Alphanumeric and underscore only"),
     password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
 })
 
@@ -201,11 +230,13 @@ interface EditStaffDialogProps {
 export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const username = staff.email ? staff.email.split('@')[0] : ''
 
     const form = useForm<z.infer<typeof editStaffSchema>>({
         resolver: zodResolver(editStaffSchema),
         defaultValues: {
             name: staff.name,
+            username,
             password: "",
         },
     })
@@ -220,12 +251,13 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
         try {
             await updateStaff(staff.id, {
                 name: values.name,
+                username: values.username,
                 password: values.password || undefined
             })
             router.refresh()
             toast.success("Staff updated successfully")
             onOpenChange(false)
-            form.reset({ name: values.name, password: "" })
+            form.reset({ name: values.name, username: values.username, password: "" })
         } catch (error) {
             toast.error("Failed to update staff")
             console.error(error)
@@ -233,8 +265,6 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
             setIsLoading(false)
         }
     }
-
-    const username = staff.email ? staff.email.split('@')[0] : 'Unknown'
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -249,7 +279,21 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <div className="space-y-2">
                             <FormLabel>Username</FormLabel>
-                            <Input value={username} disabled readOnly />
+                            <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input placeholder="taro_y" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Used for login as username@yoshiya.internal.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         <FormField
@@ -292,6 +336,115 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
                         </DialogFooter>
                     </form>
                 </Form>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+interface StaffAccessDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    staff: { id: string; name: string; role: string; modules: string[] }
+}
+
+export function StaffAccessDialog({ open, onOpenChange, staff }: StaffAccessDialogProps) {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
+    const [role, setRole] = useState<AppRole>(isAppRole(staff.role) ? staff.role : "staff")
+    const [modules, setModules] = useState<Set<AppModule>>(
+        () => new Set(staff.modules.filter(isAppModule))
+    )
+
+    const toggleModule = (module: AppModule, checked: boolean) => {
+        setModules((previous) => {
+            const next = new Set(previous)
+            if (checked) {
+                next.add(module)
+            } else {
+                next.delete(module)
+            }
+            return next
+        })
+    }
+
+    async function handleSave() {
+        setIsLoading(true)
+        try {
+            await updateStaffAccess(staff.id, {
+                role,
+                modules: Array.from(modules),
+            })
+            router.refresh()
+            toast.success("Permissions updated")
+            onOpenChange(false)
+        } catch (error) {
+            toast.error("Failed to update permissions")
+            console.error(error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                    <DialogTitle>User Permissions</DialogTitle>
+                    <DialogDescription>
+                        Manage authority role and module access for <strong>{staff.name}</strong>.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-5">
+                    <div className="space-y-2">
+                        <Label>Authority role</Label>
+                        <Select value={role} onValueChange={(value) => setRole(value as AppRole)}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ROLES.map((roleOption) => (
+                                    <SelectItem key={roleOption} value={roleOption}>
+                                        {ROLE_LABELS[roleOption]}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div>
+                            <Label>Modules</Label>
+                            <p className="text-muted-foreground text-sm">
+                                Modules control the work areas this user can access.
+                            </p>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            {MODULES.map((module) => (
+                                <label
+                                    key={module}
+                                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                                >
+                                    <span className="text-sm font-medium">{MODULE_LABELS[module]}</span>
+                                    <Switch
+                                        checked={modules.has(module)}
+                                        onCheckedChange={(checked) => toggleModule(module, checked)}
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button type="button" onClick={handleSave} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Permissions
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )

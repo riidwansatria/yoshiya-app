@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,9 +24,27 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { AddStaffDialog, EditStaffDialog, RemoveStaffDialog } from "./staff-dialogs"
+import { AddStaffDialog, EditStaffDialog, RemoveStaffDialog, StaffAccessDialog } from "./staff-dialogs"
 import type { StaffRecord } from "./types"
 import { toggleAssignable } from "@/lib/actions/staff"
+
+const ROLE_LABELS: Record<string, string> = {
+    admin: "Admin",
+    owner: "Owner",
+    manager: "Manager",
+    staff: "Staff",
+}
+
+const MODULE_LABELS: Record<string, string> = {
+    reservations: "Reservations",
+    kitchen: "Kitchen",
+    procurement: "Procurement",
+    skewer_shop: "Skewer shop",
+    menus: "Menus",
+    reports: "Reports",
+    staff_management: "Staff management",
+    settings: "Settings",
+}
 
 interface StaffTableProps {
     data: StaffRecord[]
@@ -34,6 +53,7 @@ interface StaffTableProps {
 export function StaffTable({ data }: StaffTableProps) {
     const router = useRouter()
     const [editStaff, setEditStaff] = useState<StaffRecord | null>(null)
+    const [accessStaff, setAccessStaff] = useState<StaffRecord | null>(null)
     const [removeStaff, setRemoveStaff] = useState<StaffRecord | null>(null)
 
     return (
@@ -54,6 +74,8 @@ export function StaffTable({ data }: StaffTableProps) {
                         <TableRow>
                             <TableHead>名前</TableHead>
                             <TableHead>ユーザー名</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Modules</TableHead>
                             <TableHead>配役に表示</TableHead>
                             <TableHead className="w-[70px]"></TableHead>
                         </TableRow>
@@ -70,6 +92,24 @@ export function StaffTable({ data }: StaffTableProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">{username}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={staff.role === "admin" ? "default" : "secondary"}>
+                                            {ROLE_LABELS[staff.role] ?? staff.role}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="max-w-[260px]">
+                                        <div className="flex flex-wrap gap-1">
+                                            {staff.modules.length > 0 ? (
+                                                staff.modules.map((module) => (
+                                                    <Badge key={module} variant="outline">
+                                                        {MODULE_LABELS[module] ?? module}
+                                                    </Badge>
+                                                ))
+                                            ) : (
+                                                <span className="text-sm text-muted-foreground">None</span>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex items-center space-x-2">
                                             <Switch
@@ -108,6 +148,9 @@ export function StaffTable({ data }: StaffTableProps) {
                                                 <DropdownMenuItem onClick={() => setEditStaff(staff)}>
                                                     Reference/Edit
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setAccessStaff(staff)}>
+                                                    Permissions
+                                                </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     className="text-red-600"
@@ -123,7 +166,7 @@ export function StaffTable({ data }: StaffTableProps) {
                         })}
                         {data.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
+                                <TableCell colSpan={6} className="h-24 text-center">
                                     No staff found.
                                 </TableCell>
                             </TableRow>
@@ -145,6 +188,14 @@ export function StaffTable({ data }: StaffTableProps) {
                     open={!!removeStaff}
                     onOpenChange={(open) => !open && setRemoveStaff(null)}
                     staff={removeStaff}
+                />
+            )}
+
+            {accessStaff && (
+                <StaffAccessDialog
+                    open={!!accessStaff}
+                    onOpenChange={(open) => !open && setAccessStaff(null)}
+                    staff={accessStaff}
                 />
             )}
         </div>
