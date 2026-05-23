@@ -2,7 +2,7 @@ import { cache } from 'react';
 
 import { createClient } from '@/lib/supabase/server';
 
-export type PurchaseOrderStatus = 'draft' | 'done';
+export type PurchaseOrderStatus = 'draft' | 'sent';
 export type PurchaseOrderSourceType = 'blank' | 'summary';
 
 export interface PurchaseOrderLine {
@@ -35,6 +35,7 @@ export interface PurchaseOrder {
     recipient_email: string | null;
     order_date: string;
     status: PurchaseOrderStatus;
+    sent_at: string | null;
     source_type: PurchaseOrderSourceType;
     source_date_from: string | null;
     source_date_to: string | null;

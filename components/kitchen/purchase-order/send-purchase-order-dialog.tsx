@@ -26,6 +26,8 @@ interface SendPurchaseOrderDialogProps {
     initialEmail: string
     open: boolean
     onOpenChange: (open: boolean) => void
+    isResend?: boolean
+    onSent?: () => void
 }
 
 export function SendPurchaseOrderDialog({
@@ -36,6 +38,8 @@ export function SendPurchaseOrderDialog({
     initialEmail,
     open,
     onOpenChange,
+    isResend = false,
+    onSent,
 }: SendPurchaseOrderDialogProps) {
     const t = useTranslations("kitchen.purchaseOrders")
     const [isPending, startTransition] = useTransition()
@@ -50,6 +54,7 @@ export function SendPurchaseOrderDialog({
                 return
             }
             toast.success(t("sendSuccess"))
+            onSent?.()
             onOpenChange(false)
         })
     }
@@ -82,7 +87,7 @@ export function SendPurchaseOrderDialog({
                         </Button>
                         <Button type="submit" disabled={isPending || !email.trim()}>
                             <Send />
-                            {isPending ? t("sendPending") : t("sendAction")}
+                            {isPending ? t("sendPending") : isResend ? t("resendAction") : t("sendAction")}
                         </Button>
                     </DialogFooter>
                 </form>

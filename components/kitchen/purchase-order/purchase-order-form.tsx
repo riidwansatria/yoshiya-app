@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Info, Mail, MoreHorizontal, Phone, Printer, Save, Send, Trash2 } from "lucide-react"
@@ -20,6 +21,7 @@ import type {
 import type { Ingredient } from "@/lib/queries/ingredients"
 import type { Vendor } from "@/lib/queries/vendors"
 import type { AggregatedIngredient } from "@/lib/queries/ingredients-summary"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
@@ -37,23 +39,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import {
-    Page,
-    PageActions,
-    PageContent,
-    PageHeader,
-    PageHeaderHeading,
-    PageTitle,
-} from "@/components/layout/page"
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import {
     Table,
     TableBody,
@@ -114,6 +108,70 @@ function getLinePackDisplay(
     return baseUnit || "—"
 }
 
+function normalizePurchaseOrderStatus(status: PurchaseOrderStatus | "done" | "ready"): PurchaseOrderStatus {
+    return status === "sent" ? "sent" : "draft"
+}
+
+function getSourceType(sourceDateFrom: string, sourceDateTo: string) {
+    return sourceDateFrom && sourceDateTo ? "summary" : "blank"
+}
+
+function buildEditSnapshot({
+    selectedVendor,
+    subject,
+    notes,
+    orderDate,
+    sourceDateFrom,
+    sourceDateTo,
+    lines,
+}: {
+    selectedVendor: Vendor | null
+    subject: string
+    notes: string
+    orderDate: string
+    sourceDateFrom: string
+    sourceDateTo: string
+    lines: PurchaseOrderLine[]
+}) {
+    return JSON.stringify({
+        supplier_name: selectedVendor?.name.trim() ?? "",
+        vendor_id: selectedVendor?.id ?? null,
+        subject: subject.trim(),
+        notes: notes.trim(),
+        order_date: orderDate,
+        source_date_from: sourceDateFrom || null,
+        source_date_to: sourceDateTo || null,
+        source_type: getSourceType(sourceDateFrom, sourceDateTo),
+        lines: lines.map((line, index) => ({
+            id: line.id.startsWith("new-") ? null : line.id,
+            ingredient_id: line.ingredient_id,
+            item_name: line.item_name.trim(),
+            unit: line.unit?.trim() || null,
+            category: line.category?.trim() || null,
+            needed_quantity: line.needed_quantity,
+            package_size: line.package_size,
+            package_label: line.package_label?.trim() || null,
+            order_quantity: line.order_quantity,
+            memo: line.memo?.trim() || null,
+            sort_order: index,
+        })),
+    })
+}
+
+function subscribeActionsPortalStore() {
+    return () => undefined
+}
+
+function getActionsPortalTarget() {
+    return typeof document === "undefined"
+        ? null
+        : document.getElementById("purchase-order-actions-slot")
+}
+
+function getServerActionsPortalTarget() {
+    return null
+}
+
 export function PurchaseOrderForm({
     restaurantId,
     order,
@@ -134,14 +192,34 @@ export function PurchaseOrderForm({
     const [subject, setSubject] = useState(order.subject || t("defaultSubject"))
     const [notes, setNotes] = useState(order.notes ?? "")
     const [orderDate, setOrderDate] = useState(order.order_date.slice(0, 10))
-    const [status, setStatus] = useState<PurchaseOrderStatus>(order.status)
+    const [status, setStatus] = useState<PurchaseOrderStatus>(normalizePurchaseOrderStatus(order.status))
     const [localSourceDateFrom, setLocalSourceDateFrom] = useState(sourceDateFrom ?? "")
     const [localSourceDateTo, setLocalSourceDateTo] = useState(sourceDateTo ?? "")
     const [lines, setLines] = useState<PurchaseOrderLine[]>(order.lines)
     const [appendIngredient, setAppendIngredient] = useState<Ingredient | null>(null)
     const [showOtherVendors, setShowOtherVendors] = useState(false)
     const [sendDialogOpen, setSendDialogOpen] = useState(false)
+    const [saveFirstDialogOpen, setSaveFirstDialogOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
+    const actionsPortalTarget = useSyncExternalStore(
+        subscribeActionsPortalStore,
+        getActionsPortalTarget,
+        getServerActionsPortalTarget
+    )
+    const currentSnapshot = useMemo(
+        () => buildEditSnapshot({
+            selectedVendor,
+            subject,
+            notes,
+            orderDate,
+            sourceDateFrom: localSourceDateFrom,
+            sourceDateTo: localSourceDateTo,
+            lines,
+        }),
+        [selectedVendor, subject, notes, orderDate, localSourceDateFrom, localSourceDateTo, lines]
+    )
+    const [savedSnapshot, setSavedSnapshot] = useState(currentSnapshot)
+    const hasUnsavedChanges = currentSnapshot !== savedSnapshot
 
     const { currentGroup, otherGroups } = useMemo(() => {
         const groups = new Map<string, { vendorName: string; vendorId: string | null; items: AggregatedIngredient[] }>()
@@ -233,54 +311,85 @@ export function PurchaseOrderForm({
         )
     }
 
-    const save = () => {
+    const persistOrder = async (options: { silent?: boolean } = {}) => {
         if (lines.some((line) => line.order_quantity !== null && line.order_quantity < 1)) {
             toast.error(t("orderQuantityMinError"))
+            return false
+        }
+
+        const headerResult = await updatePurchaseOrderHeader(restaurantId, order.id, {
+            supplier_name: selectedVendor?.name ?? "",
+            vendor_id: selectedVendor?.id ?? null,
+            subject,
+            notes,
+            order_date: orderDate,
+            status,
+            source_date_from: localSourceDateFrom || null,
+            source_date_to: localSourceDateTo || null,
+            source_type: getSourceType(localSourceDateFrom, localSourceDateTo)
+        })
+        if (headerResult.error) {
+            toast.error(headerResult.error)
+            return false
+        }
+
+        const linesResult = await updatePurchaseOrderLines(
+            restaurantId,
+            order.id,
+            lines.map((line, index) => ({
+                id: line.id.startsWith("new-") ? undefined : line.id,
+                ingredient_id: line.ingredient_id,
+                item_name: line.item_name,
+                unit: line.unit,
+                category: line.category,
+                needed_quantity: line.needed_quantity,
+                package_size: line.package_size,
+                package_label: line.package_label,
+                order_quantity: line.order_quantity,
+                memo: line.memo,
+                sort_order: index,
+            }))
+        )
+        if (linesResult.error) {
+            toast.error(linesResult.error)
+            return false
+        }
+
+        setSavedSnapshot(currentSnapshot)
+        if (!options.silent) {
+            toast.success(t("saveSuccess"))
+        }
+        router.refresh()
+        return true
+    }
+
+    const save = () => {
+        startTransition(() => {
+            void persistOrder()
+        })
+    }
+
+    const saveFromPrompt = () => {
+        startTransition(async () => {
+            const saved = await persistOrder()
+            if (saved) {
+                setSaveFirstDialogOpen(false)
+            }
+        })
+    }
+
+    const openSendDialog = () => {
+        if (hasUnsavedChanges) {
+            setSaveFirstDialogOpen(true)
             return
         }
 
-        startTransition(async () => {
-            const headerResult = await updatePurchaseOrderHeader(restaurantId, order.id, {
-                supplier_name: selectedVendor?.name ?? "",
-                vendor_id: selectedVendor?.id ?? null,
-                subject,
-                notes,
-                order_date: orderDate,
-                status,
-                source_date_from: localSourceDateFrom || null,
-                source_date_to: localSourceDateTo || null,
-                source_type: (localSourceDateFrom && localSourceDateTo) ? "summary" : "manual"
-            })
-            if (headerResult.error) {
-                toast.error(headerResult.error)
-                return
-            }
+        setSendDialogOpen(true)
+    }
 
-            const linesResult = await updatePurchaseOrderLines(
-                restaurantId,
-                order.id,
-                lines.map((line, index) => ({
-                    id: line.id.startsWith("new-") ? undefined : line.id,
-                    ingredient_id: line.ingredient_id,
-                    item_name: line.item_name,
-                    unit: line.unit,
-                    category: line.category,
-                    needed_quantity: line.needed_quantity,
-                    package_size: line.package_size,
-                    package_label: line.package_label,
-                    order_quantity: line.order_quantity,
-                    memo: line.memo,
-                    sort_order: index,
-                }))
-            )
-            if (linesResult.error) {
-                toast.error(linesResult.error)
-                return
-            }
-
-            toast.success(t("saveSuccess"))
-            router.refresh()
-        })
+    const handleSent = () => {
+        setStatus("sent")
+        router.refresh()
     }
 
     const addLine = (ingredientId: string) => {
@@ -315,127 +424,126 @@ export function PurchaseOrderForm({
         setLines((current) => current.filter((line) => line.id !== lineId))
     }
 
+    const baseStatusLabel = status === "sent"
+        ? t("statusSent")
+        : t("statusDraft")
+    const statusLabel = hasUnsavedChanges
+        ? t("statusUnsaved", { status: baseStatusLabel })
+        : baseStatusLabel
+
+    const actions = (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+            <Badge variant={hasUnsavedChanges ? "outline" : status === "sent" ? "default" : "secondary"}>
+                {statusLabel}
+            </Badge>
+            <Button
+                type="button"
+                variant="outline"
+                onClick={save}
+                disabled={isPending || !selectedVendor}
+            >
+                <Save />
+                {t("saveAction")}
+            </Button>
+            <Button type="button" onClick={openSendDialog} disabled={isPending || !selectedVendor}>
+                <Send />
+                {status === "sent" ? t("resendAction") : t("sendAction")}
+            </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" size="icon">
+                        <MoreHorizontal />
+                        <span className="sr-only">More actions</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                        <Link href={`/api/kitchen/purchase-orders/${order.id}/pdf?restaurant=${restaurantId}`} target="_blank">
+                            <Printer />
+                            {t("printAction")}
+                        </Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    )
+
     return (
-        <Page>
-            <PageHeader>
-                <PageHeaderHeading>
-                    <PageTitle>{t("detailTitle")}</PageTitle>
-                </PageHeaderHeading>
-                <PageActions>
-                    <Select
-                        value={status}
-                        onValueChange={(value) => setStatus(value as PurchaseOrderStatus)}
-                    >
-                        <SelectTrigger className="w-28">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectItem value="draft">{t("statusDraft")}</SelectItem>
-                                <SelectItem value="done">{t("statusDone")}</SelectItem>
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <Button type="button" variant="outline" onClick={() => setSendDialogOpen(true)} disabled={!selectedVendor}>
-                        <Send />
-                        {t("sendAction")}
-                    </Button>
-                    <Button type="button" onClick={save} disabled={isPending || !selectedVendor}>
-                        <Save />
-                        {t("saveAction")}
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button type="button" variant="outline" size="icon">
-                                <MoreHorizontal />
-                                <span className="sr-only">More actions</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link href={`/api/kitchen/purchase-orders/${order.id}/pdf?restaurant=${restaurantId}`} target="_blank">
-                                    <Printer />
-                                    {t("printAction")}
-                                </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </PageActions>
-            </PageHeader>
-            <PageContent className="flex flex-col gap-4 overflow-hidden">
+        <>
+            {actionsPortalTarget ? createPortal(actions, actionsPortalTarget) : null}
             <div className="flex flex-wrap items-start gap-3 rounded-md border p-3 shrink-0">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium">{t("documentNo")}</label>
-                        <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
-                            {order.document_no}
-                        </div>
-                    </div>
-                    <div className="flex min-w-44 flex-[1.4] flex-col gap-1.5">
-                        <label className="text-sm font-semibold">
-                            {t("supplierLabel")}
-                        </label>
-                        <Combobox
-                            value={selectedVendor}
-                            onValueChange={setSelectedVendor}
-                            items={vendors}
-                            itemToStringLabel={(vendor) => vendor.name}
-                            autoHighlight
-                        >
-                            <ComboboxInput
-                                id="purchase-order-supplier"
-                                placeholder={t("vendorPlaceholder")}
-                                showClear={!!selectedVendor}
-                            />
-                            <ComboboxContent>
-                                <ComboboxEmpty>{t("vendorEmpty")}</ComboboxEmpty>
-                                <ComboboxList>
-                                    {(vendor) => (
-                                        <ComboboxItem key={vendor.id} value={vendor}>
-                                            {vendor.name}
-                                        </ComboboxItem>
-                                    )}
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
-                        {(selectedVendor?.email || selectedVendor?.tel) && (
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                {selectedVendor.email && (
-                                    <span className="flex items-center gap-1">
-                                        <Mail className="size-3 shrink-0" />
-                                        {selectedVendor.email}
-                                    </span>
-                                )}
-                                {selectedVendor.tel && (
-                                    <span className="flex items-center gap-1">
-                                        <Phone className="size-3 shrink-0" />
-                                        {selectedVendor.tel}
-                                    </span>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex min-w-36 flex-1 flex-col gap-1.5">
-                        <label htmlFor="purchase-order-subject" className="text-sm font-medium">
-                            {t("subjectLabel")}
-                        </label>
-                        <Input
-                            id="purchase-order-subject"
-                            value={subject}
-                            onChange={(event) => setSubject(event.target.value)}
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="purchase-order-date" className="text-sm font-medium">
-                            {t("orderDate")}
-                        </label>
-                        <DatePicker
-                            value={orderDate}
-                            onChange={setOrderDate}
-                            locale={locale === "ja" ? "ja" : "en"}
-                            className="h-9"
-                        />
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t("documentNo")}</label>
+                    <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
+                        {order.document_no}
                     </div>
                 </div>
+                <div className="flex min-w-44 flex-[1.4] flex-col gap-1.5">
+                    <label className="text-sm font-semibold">
+                        {t("supplierLabel")}
+                    </label>
+                    <Combobox
+                        value={selectedVendor}
+                        onValueChange={setSelectedVendor}
+                        items={vendors}
+                        itemToStringLabel={(vendor) => vendor.name}
+                        autoHighlight
+                    >
+                        <ComboboxInput
+                            id="purchase-order-supplier"
+                            placeholder={t("vendorPlaceholder")}
+                            showClear={!!selectedVendor}
+                        />
+                        <ComboboxContent>
+                            <ComboboxEmpty>{t("vendorEmpty")}</ComboboxEmpty>
+                            <ComboboxList>
+                                {(vendor) => (
+                                    <ComboboxItem key={vendor.id} value={vendor}>
+                                        {vendor.name}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
+                    {(selectedVendor?.email || selectedVendor?.tel) && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            {selectedVendor.email && (
+                                <span className="flex items-center gap-1">
+                                    <Mail className="size-3 shrink-0" />
+                                    {selectedVendor.email}
+                                </span>
+                            )}
+                            {selectedVendor.tel && (
+                                <span className="flex items-center gap-1">
+                                    <Phone className="size-3 shrink-0" />
+                                    {selectedVendor.tel}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <div className="flex min-w-36 flex-1 flex-col gap-1.5">
+                    <label htmlFor="purchase-order-subject" className="text-sm font-medium">
+                        {t("subjectLabel")}
+                    </label>
+                    <Input
+                        id="purchase-order-subject"
+                        value={subject}
+                        onChange={(event) => setSubject(event.target.value)}
+                    />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <label htmlFor="purchase-order-date" className="text-sm font-medium">
+                        {t("orderDate")}
+                    </label>
+                    <DatePicker
+                        value={orderDate}
+                        onChange={setOrderDate}
+                        locale={locale === "ja" ? "ja" : "en"}
+                        className="h-9"
+                    />
+                </div>
+            </div>
 
             <div className="min-h-0 flex-1 flex flex-col lg:flex-row gap-4">
                 <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -721,7 +829,6 @@ export function PurchaseOrderForm({
                 </div>
             </div>
         </div>
-            </PageContent>
             <SendPurchaseOrderDialog
                 restaurantId={restaurantId}
                 orderId={order.id}
@@ -730,7 +837,33 @@ export function PurchaseOrderForm({
                 initialEmail={selectedVendor?.email ?? order.recipient_email ?? ""}
                 open={sendDialogOpen}
                 onOpenChange={setSendDialogOpen}
+                isResend={status === "sent"}
+                onSent={handleSent}
             />
-        </Page>
+            <Dialog open={saveFirstDialogOpen} onOpenChange={setSaveFirstDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{t("saveBeforeSendTitle")}</DialogTitle>
+                        <DialogDescription>
+                            {t("saveBeforeSendDescription")}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setSaveFirstDialogOpen(false)}
+                            disabled={isPending}
+                        >
+                            {t("sendCancel")}
+                        </Button>
+                        <Button type="button" onClick={saveFromPrompt} disabled={isPending || !selectedVendor}>
+                            <Save />
+                            {t("saveAction")}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }

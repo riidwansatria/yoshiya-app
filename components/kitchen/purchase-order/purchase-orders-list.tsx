@@ -53,7 +53,7 @@ function formatDate(value: string) {
 
 const statusFilterFn: FilterFn<PurchaseOrderListItem> = (row, _columnId, filterValue: string[]) => {
     if (!filterValue?.length) return true
-    return filterValue.includes(row.original.status)
+    return filterValue.includes(normalizeStatus(row.original.status))
 }
 statusFilterFn.autoRemove = (value: string[]) => !value?.length
 
@@ -73,6 +73,10 @@ const supplierFilterFn: FilterFn<PurchaseOrderListItem> = (row, _columnId, filte
     return filterValue.includes(row.original.supplier_name)
 }
 supplierFilterFn.autoRemove = (value: string[]) => !value?.length
+
+function normalizeStatus(status: PurchaseOrderListItem["status"] | "done" | "ready") {
+    return status === "sent" ? "sent" : "draft"
+}
 
 export function PurchaseOrdersList({
     restaurantId,
@@ -162,17 +166,21 @@ export function PurchaseOrdersList({
                     variant: "multiSelect",
                     options: [
                         { label: t("statusDraft"), value: "draft" },
-                        { label: t("statusDone"), value: "done" },
+                        { label: t("statusSent"), value: "sent" },
                     ],
                 },
                 header: ({ column }) => (
                     <DataTableColumnHeader column={column} label={t("status")} />
                 ),
-                cell: ({ row }) => (
-                    <Badge variant={row.original.status === "done" ? "default" : "secondary"}>
-                        {row.original.status === "done" ? t("statusDone") : t("statusDraft")}
-                    </Badge>
-                ),
+                cell: ({ row }) => {
+                    const status = normalizeStatus(row.original.status)
+
+                    return (
+                        <Badge variant={status === "sent" ? "default" : "secondary"}>
+                            {status === "sent" ? t("statusSent") : t("statusDraft")}
+                        </Badge>
+                    )
+                },
             },
             {
                 accessorKey: "line_count",

@@ -249,7 +249,7 @@ export async function updatePurchaseOrderHeader(
         status: PurchaseOrderStatus;
         source_date_from?: string | null;
         source_date_to?: string | null;
-        source_type?: 'manual' | 'summary';
+        source_type?: 'blank' | 'summary';
     }
 ) {
     await requirePermission('procurement', 'procurement.update');
@@ -583,8 +583,14 @@ export async function sendPurchaseOrderEmail(
     const supabase = await createClient()
     await supabase
         .from('purchase_orders')
-        .update({ recipient_email: recipientEmail })
+        .update({
+            recipient_email: recipientEmail,
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+        })
         .eq('id', orderId)
+
+    revalidatePurchaseOrders(restaurantId, orderId)
 
     return { success: true }
 }
