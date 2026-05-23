@@ -1,7 +1,6 @@
 import { BookingsTable } from "@/components/bookings/bookings-table"
 import { NewBookingForm } from "@/components/bookings/new-booking-form"
 import { getReservations } from "@/lib/queries/reservations"
-import { getUsers } from "@/lib/queries/users"
 import { getVenues } from "@/lib/queries/venues"
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page'
 import { requirePagePermission } from "@/lib/auth/server"
@@ -10,9 +9,8 @@ export default async function BookingsPage({ params }: { params: Promise<{ resta
     const { restaurant } = await params
     await requirePagePermission("reservations", "reservations.read")
 
-    const [reservations, staff, venues] = await Promise.all([
+    const [reservations, venues] = await Promise.all([
         getReservations(restaurant),
-        getUsers(),
         getVenues(restaurant),
     ])
 
@@ -41,7 +39,7 @@ export default async function BookingsPage({ params }: { params: Promise<{ resta
                 <BookingsTable
                     data={data}
                     restaurantId={restaurant}
-                    initialStaff={staff ?? []}
+                    initialStaff={[]}
                     initialVenues={venues ?? []}
                 />
             </PageContent>

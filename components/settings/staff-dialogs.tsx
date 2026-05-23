@@ -272,29 +272,27 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
                 <DialogHeader>
                     <DialogTitle>Edit Staff</DialogTitle>
                     <DialogDescription>
-                        Update staff details. Username cannot be changed.
+                        Update staff details, login username, or password.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="space-y-2">
-                            <FormLabel>Username</FormLabel>
-                            <FormField
-                                control={form.control}
-                                name="username"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Input placeholder="taro_y" {...field} />
-                                        </FormControl>
-                                        <FormDescription>
-                                            Used for login as username@yoshiya.internal.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                        <FormField
+                            control={form.control}
+                            name="username"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="taro_y" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Used for login as username@yoshiya.internal.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}

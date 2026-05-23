@@ -50,7 +50,12 @@ export default async function DashboardLayout({
             vendors={vendors}
         >
             <SidebarProvider style={{ "--sidebar-width": "12rem" } as React.CSSProperties}>
-                <AppSidebar access={access} className="print:hidden" />
+                <AppSidebar
+                    access={access}
+                    userDisplayName={currentAccess?.profile.name ?? null}
+                    userEmail={currentAccess?.user.email ?? null}
+                    className="print:hidden"
+                />
                 <SidebarInset className="h-[calc(100svh-1rem)] overflow-hidden flex flex-col">
                     <div className="flex-1 flex flex-col overflow-hidden">
                         {children}

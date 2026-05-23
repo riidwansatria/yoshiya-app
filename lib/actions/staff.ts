@@ -85,7 +85,8 @@ export async function addStaff(data: { name: string, username: string, password:
     await requirePermission('staff_management', 'staff.manage')
     const supabaseAdmin = getSupabaseAdminClient()
 
-    const email = `${data.username}@yoshiya.internal`
+    const username = data.username.trim().toLowerCase()
+    const email = `${username}@yoshiya.internal`
 
     // 1. Create Auth User
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -104,6 +105,7 @@ export async function addStaff(data: { name: string, username: string, password:
         .insert({
             id: authData.user.id,
             name: data.name,
+            email,
             role: 'staff', // Hardcoded for simplified version
             // restaurant_id: 'banquet', // If column exists? Not in `create_users.sql` snippet...
             // Wait, snippet didn't show restaurant_id. 
@@ -130,8 +132,17 @@ export async function updateStaff(userId: string, data: { name: string, username
     const supabaseAdmin = getSupabaseAdminClient()
     const trimmedUsername = data.username?.trim().toLowerCase()
     const email = trimmedUsername ? `${trimmedUsername}@yoshiya.internal` : undefined
+    const trimmedPassword = data.password?.trim()
 
-    // 1. Update DB
+    // Update Auth first so the profile display cannot drift if the login update fails.
+    if (email || (trimmedPassword && trimmedPassword !== '')) {
+        const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+            ...(email ? { email, email_confirm: true } : {}),
+            ...(trimmedPassword && trimmedPassword !== '' ? { password: trimmedPassword } : {}),
+        })
+        if (authError) throw authError
+    }
+
     const { error } = await supabaseAdmin
         .from('users')
         .update({
@@ -141,16 +152,6 @@ export async function updateStaff(userId: string, data: { name: string, username
         .eq('id', userId)
 
     if (error) throw error
-
-    // 2. Update Auth if username or password provided
-    const trimmedPassword = data.password?.trim()
-    if (email || (trimmedPassword && trimmedPassword !== '')) {
-        const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-            ...(email ? { email, email_confirm: true } : {}),
-            ...(trimmedPassword && trimmedPassword !== '' ? { password: trimmedPassword } : {}),
-        })
-        if (authError) throw authError
-    }
 
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_SETTINGS_PAGE)
 }

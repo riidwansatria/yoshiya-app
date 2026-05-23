@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import { MoreHorizontal } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +13,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
 import {
     Table,
     TableBody,
@@ -26,7 +23,6 @@ import {
 } from "@/components/ui/table"
 import { AddStaffDialog, EditStaffDialog, RemoveStaffDialog, StaffAccessDialog } from "./staff-dialogs"
 import type { StaffRecord } from "./types"
-import { toggleAssignable } from "@/lib/actions/staff"
 
 const ROLE_LABELS: Record<string, string> = {
     admin: "Admin",
@@ -51,7 +47,6 @@ interface StaffTableProps {
 }
 
 export function StaffTable({ data }: StaffTableProps) {
-    const router = useRouter()
     const [editStaff, setEditStaff] = useState<StaffRecord | null>(null)
     const [accessStaff, setAccessStaff] = useState<StaffRecord | null>(null)
     const [removeStaff, setRemoveStaff] = useState<StaffRecord | null>(null)
@@ -62,7 +57,7 @@ export function StaffTable({ data }: StaffTableProps) {
                 <div>
                     <h2 className="text-lg font-medium">スタッフ一覧</h2>
                     <p className="text-sm text-muted-foreground">
-                        Manage staff accounts and assignment visibility.
+                        Manage staff accounts, roles, and module access.
                     </p>
                 </div>
                 <AddStaffDialog />
@@ -76,7 +71,6 @@ export function StaffTable({ data }: StaffTableProps) {
                             <TableHead>ユーザー名</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Modules</TableHead>
-                            <TableHead>配役に表示</TableHead>
                             <TableHead className="w-[70px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -111,31 +105,6 @@ export function StaffTable({ data }: StaffTableProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                checked={staff.is_assignable}
-                                                onCheckedChange={async (checked) => {
-                                                    // Optimistic UI handled by server revalidation
-                                                    // But to avoid flicker, we might want local state.
-                                                    // Actually, checked state comes from `staff.is_assignable`.
-                                                    // Unless we useOptimistic, it will revert until server responses.
-                                                    // I'll wrap in transition?
-                                                    // Or just accept simple implementation for now.
-                                                    try {
-                                                        await toggleAssignable(staff.id, checked)
-                                                        router.refresh()
-                                                        toast.success(checked ? "Visible in assignments" : "Hidden from assignments")
-                                                    } catch {
-                                                        toast.error("Failed to update")
-                                                    }
-                                                }}
-                                            />
-                                            <span className="text-sm text-muted-foreground">
-                                                {staff.is_assignable ? "ON" : "OFF"}
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -166,7 +135,7 @@ export function StaffTable({ data }: StaffTableProps) {
                         })}
                         {data.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={5} className="h-24 text-center">
                                     No staff found.
                                 </TableCell>
                             </TableRow>

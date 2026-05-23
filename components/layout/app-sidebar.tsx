@@ -34,7 +34,16 @@ import { RestaurantSwitcher } from "@/components/layout/app-sidebar-restaurant-s
 import { NavUser } from "@/components/layout/app-sidebar-nav-user"
 import { canAccess, type UserAccess } from "@/lib/auth/access-control"
 
-export function AppSidebar({ access, ...props }: React.ComponentProps<typeof Sidebar> & { access?: UserAccess | null }) {
+export function AppSidebar({
+    access,
+    userDisplayName,
+    userEmail,
+    ...props
+}: React.ComponentProps<typeof Sidebar> & {
+    access?: UserAccess | null
+    userDisplayName?: string | null
+    userEmail?: string | null
+}) {
     const tNav = useTranslations('nav')
     const tKitchen = useTranslations('kitchen')
     const params = useParams()
@@ -172,7 +181,7 @@ export function AppSidebar({ access, ...props }: React.ComponentProps<typeof Sid
 
             </SidebarContent>
             <SidebarFooter>
-                <NavUser />
+                <NavUser displayName={userDisplayName} email={userEmail} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

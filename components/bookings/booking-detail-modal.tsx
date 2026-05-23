@@ -44,6 +44,8 @@ import { toast } from "sonner"
 type StaffOption = { id: string; name: string; role: string }
 type VenueOption = { id: string; name: string; capacity: number }
 
+const STAFF_ASSIGNMENT_ENABLED = false
+
 interface BookingDetailModalProps {
     bookingId: string | null
     open: boolean
@@ -276,7 +278,7 @@ export function BookingDetailModal({
             try {
                 const [bookingResult, staffResult, venueResult] = await Promise.all([
                     bookingId ? getBookingDetails(bookingId) : Promise.resolve({ success: true, data: null }),
-                    staffHydrated ? Promise.resolve(null) : getStaffList(),
+                    STAFF_ASSIGNMENT_ENABLED && !staffHydrated ? getStaffList() : Promise.resolve(null),
                     venuesHydrated ? Promise.resolve(null) : getVenueList(restaurantId)
                 ])
 
@@ -550,17 +552,19 @@ export function BookingDetailModal({
             agency_fax: agencyFax,
             agency_address: agencyAddress,
         }
-        const staffData = {
-            prep: { ids: prepStaffIds, tempNames: prepTempNames, duration: prepDuration },
-            service: {
-                ids: serviceStaffIds,
-                tempNames: serviceTempNames,
-                duration: (startTime && endTime)
-                    ? differenceInMinutes(parse(endTime, 'HH:mm', new Date()), parse(startTime, 'HH:mm', new Date()))
-                    : 0
-            },
-            cleaning: { ids: cleaningStaffIds, tempNames: cleaningTempNames, duration: cleaningDuration },
-        }
+        const staffData = STAFF_ASSIGNMENT_ENABLED
+            ? {
+                prep: { ids: prepStaffIds, tempNames: prepTempNames, duration: prepDuration },
+                service: {
+                    ids: serviceStaffIds,
+                    tempNames: serviceTempNames,
+                    duration: (startTime && endTime)
+                        ? differenceInMinutes(parse(endTime, 'HH:mm', new Date()), parse(startTime, 'HH:mm', new Date()))
+                        : 0
+                },
+                cleaning: { ids: cleaningStaffIds, tempNames: cleaningTempNames, duration: cleaningDuration },
+            }
+            : undefined
         try {
             const result = isNew
                 ? await createBooking(restaurantId, bookingData, staffData)
@@ -661,16 +665,20 @@ export function BookingDetailModal({
                             </SelectContent>
                         </Select>
 
-                        <div className="w-px h-6 bg-border mx-1"></div>
+                        {STAFF_ASSIGNMENT_ENABLED ? (
+                            <>
+                                <div className="w-px h-6 bg-border mx-1"></div>
 
-                        <Button
-                            variant={showStaffSidebar ? "secondary" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground"
-                            onClick={() => setShowStaffSidebar(!showStaffSidebar)}
-                        >
-                            <PanelRight className="h-4 w-4" />
-                        </Button>
+                                <Button
+                                    variant={showStaffSidebar ? "secondary" : "ghost"}
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground"
+                                    onClick={() => setShowStaffSidebar(!showStaffSidebar)}
+                                >
+                                    <PanelRight className="h-4 w-4" />
+                                </Button>
+                            </>
+                        ) : null}
                     </div>
                 </header>
 
@@ -1034,60 +1042,61 @@ export function BookingDetailModal({
                         </div>
                     </div>
 
-                    {/* Right Side - Staff Assignment Sidebar */}
-                    <div className={cn(
-                        "w-80 border-l bg-slate-50 flex flex-col transition-all duration-300 ease-in-out overflow-hidden shadow-inner",
-                        !showStaffSidebar && "w-0 border-l-0 opacity-0"
-                    )}>
-                        <div className="w-80 flex flex-col h-full">
-                            <div className="p-4 border-b bg-white/50 backdrop-blur-sm sticky top-0 z-10 flex flex-col gap-3">
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
-                                    <UserCog className="w-3 h-3" />
-                                    {t('bookingModal.staffAssignment')}
-                                </h3>
-                            </div>
+                    {STAFF_ASSIGNMENT_ENABLED ? (
+                        <div className={cn(
+                            "w-80 border-l bg-slate-50 flex flex-col transition-all duration-300 ease-in-out overflow-hidden shadow-inner",
+                            !showStaffSidebar && "w-0 border-l-0 opacity-0"
+                        )}>
+                            <div className="w-80 flex flex-col h-full">
+                                <div className="p-4 border-b bg-white/50 backdrop-blur-sm sticky top-0 z-10 flex flex-col gap-3">
+                                    <h3 className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
+                                        <UserCog className="w-3 h-3" />
+                                        {t('bookingModal.staffAssignment')}
+                                    </h3>
+                                </div>
 
-                            <div className="p-4 space-y-6 overflow-y-auto flex-1">
-                                {/* Prep Staff */}
-                                <StaffSelector
-                                    title={t('bookingModal.roles.preparation')}
-                                    selectedIds={prepStaffIds}
-                                    setIds={setPrepStaffIds}
-                                    tempNames={prepTempNames}
-                                    setTempNames={setPrepTempNames}
-                                    duration={prepDuration}
-                                    setDuration={setPrepDuration}
-                                    icon={ChefHat}
-                                />
+                                <div className="p-4 space-y-6 overflow-y-auto flex-1">
+                                    {/* Prep Staff */}
+                                    <StaffSelector
+                                        title={t('bookingModal.roles.preparation')}
+                                        selectedIds={prepStaffIds}
+                                        setIds={setPrepStaffIds}
+                                        tempNames={prepTempNames}
+                                        setTempNames={setPrepTempNames}
+                                        duration={prepDuration}
+                                        setDuration={setPrepDuration}
+                                        icon={ChefHat}
+                                    />
 
-                                <div className="w-full flex justify-center"><div className="w-1 h-4 border-l-2 border-dashed border-slate-300/50"></div></div>
+                                    <div className="w-full flex justify-center"><div className="w-1 h-4 border-l-2 border-dashed border-slate-300/50"></div></div>
 
-                                {/* Service Staff */}
-                                <StaffSelector
-                                    title={t('bookingModal.roles.service')}
-                                    selectedIds={serviceStaffIds}
-                                    setIds={setServiceStaffIds}
-                                    tempNames={serviceTempNames}
-                                    setTempNames={setServiceTempNames}
-                                    icon={Utensils}
-                                />
+                                    {/* Service Staff */}
+                                    <StaffSelector
+                                        title={t('bookingModal.roles.service')}
+                                        selectedIds={serviceStaffIds}
+                                        setIds={setServiceStaffIds}
+                                        tempNames={serviceTempNames}
+                                        setTempNames={setServiceTempNames}
+                                        icon={Utensils}
+                                    />
 
-                                <div className="w-full flex justify-center"><div className="w-1 h-4 border-l-2 border-dashed border-slate-300/50"></div></div>
+                                    <div className="w-full flex justify-center"><div className="w-1 h-4 border-l-2 border-dashed border-slate-300/50"></div></div>
 
-                                {/* Cleaning Staff */}
-                                <StaffSelector
-                                    title={t('bookingModal.roles.cleaning')}
-                                    selectedIds={cleaningStaffIds}
-                                    setIds={setCleaningStaffIds}
-                                    tempNames={cleaningTempNames}
-                                    setTempNames={setCleaningTempNames}
-                                    duration={cleaningDuration}
-                                    setDuration={setCleaningDuration}
-                                    icon={Sparkles}
-                                />
+                                    {/* Cleaning Staff */}
+                                    <StaffSelector
+                                        title={t('bookingModal.roles.cleaning')}
+                                        selectedIds={cleaningStaffIds}
+                                        setIds={setCleaningStaffIds}
+                                        tempNames={cleaningTempNames}
+                                        setTempNames={setCleaningTempNames}
+                                        duration={cleaningDuration}
+                                        setDuration={setCleaningDuration}
+                                        icon={Sparkles}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : null}
                 </div>
 
                 {/* Footer */}

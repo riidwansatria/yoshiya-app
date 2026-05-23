@@ -2,7 +2,6 @@ import { ScheduleGridTransposed } from "@/components/schedule/schedule-grid-tran
 import { NewReservationButton } from "@/components/schedule/new-reservation-button"
 import { Page, PageActions, PageContent, PageHeader, PageHeaderHeading, PageTitle } from "@/components/layout/page"
 import { getReservations } from "@/lib/queries/reservations"
-import { getUsers } from "@/lib/queries/users"
 import { getVenuesWithConcurrent } from "@/lib/queries/venues"
 import { format } from "date-fns"
 import { getTranslations } from "next-intl/server"
@@ -29,10 +28,9 @@ export default async function SchedulePage({
 
     const currentDate = date
 
-    const [venues, reservations, staff] = await Promise.all([
+    const [venues, reservations] = await Promise.all([
         getVenuesWithConcurrent(restaurant),
         getReservations(restaurant, { date: currentDate }),
-        getUsers(),
     ])
 
     return (
@@ -45,7 +43,7 @@ export default async function SchedulePage({
                     <NewReservationButton
                         restaurantId={restaurant}
                         defaultDate={currentDate}
-                        initialStaff={staff || []}
+                        initialStaff={[]}
                         initialVenues={venues || []}
                     />
                 </PageActions>
@@ -56,7 +54,7 @@ export default async function SchedulePage({
                     dateStr={currentDate}
                     initialVenues={venues || []}
                     initialReservations={reservations || []}
-                    initialStaff={staff || []}
+                    initialStaff={[]}
                 />
             </PageContent>
         </Page>
