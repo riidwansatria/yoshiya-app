@@ -53,7 +53,7 @@ function formatDate(value: string) {
 
 const statusFilterFn: FilterFn<PurchaseOrderListItem> = (row, _columnId, filterValue: string[]) => {
     if (!filterValue?.length) return true
-    return filterValue.includes(normalizeStatus(row.original.status))
+    return filterValue.includes(getDisplayStatus(row.original))
 }
 statusFilterFn.autoRemove = (value: string[]) => !value?.length
 
@@ -74,8 +74,8 @@ const supplierFilterFn: FilterFn<PurchaseOrderListItem> = (row, _columnId, filte
 }
 supplierFilterFn.autoRemove = (value: string[]) => !value?.length
 
-function normalizeStatus(status: PurchaseOrderListItem["status"] | "done" | "ready") {
-    return status === "sent" ? "sent" : "draft"
+function getDisplayStatus(order: PurchaseOrderListItem) {
+    return order.status === "sent" || order.sent_at || order.recipient_email ? "sent" : "draft"
 }
 
 export function PurchaseOrdersList({
@@ -173,7 +173,7 @@ export function PurchaseOrdersList({
                     <DataTableColumnHeader column={column} label={t("status")} />
                 ),
                 cell: ({ row }) => {
-                    const status = normalizeStatus(row.original.status)
+                    const status = getDisplayStatus(row.original)
 
                     return (
                         <Badge variant={status === "sent" ? "default" : "secondary"}>

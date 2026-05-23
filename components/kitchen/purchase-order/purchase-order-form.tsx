@@ -108,8 +108,8 @@ function getLinePackDisplay(
     return baseUnit || "—"
 }
 
-function normalizePurchaseOrderStatus(status: PurchaseOrderStatus | "done" | "ready"): PurchaseOrderStatus {
-    return status === "sent" ? "sent" : "draft"
+function getDisplayStatus(order: PurchaseOrderDetail): PurchaseOrderStatus {
+    return order.status === "sent" || order.sent_at || order.recipient_email ? "sent" : "draft"
 }
 
 function getSourceType(sourceDateFrom: string, sourceDateTo: string) {
@@ -192,7 +192,7 @@ export function PurchaseOrderForm({
     const [subject, setSubject] = useState(order.subject || t("defaultSubject"))
     const [notes, setNotes] = useState(order.notes ?? "")
     const [orderDate, setOrderDate] = useState(order.order_date.slice(0, 10))
-    const [status, setStatus] = useState<PurchaseOrderStatus>(normalizePurchaseOrderStatus(order.status))
+    const [status, setStatus] = useState<PurchaseOrderStatus>(getDisplayStatus(order))
     const [localSourceDateFrom, setLocalSourceDateFrom] = useState(sourceDateFrom ?? "")
     const [localSourceDateTo, setLocalSourceDateTo] = useState(sourceDateTo ?? "")
     const [lines, setLines] = useState<PurchaseOrderLine[]>(order.lines)
