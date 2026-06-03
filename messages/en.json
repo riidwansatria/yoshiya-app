@@ -17,6 +17,10 @@
         "settings": "Settings",
         "language": "Language",
         "logout": "Log out",
+        "logoutConfirmTitle": "Log out?",
+        "logoutConfirmBody": "Are you sure you want to log out of this dashboard?",
+        "loggingOut": "Logging out...",
+        "cancel": "Cancel",
         "defaultName": "User",
         "japanese": "Japanese",
         "english": "English"

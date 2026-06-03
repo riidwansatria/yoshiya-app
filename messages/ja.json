@@ -17,6 +17,10 @@
         "settings": "設定",
         "language": "言語",
         "logout": "ログアウト",
+        "logoutConfirmTitle": "ログアウトしますか？",
+        "logoutConfirmBody": "このダッシュボードからログアウトしてもよろしいですか？",
+        "loggingOut": "ログアウト中...",
+        "cancel": "キャンセル",
         "defaultName": "ユーザー",
         "japanese": "日本語",
         "english": "英語"

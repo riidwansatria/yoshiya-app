@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
     ChevronsUpDown,
     LogOut,
@@ -10,6 +11,15 @@ import {
     Avatar,
     AvatarFallback,
 } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -36,20 +46,34 @@ type NavUserProps = {
     email?: string | null
 }
 
+function getUserHandle(email?: string | null) {
+    const trimmedEmail = email?.trim()
+    if (!trimmedEmail) return null
+
+    const [username, domain] = trimmedEmail.split('@')
+    if (domain === 'yoshiya.internal') return username || null
+
+    return trimmedEmail
+}
+
 export function NavUser({ displayName, email }: NavUserProps) {
     const t = useTranslations('userMenu')
     const { isMobile } = useSidebar()
     const router = useRouter()
     const settings = useSettings()
+    const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const handleLogout = async () => {
+        setIsLoggingOut(true)
         const supabase = createClient()
         await supabase.auth.signOut()
         router.push('/login')
         router.refresh()
     }
 
-    const label = displayName?.trim() || email?.split('@')[0] || t('defaultName')
+    const userHandle = getUserHandle(email)
+    const label = displayName?.trim() || userHandle || t('defaultName')
     const userInitial = label.substring(0, 2).toUpperCase()
 
     return (
@@ -83,7 +107,7 @@ export function NavUser({ displayName, email }: NavUserProps) {
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-semibold">{label}</span>
-                                    {email ? <span className="truncate text-xs">{email}</span> : null}
+                                    {userHandle ? <span className="truncate text-xs">{userHandle}</span> : null}
                                 </div>
                             </div>
                         </DropdownMenuLabel>
@@ -95,12 +119,36 @@ export function NavUser({ displayName, email }: NavUserProps) {
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
+                        <DropdownMenuItem onClick={() => setLogoutDialogOpen(true)}>
                             <LogOut className="mr-2 h-4 w-4" />
                             {t('logout')}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>{t('logoutConfirmTitle')}</DialogTitle>
+                            <DialogDescription>{t('logoutConfirmBody')}</DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setLogoutDialogOpen(false)}
+                                disabled={isLoggingOut}
+                            >
+                                {t('cancel')}
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                            >
+                                {isLoggingOut ? t('loggingOut') : t('logout')}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </SidebarMenuItem>
         </SidebarMenu>
     )
