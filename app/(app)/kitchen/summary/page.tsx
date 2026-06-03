@@ -1,0 +1,100 @@
+import { getIngredientsSummary } from '@/lib/queries/ingredients-summary';
+import { getComponentsSummary } from '@/lib/queries/components-summary';
+import { getMenusSummary } from '@/lib/queries/menus-summary';
+import { SummaryPrintView } from '@/components/kitchen/summary-print-view';
+import { format, isValid, parseISO } from 'date-fns';
+import { getTranslations } from 'next-intl/server';
+import { Page, PageContent, PageHeader, PageHeaderHeading, PageTitle } from '@/components/layout/page';
+import { RestaurantRequiredState } from '@/components/layout/restaurant-context-select';
+import { requirePagePermission } from '@/lib/auth/server';
+import { getRestaurants } from '@/lib/queries/restaurants';
+import { resolveRestaurantContext } from '@/lib/utils/restaurant-context';
+
+function normalizeIsoDate(value: string | undefined, label: 'from' | 'to' | 'date') {
+    if (!value) return undefined;
+    const parsed = parseISO(value);
+
+    if (!isValid(parsed)) {
+        console.error('[IngredientsSummaryPage] Invalid date query param', { label, value });
+        return undefined;
+    }
+
+    return format(parsed, 'yyyy-MM-dd');
+}
+
+export default async function IngredientsSummaryPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ date?: string; from?: string; to?: string; restaurant?: string | string[] }>;
+}) {
+    await requirePagePermission('kitchen', 'kitchen.read');
+    const [resolvedSearchParams, restaurants] = await Promise.all([
+        searchParams,
+        getRestaurants(),
+    ]);
+    const selectedRestaurant = resolveRestaurantContext(restaurants, resolvedSearchParams.restaurant);
+    const t = await getTranslations('kitchen.summary');
+
+    // Default to today if no range provided. `date` is the legacy single-day param.
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const normalizedLegacyDate = normalizeIsoDate(resolvedSearchParams.date, 'date');
+    const fromDate = normalizeIsoDate(resolvedSearchParams.from, 'from') || normalizedLegacyDate || today;
+    const toDate = normalizeIsoDate(resolvedSearchParams.to, 'to') || normalizedLegacyDate || fromDate;
+
+    if (!selectedRestaurant) {
+        return (
+            <Page>
+                <PageHeader>
+                    <PageHeaderHeading>
+                        <PageTitle>{t('title')}</PageTitle>
+                    </PageHeaderHeading>
+                </PageHeader>
+                <PageContent>
+                    <RestaurantRequiredState restaurants={restaurants} />
+                </PageContent>
+            </Page>
+        );
+    }
+
+    const restaurant = selectedRestaurant.id;
+
+    let groupedIngredients;
+    let components;
+    let menus;
+
+    try {
+        [groupedIngredients, components, menus] = await Promise.all([
+            getIngredientsSummary(restaurant, fromDate, toDate),
+            getComponentsSummary(restaurant, fromDate, toDate),
+            getMenusSummary(restaurant, fromDate, toDate),
+        ]);
+    } catch (error) {
+        console.error('[IngredientsSummaryPage] Failed to load summary data', {
+            restaurant,
+            fromDate,
+            toDate,
+            error,
+        });
+        throw error;
+    }
+
+    return (
+        <Page>
+            <PageHeader>
+                <PageHeaderHeading>
+                    <PageTitle>{t('title')}</PageTitle>
+                </PageHeaderHeading>
+            </PageHeader>
+            <PageContent>
+                <SummaryPrintView
+                    restaurantId={restaurant}
+                    fromDate={fromDate}
+                    toDate={toDate}
+                    groupedIngredients={groupedIngredients}
+                    components={components}
+                    menus={menus}
+                />
+            </PageContent>
+        </Page>
+    );
+}

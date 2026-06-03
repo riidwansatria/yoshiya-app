@@ -82,19 +82,19 @@ export function canAccessAny(
 
 export function getDefaultDashboardPath(
     access: UserAccess | null | undefined,
-    restaurantId = 'banquet'
+    restaurantId = 'enkaijou'
 ) {
     if (canAccess(access, 'reservations', 'reservations.read')) {
-        return `/dashboard/${restaurantId}/schedule`;
+        return `/reservations/${restaurantId}/schedule`;
     }
     if (canAccess(access, 'kitchen', 'kitchen.read')) {
-        return `/dashboard/${restaurantId}/kitchen/orders`;
+        return `/kitchen/orders`;
     }
     if (canAccess(access, 'menus', 'menus.read')) {
-        return `/dashboard/${restaurantId}/menus`;
+        return `/kitchen/menus`;
     }
     if (canAccess(access, 'procurement', 'procurement.read')) {
-        return `/dashboard/${restaurantId}/kitchen/purchase-orders`;
+        return `/procurement/purchase-orders`;
     }
-    return '/dashboard';
+    return '/';
 }

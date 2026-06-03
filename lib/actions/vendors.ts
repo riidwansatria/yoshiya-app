@@ -16,7 +16,7 @@ function normalizeOptionalText(value: string | null | undefined) {
 
 function revalidateVendors() {
     updateTag(CACHE_TAGS.VENDORS);
-    revalidatePath('/dashboard', 'layout');
+    revalidatePath('/', 'layout');
 }
 
 export async function createVendor(values: {

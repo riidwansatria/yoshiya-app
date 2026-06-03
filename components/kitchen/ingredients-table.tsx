@@ -34,6 +34,10 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { fetchDistinctCategories, fetchIngredientsListData } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
+import {
+    buildDashboardComponentDetailPath,
+    buildDashboardIngredientDetailPath,
+} from '@/lib/constants/routes';
 import { decimalToFraction } from '@/lib/utils/fraction-quantity';
 
 function formatPackageDisplay(
@@ -298,7 +302,7 @@ export function IngredientsTable({
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 <Link
-                                                    href={`/dashboard/${restaurantId}/ingredients/${ingredient.id}`}
+                                                    href={buildDashboardIngredientDetailPath(ingredient.id, restaurantId)}
                                                     className="hover:underline"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
@@ -319,7 +323,7 @@ export function IngredientsTable({
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem
-                                                            onClick={() => router.push(`/dashboard/${restaurantId}/ingredients/${ingredient.id}`)}
+                                                            onClick={() => router.push(buildDashboardIngredientDetailPath(ingredient.id, restaurantId))}
                                                         >
                                                             {t('common.edit')}
                                                         </DropdownMenuItem>
@@ -363,7 +367,7 @@ export function IngredientsTable({
                                                                                 {decimalToFraction(usage.qtyPerServing)} {usage.unit}
                                                                             </span>
                                                                             <Link
-                                                                                href={`/dashboard/${restaurantId}/components/${usage.componentId}`}
+                                                                                href={buildDashboardComponentDetailPath(usage.componentId, restaurantId)}
                                                                                 className="text-foreground hover:underline"
                                                                                 onClick={(e) => e.stopPropagation()}
                                                                             >

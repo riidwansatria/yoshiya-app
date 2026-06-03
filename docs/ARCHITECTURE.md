@@ -57,7 +57,7 @@ Actions in `lib/actions/` use the cookie-aware server client, validate, mutate, 
 // 2. Mutate via server client
 // 3. Invalidate cache tags and paths
 updateTag('ingredients');
-revalidatePath('/[lang]/dashboard/[restaurant]/ingredients', 'page');
+revalidatePath('/[lang]/kitchen/ingredients', 'page');
 ```
 
 Always call both `updateTag` (for `unstable_cache` tags) and `revalidatePath` (for router cache) after a mutation so both the cached data and the page cache are cleared.
@@ -70,9 +70,9 @@ Always call both `updateTag` (for `unstable_cache` tags) and `revalidatePath` (f
 
 Actions return `{ success: true, data?: T }` on success and `{ error: string }` on failure. Components check `result.error` before proceeding.
 
-## Dashboard layout
+## App layout
 
-`app/dashboard/layout.tsx` composes two context providers before the shell:
+`app/(app)/layout.tsx` composes two context providers before the protected app shell:
 
 ```
 SettingsProvider (menuTags, staff, userRole)

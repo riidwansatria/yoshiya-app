@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import type { Ingredient } from '@/lib/queries/ingredients';
 import type { Vendor } from '@/lib/queries/vendors';
+import { buildDashboardIngredientsPath } from '@/lib/constants/routes';
 import { IngredientEditor } from './ingredient-editor';
 
 export function IngredientEditorPage({
@@ -20,7 +21,7 @@ export function IngredientEditorPage({
 }) {
     const t = useTranslations('kitchen');
     const router = useRouter();
-    const backHref = `/dashboard/${restaurantId}/ingredients`;
+    const backHref = buildDashboardIngredientsPath(restaurantId);
 
     const handleClose = () => {
         router.push(backHref);

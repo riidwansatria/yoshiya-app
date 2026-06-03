@@ -34,10 +34,12 @@ node --test lib/utils/menu-tags.test.ts
 
 ```
 app/              # Route segments only
-  dashboard/
+  (app)/
     layout.tsx    # Shell: SettingsProvider → SidebarProvider → SidebarInset
-    [restaurant]/ # Dynamic restaurant context
-    @modal/       # Parallel route for sheet/modal overlays
+    reservations/[restaurant]/
+    kitchen/
+    procurement/
+    customers/
   print/, api/
 
 components/       # Visual UI only — no direct Supabase calls

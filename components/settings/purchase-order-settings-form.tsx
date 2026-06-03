@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Save } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -99,8 +99,9 @@ function PrintToggle({
 export function PurchaseOrderSettingsForm({ settings }: PurchaseOrderSettingsFormProps) {
     const router = useRouter()
     const params = useParams()
+    const searchParams = useSearchParams()
     const t = useTranslations("settings.purchaseOrders")
-    const restaurantId = getParamValue(params.restaurant) ?? "kitchen"
+    const restaurantId = getParamValue(params.restaurant) ?? searchParams.get("restaurant") ?? "kitchen"
     const currentSettings =
         settings.find((item) => item.restaurant_id === restaurantId) ??
         settings.find((item) => item.restaurant_id === "kitchen")

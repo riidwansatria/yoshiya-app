@@ -20,6 +20,7 @@ import {
 } from "@tanstack/react-table"
 
 import { deletePurchaseOrder } from "@/lib/actions/purchase-orders"
+import { buildDashboardPurchaseOrderDetailPath } from "@/lib/constants/routes"
 import type { PurchaseOrderListItem } from "@/lib/queries/purchase-orders"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -123,7 +124,7 @@ export function PurchaseOrdersList({
                 ),
                 cell: ({ row }) => (
                     <Link
-                        href={`/dashboard/${restaurantId}/kitchen/purchase-orders/${row.original.id}`}
+                        href={buildDashboardPurchaseOrderDetailPath(row.original.id, restaurantId)}
                         className="font-medium tabular-nums hover:underline"
                     >
                         {row.original.document_no}
@@ -231,7 +232,7 @@ export function PurchaseOrdersList({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
-                                    <Link href={`/dashboard/${restaurantId}/kitchen/purchase-orders/${order.id}`}>
+                                    <Link href={buildDashboardPurchaseOrderDetailPath(order.id, restaurantId)}>
                                         {t("editAction")}
                                     </Link>
                                 </DropdownMenuItem>

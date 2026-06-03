@@ -10,6 +10,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Menu } from '@/lib/queries/menus';
 import { DailyOrder } from '@/lib/queries/daily-orders';
 import { saveDailyOrders } from '@/lib/actions/daily-orders';
+import { buildDashboardKitchenOrdersPath } from '@/lib/constants/routes';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,7 +121,7 @@ export function DailyOrdersForm({
             return;
         }
         setDateStr(newDate);
-        router.push(`/dashboard/${restaurantId}/kitchen/orders?date=${newDate}`);
+        router.push(`${buildDashboardKitchenOrdersPath(restaurantId)}&date=${newDate}`);
     };
 
     const handleLineChange = (id: string, field: 'menu_id' | 'quantity' | 'notes', value: string | number) => {

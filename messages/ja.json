@@ -122,12 +122,26 @@
         }
     },
     "restaurantSwitcher": {
-        "banquet": "宴会場",
+        "enkaijou": "宴会場",
         "fineDining": "嵐野亭",
-        "local": "奥の庭",
-        "skewers": "湯葉チーズ",
+        "okunoniwa": "奥の庭",
+        "yubacheese": "湯葉チーズ",
         "kitchen": "調理場",
         "subtitle": "よしや嵐山"
+    },
+    "workspace": {
+        "workspace": "ワークスペース",
+        "reservations": "予約",
+        "reservationsSubtitle": "スケジュール・予約",
+        "kitchenSubtitle": "メニュー・日次発注",
+        "procurementSubtitle": "発注書"
+    },
+    "restaurantContext": {
+        "label": "店舗",
+        "global": "全体",
+        "placeholder": "店舗を選択",
+        "requiredTitle": "店舗を選択してください",
+        "requiredDescription": "調理場は共通ワークスペースですが、このページではメニュー・内容・発注データを読み込むために店舗の選択が必要です。"
     },
     "booking": {
         "newBooking": "新規予約",
@@ -305,7 +319,8 @@
             "menuColumn": "メニュー名",
             "defaultPackLabel": "パック",
             "createPurchaseOrder": "発注書を作成",
-            "purchaseOrderCreateSuccess": "発注書を作成しました。"
+            "purchaseOrderCreateSuccess": "発注書を作成しました。",
+            "purchaseOrderCreateFailed": "発注書の作成に失敗しました。"
         },
         "purchaseOrders": {
             "title": "発注書",
@@ -330,6 +345,7 @@
             "lineCount": "行数",
             "updatedAt": "更新日",
             "newBlank": "新規発注書",
+            "createFailed": "発注書の作成に失敗しました。",
             "unassignedSupplier": "未設定",
             "openMenu": "メニューを開く",
             "editAction": "編集",

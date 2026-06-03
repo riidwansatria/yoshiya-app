@@ -18,6 +18,7 @@ import {
 import { TimeIndicator } from "./time-indicator"
 import { Separator } from "@/components/ui/separator"
 import { fetchScheduleReservations } from "@/lib/actions/schedule"
+import { buildDashboardReservationsSchedulePath } from "@/lib/constants/routes"
 
 interface ScheduleGridProps {
     restaurantId: string
@@ -122,7 +123,7 @@ export function ScheduleGrid({
                 if (data) { cacheRef.current.set(formatted, data); setReservations(data) }
             })
         }
-        window.history.pushState({}, '', `/dashboard/${restaurantId}/schedule?date=${formatted}`)
+        window.history.pushState({}, '', buildDashboardReservationsSchedulePath(restaurantId, formatted))
     }
 
     // dailyReservations alias kept for readability in JSX below

@@ -36,7 +36,7 @@ export default function LoginPage() {
                 console.error('Login error:', error)
                 setError('ユーザー名またはパスワードが正しくありません')
             } else {
-                router.push('/dashboard')
+                router.push('/')
                 router.refresh()
             }
         } catch (err) {

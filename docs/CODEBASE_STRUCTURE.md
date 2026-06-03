@@ -18,20 +18,22 @@ This document defines a comprehensive structure for the Yoshiya App codebase so 
 │   ├── layout.tsx
 │   ├── globals.css
 │   ├── login/
-│   ├── dashboard/
+│   ├── (app)/
 │   │   ├── layout.tsx
 │   │   ├── customers/
-│   │   ├── [restaurant]/
-│   │   │   ├── bookings/
+│   │   ├── reservations/
+│   │   │   └── [restaurant]/
+│   │   │       ├── bookings/
+│   │   │       ├── schedule/
+│   │   │       └── today/
+│   │   ├── kitchen/
+│   │   │   ├── orders/
+│   │   │   ├── summary/
 │   │   │   ├── ingredients/
 │   │   │   ├── components/
-│   │   │   ├── menus/
-│   │   │   ├── kitchen/
-│   │   │   │   ├── orders/
-│   │   │   │   └── summary/
-│   │   │   ├── schedule/
-│   │   │   └── today/
-│   │   └── @modal/
+│   │   │   └── menus/
+│   │   └── procurement/
+│   │       └── purchase-orders/
 │   ├── print/
 │   │   └── [restaurant]/
 │   │       └── kitchen/

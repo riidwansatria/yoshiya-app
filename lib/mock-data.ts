@@ -1,22 +1,22 @@
 export const restaurants = [
-  { id: 'banquet', name: 'Banquet Hall', icon: '🎋' },
-  { id: 'fine_dining', name: 'Fine Dining', icon: '🍷' },
-  { id: 'local', name: 'Local Specialty', icon: '🍜' },
-  { id: 'skewers', name: 'Skewers Shop', icon: '🍢' },
+  { id: 'enkaijou', name: '宴会場', icon: '🎋' },
+  { id: 'arashinotei', name: '嵐野亭', icon: '🍷' },
+  { id: 'okunoniwa', name: '奥の庭', icon: '🍜' },
+  { id: 'yubacheese', name: '湯葉チーズ', icon: '🍢' },
   { id: 'kitchen', name: 'Kitchen', icon: '🧑‍🍳' },
 ];
 
 export const halls = [
-  { id: '1', restaurant: 'banquet', name: '嵐山', capacity: 88 },
-  { id: '2', restaurant: 'banquet', name: '百花亭', capacity: 60 },
-  { id: '3', restaurant: 'banquet', name: '香花亭', capacity: 48 },
-  { id: '4', restaurant: 'banquet', name: '嵯峨', capacity: 56 },
-  { id: '5', restaurant: 'banquet', name: '福の間', capacity: 32 },
-  { id: '6', restaurant: 'banquet', name: '錦', capacity: 12 },
-  { id: '7', restaurant: 'banquet', name: '東山 松', capacity: 10 },
-  { id: '8', restaurant: 'banquet', name: '東山 桜', capacity: 10 },
-  { id: '9', restaurant: 'banquet', name: '東山 楓', capacity: 10 },
-  { id: '10', restaurant: 'banquet', name: '東山 欅', capacity: 8 },
+  { id: '1', restaurant: 'enkaijou', name: '嵐山', capacity: 88 },
+  { id: '2', restaurant: 'enkaijou', name: '百花亭', capacity: 60 },
+  { id: '3', restaurant: 'enkaijou', name: '香花亭', capacity: 48 },
+  { id: '4', restaurant: 'enkaijou', name: '嵯峨', capacity: 56 },
+  { id: '5', restaurant: 'enkaijou', name: '福の間', capacity: 32 },
+  { id: '6', restaurant: 'enkaijou', name: '錦', capacity: 12 },
+  { id: '7', restaurant: 'enkaijou', name: '東山 松', capacity: 10 },
+  { id: '8', restaurant: 'enkaijou', name: '東山 桜', capacity: 10 },
+  { id: '9', restaurant: 'enkaijou', name: '東山 楓', capacity: 10 },
+  { id: '10', restaurant: 'enkaijou', name: '東山 欅', capacity: 8 },
 ];
 
 export const customers = [
@@ -26,9 +26,9 @@ export const customers = [
 ];
 
 export const menus = [
-  { id: '1', restaurant: 'banquet', name: '会席Aコース', description: '前菜・椀物・刺身・焼物・煮物・食事・デザート', price: 4000 },
-  { id: '2', restaurant: 'banquet', name: '会席Bコース', description: '特選会席 - 旬の食材を使った贅沢なコース', price: 6000 },
-  { id: '3', restaurant: 'banquet', name: '飲み放題', description: '2時間飲み放題（ビール・日本酒・焼酎・ソフトドリンク）', price: 2000 },
+  { id: '1', restaurant: 'enkaijou', name: '会席Aコース', description: '前菜・椀物・刺身・焼物・煮物・食事・デザート', price: 4000 },
+  { id: '2', restaurant: 'enkaijou', name: '会席Bコース', description: '特選会席 - 旬の食材を使った贅沢なコース', price: 6000 },
+  { id: '3', restaurant: 'enkaijou', name: '飲み放題', description: '2時間飲み放題（ビール・日本酒・焼酎・ソフトドリンク）', price: 2000 },
 ];
 
 export const staff = [
@@ -43,7 +43,7 @@ export const staff = [
 export const reservations = [
   {
     id: '1',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '1',
     hallId: '1',
     menuId: '1',
@@ -78,7 +78,7 @@ export const reservations = [
   },
   {
     id: '2',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '2',
     hallId: '4',
     menuId: '2',
@@ -97,7 +97,7 @@ export const reservations = [
   },
   {
     id: '3',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '3',
     hallId: '2',
     menuId: '1',
@@ -126,7 +126,7 @@ export const reservations = [
   },
   {
     id: '4',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '1',
     hallId: '1',
     menuId: '2',
@@ -161,7 +161,7 @@ export const reservations = [
   },
   {
     id: '9',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '2',
     hallId: '1', // Same hall as id='4' (嵐山) - 2回転目
     menuId: '1',
@@ -196,7 +196,7 @@ export const reservations = [
   },
   {
     id: '10',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '3',
     hallId: '1', // 嵐山 - 3回転目
     menuId: '2',
@@ -231,7 +231,7 @@ export const reservations = [
   },
   {
     id: '11',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '1',
     hallId: '2', // 百花亭
     menuId: '1',
@@ -266,7 +266,7 @@ export const reservations = [
   },
   {
     id: '12',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '2',
     hallId: '2', // 百花亭 - 2回転目
     menuId: '2',
@@ -301,7 +301,7 @@ export const reservations = [
   },
   {
     id: '13',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '3',
     hallId: '4', // 嵯峨
     menuId: '1',
@@ -336,7 +336,7 @@ export const reservations = [
   },
   {
     id: '5',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '2',
     hallId: '3',
     menuId: '3',
@@ -365,7 +365,7 @@ export const reservations = [
   },
   {
     id: '6',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '3',
     hallId: '5',
     menuId: '1',
@@ -394,7 +394,7 @@ export const reservations = [
   },
   {
     id: '7',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '1',
     hallId: '1',
     menuId: '2',
@@ -423,7 +423,7 @@ export const reservations = [
   },
   {
     id: '8',
-    restaurant: 'banquet',
+    restaurant: 'enkaijou',
     customerId: '2',
     hallId: '2',
     menuId: '1',

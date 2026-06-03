@@ -12,7 +12,7 @@ const embedMessages = {
     ja: ja.menuFinder.embed,
 }
 
-const DEFAULT_EMBED_RESTAURANT = 'banquet'
+const DEFAULT_EMBED_RESTAURANT = 'enkaijou'
 
 type EmbedSearchParams = {
     restaurant?: string | string[]

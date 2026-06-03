@@ -5,7 +5,11 @@ import { ja } from 'date-fns/locale';
 import { revalidatePath, updateTag } from 'next/cache';
 
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
-import { REVALIDATE_PATHS } from '@/lib/constants/routes';
+import {
+    buildDashboardPurchaseOrderDetailPath,
+    buildDashboardPurchaseOrdersPath,
+    REVALIDATE_PATHS,
+} from '@/lib/constants/routes';
 import { resend } from '@/lib/email/resend';
 import { DEFAULT_EMAIL_BODY_TEMPLATE } from '@/lib/email/templates';
 import { generatePurchaseOrderPdf } from '@/lib/pdf/purchase-order-pdf';
@@ -96,18 +100,18 @@ function normalizeNumber(value: number | null | undefined) {
     return value;
 }
 
-function purchaseOrdersPath(restaurantId: string) {
-    return `/dashboard/${restaurantId}/kitchen/purchase-orders`;
+function purchaseOrdersPath() {
+    return buildDashboardPurchaseOrdersPath();
 }
 
 function purchaseOrderDetailPath(restaurantId: string, id: string) {
-    return `/dashboard/${restaurantId}/kitchen/purchase-orders/${id}`;
+    return buildDashboardPurchaseOrderDetailPath(id, restaurantId);
 }
 
 function revalidatePurchaseOrders(restaurantId: string, id?: string) {
     updateTag(CACHE_TAGS.PURCHASE_ORDERS);
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_KITCHEN_PURCHASE_ORDERS_PAGE, 'page');
-    revalidatePath(purchaseOrdersPath(restaurantId), 'page');
+    revalidatePath(purchaseOrdersPath(), 'page');
     if (id) {
         revalidatePath(purchaseOrderDetailPath(restaurantId, id), 'page');
         revalidatePath(`/print/${restaurantId}/kitchen/purchase-orders/${id}`, 'page');
@@ -116,8 +120,8 @@ function revalidatePurchaseOrders(restaurantId: string, id?: string) {
 
 function revalidatePurchaseOrderSettings(restaurantId: string) {
     updateTag(CACHE_TAGS.PURCHASE_ORDER_SETTINGS);
-    revalidatePath('/dashboard', 'layout');
-    revalidatePath(`/dashboard/${restaurantId}/kitchen/purchase-orders`, 'page');
+    revalidatePath('/', 'layout');
+    revalidatePath(buildDashboardPurchaseOrdersPath(), 'page');
     revalidatePath(`/print/${restaurantId}/kitchen/purchase-orders/[id]`, 'page');
 }
 

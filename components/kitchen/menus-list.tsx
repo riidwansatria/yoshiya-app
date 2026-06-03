@@ -45,6 +45,10 @@ import { DataTableToolbar } from '@/components/dice-ui/data-table/data-table-too
 import { DataTableSortList } from '@/components/dice-ui/data-table/data-table-sort-list';
 import { DeleteMenuDialog } from './menu-dialogs';
 import { duplicateMenu } from '@/lib/actions/menus';
+import {
+    buildDashboardComponentDetailPath,
+    buildDashboardMenuDetailPath,
+} from '@/lib/constants/routes';
 
 // Multi-field search across name, description, tags, and component names
 const menuSearchFilterFn: FilterFn<Menu> = (row, _columnId, filterValue) => {
@@ -173,7 +177,7 @@ export function MenusList({
                                 />
                             )}
                             <Link
-                                href={`/dashboard/${restaurantId}/menus/${menu.id}`}
+                                href={buildDashboardMenuDetailPath(menu.id, restaurantId)}
                                 className="hover:underline"
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -275,7 +279,7 @@ export function MenusList({
                                 <DropdownMenuItem
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        router.push(`/dashboard/${restaurantId}/menus/${menu.id}`);
+                                        router.push(buildDashboardMenuDetailPath(menu.id, restaurantId));
                                     }}
                                 >
                                     {t('common.viewEdit')}
@@ -289,7 +293,7 @@ export function MenusList({
                                         setDuplicatingId(null);
                                         if (result?.data?.id) {
                                             router.push(
-                                                `/dashboard/${restaurantId}/menus/${result.data.id}`
+                                                buildDashboardMenuDetailPath(result.data.id, restaurantId)
                                             );
                                         }
                                     }}
@@ -418,7 +422,7 @@ export function MenusList({
                                                                     </span>
                                                                     {mc.components?.id ? (
                                                                         <Link
-                                                                            href={`/dashboard/${restaurantId}/components/${mc.components.id}`}
+                                                                            href={buildDashboardComponentDetailPath(mc.components.id, restaurantId)}
                                                                             className="text-foreground hover:underline"
                                                                             onClick={(e) =>
                                                                                 e.stopPropagation()

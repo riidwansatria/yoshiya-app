@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 
 import { createBlankPurchaseOrder } from "@/lib/actions/purchase-orders"
 import { Button } from "@/components/ui/button"
+import { buildDashboardPurchaseOrderDetailPath } from "@/lib/constants/routes"
 
 interface PurchaseOrderPageActionsProps {
     restaurantId: string
@@ -39,9 +40,13 @@ export function PurchaseOrderPageActions({ restaurantId }: PurchaseOrderPageActi
                 toast.error(result.error)
                 return
             }
+            if (!result.id) {
+                toast.error(t("createFailed"))
+                return
+            }
 
             toast.success(t("createSuccess"))
-            router.push(`/dashboard/${restaurantId}/kitchen/purchase-orders/${result.id}`)
+            router.push(buildDashboardPurchaseOrderDetailPath(result.id, restaurantId))
         })
     }
 

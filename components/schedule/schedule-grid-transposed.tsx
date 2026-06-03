@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { fetchScheduleReservations } from "@/lib/actions/schedule"
+import { buildDashboardReservationsSchedulePath } from "@/lib/constants/routes"
 
 interface ScheduleGridTransposedProps {
     restaurantId: string
@@ -122,7 +123,7 @@ export function ScheduleGridTransposed({
                 if (data) { cacheRef.current.set(formatted, data); setReservations(data) }
             })
         }
-        window.history.pushState({}, '', `/dashboard/${restaurantId}/schedule?date=${formatted}`)
+        window.history.pushState({}, '', buildDashboardReservationsSchedulePath(restaurantId, formatted))
     }
 
     const dailyReservations = reservations

@@ -122,12 +122,26 @@
         }
     },
     "restaurantSwitcher": {
-        "banquet": "Banquet Hall",
-        "fineDining": "Fine Dining",
-        "local": "Local Specialty",
-        "skewers": "Skewers Shop",
+        "enkaijou": "宴会場",
+        "fineDining": "嵐野亭",
+        "okunoniwa": "奥の庭",
+        "yubacheese": "湯葉チーズ",
         "kitchen": "Kitchen",
         "subtitle": "Yoshiya Arashiyama"
+    },
+    "workspace": {
+        "workspace": "Workspace",
+        "reservations": "Reservations",
+        "reservationsSubtitle": "Schedules and bookings",
+        "kitchenSubtitle": "Menus and daily orders",
+        "procurementSubtitle": "Purchase orders"
+    },
+    "restaurantContext": {
+        "label": "Restaurant",
+        "global": "Global",
+        "placeholder": "Select restaurant",
+        "requiredTitle": "Select a restaurant",
+        "requiredDescription": "Kitchen data is managed centrally, but this page needs a restaurant context before it can load scoped menus, components, or orders."
     },
     "booking": {
         "newBooking": "New Booking",
@@ -305,7 +319,8 @@
             "menuColumn": "Menu",
             "defaultPackLabel": "pack",
             "createPurchaseOrder": "Create purchase order",
-            "purchaseOrderCreateSuccess": "Purchase order created."
+            "purchaseOrderCreateSuccess": "Purchase order created.",
+            "purchaseOrderCreateFailed": "Failed to create purchase order."
         },
         "purchaseOrders": {
             "title": "Purchase Orders",
@@ -330,6 +345,7 @@
             "lineCount": "Lines",
             "updatedAt": "Updated",
             "newBlank": "New Purchase Order",
+            "createFailed": "Failed to create purchase order.",
             "unassignedSupplier": "Unassigned",
             "openMenu": "Open menu",
             "editAction": "Edit",
@@ -626,7 +642,7 @@
                 "season": "e.g. Spring 2026",
                 "price": "Leave blank if not needed",
                 "color": "#ffffff",
-                "description": "Optional details, e.g., 9-course meal featuring local bamboo shoots..."
+                "description": "Optional details, e.g., 9-course meal featuring okunoniwa bamboo shoots..."
             }
         },
         "sync": {
@@ -636,9 +652,9 @@
             "reloadFromLatest": "Reload from latest",
             "recordDeleted": "This record was deleted in another session.",
             "ingredientConflictDescription": "Your draft was kept, but some incoming ingredient fields need review before you save.",
-            "ingredientDeletedDescription": "Your local draft is still visible, but saving is disabled because the ingredient no longer exists.",
+            "ingredientDeletedDescription": "Your okunoniwa draft is still visible, but saving is disabled because the ingredient no longer exists.",
             "componentConflictDescription": "Your draft was kept, but some incoming component changes need review before you save.",
-            "componentDeletedDescription": "Your local draft is still visible, but saving is disabled because the component no longer exists."
+            "componentDeletedDescription": "Your okunoniwa draft is still visible, but saving is disabled because the component no longer exists."
         }
     }
 }

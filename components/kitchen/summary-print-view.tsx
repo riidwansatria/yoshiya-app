@@ -33,6 +33,7 @@ import { AggregatedIngredient } from '@/lib/queries/ingredients-summary';
 import { AggregatedComponent } from '@/lib/queries/components-summary';
 import { AggregatedMenu } from '@/lib/queries/menus-summary';
 import { createPurchaseOrderFromSummary } from '@/lib/actions/purchase-orders';
+import { buildDashboardPurchaseOrderDetailPath } from '@/lib/constants/routes';
 
 type IngredientSummaryRow = {
     ingredient_id: string;
@@ -157,8 +158,8 @@ export function SummaryPrintView({
             return;
         }
 
-        const params = new URLSearchParams({ from: newFrom, to: newTo });
-        const nextUrl = `/dashboard/${restaurantId}/kitchen/summary?${params.toString()}`;
+        const params = new URLSearchParams({ from: newFrom, to: newTo, restaurant: restaurantId });
+        const nextUrl = `/kitchen/summary?${params.toString()}`;
 
         setPendingRange({ from: newFrom, to: newTo });
         startTransition(() => {
@@ -194,9 +195,13 @@ export function SummaryPrintView({
             toast.error(result.error);
             return;
         }
+        if (!result.id) {
+            toast.error(t('purchaseOrderCreateFailed'));
+            return;
+        }
 
         toast.success(t('purchaseOrderCreateSuccess'));
-        router.push(`/dashboard/${restaurantId}/kitchen/purchase-orders/${result.id}`);
+        router.push(buildDashboardPurchaseOrderDetailPath(result.id, restaurantId));
     };
 
     const categories = useMemo(() => Object.keys(groupedIngredients).sort(), [groupedIngredients]);

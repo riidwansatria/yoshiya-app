@@ -39,6 +39,7 @@ import { createMenu, updateMenu } from '@/lib/actions/menus';
 import { uploadMenuImage, deleteMenuImage, validateMenuImageFile } from '@/lib/storage/menu-image';
 import { updateMenuComponents } from '@/lib/actions/menu-components';
 import { updateMenuTags } from '@/lib/actions/menu-tags';
+import { buildDashboardMenusPath } from '@/lib/constants/routes';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -383,7 +384,7 @@ export function MenuForm({
                         ? t('menus.form.updated')
                         : t('menus.form.created')
             );
-            router.push(`/dashboard/${restaurantId}/menus`);
+            router.push(buildDashboardMenusPath(restaurantId));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : t('menus.form.saveFailed');
             toast.error(message);

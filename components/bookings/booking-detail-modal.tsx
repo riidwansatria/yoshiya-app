@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getBookingDetails, updateBooking, createBooking, getStaffList, getVenueList, deleteBooking } from "@/lib/actions/bookings"
+import { buildDashboardReservationsBookingsPath } from "@/lib/constants/routes"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -519,7 +520,7 @@ export function BookingDetailModal({
     // Format dates
     const formattedDate = date ? format(date, 'yyyy年M月d日 (EEE)', { locale: ja }) : ''
     const handleInvoice = () => {
-        router.push(`/dashboard/${restaurantId}/bookings/${bookingId}/invoice`)
+        router.push(`${buildDashboardReservationsBookingsPath(restaurantId)}/${bookingId}/invoice`)
         onOpenChange(false)
     }
 

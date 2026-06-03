@@ -31,6 +31,11 @@ import { duplicateComponent } from '@/lib/actions/components';
 import { createClient } from '@/lib/supabase/client';
 import { fetchComponentsListData } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
+import {
+    buildDashboardComponentDetailPath,
+    buildDashboardIngredientDetailPath,
+    buildDashboardMenuDetailPath,
+} from '@/lib/constants/routes';
 
 export function ComponentsList({
     initialData,
@@ -258,7 +263,7 @@ export function ComponentsList({
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 <Link
-                                                    href={`/dashboard/${restaurantId}/components/${component.id}`}
+                                                    href={buildDashboardComponentDetailPath(component.id, restaurantId)}
                                                     className="hover:underline"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
@@ -281,7 +286,7 @@ export function ComponentsList({
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem
                                                             onClick={() =>
-                                                                router.push(`/dashboard/${restaurantId}/components/${component.id}`)
+                                                                router.push(buildDashboardComponentDetailPath(component.id, restaurantId))
                                                             }
                                                         >
                                                             {t('common.viewEdit')}
@@ -293,7 +298,7 @@ export function ComponentsList({
                                                                 const result = await duplicateComponent(component.id);
                                                                 setDuplicatingId(null);
                                                                 if (result?.data?.id) {
-                                                                    router.push(`/dashboard/${restaurantId}/components/${result.data.id}`);
+                                                                    router.push(buildDashboardComponentDetailPath(result.data.id, restaurantId));
                                                                 }
                                                             }}
                                                         >
@@ -329,7 +334,7 @@ export function ComponentsList({
                                                                         </span>
                                                                         {ci.ingredients?.id ? (
                                                                             <Link
-                                                                                href={`/dashboard/${restaurantId}/ingredients/${ci.ingredients.id}`}
+                                                                                href={buildDashboardIngredientDetailPath(ci.ingredients.id, restaurantId)}
                                                                                 className="text-foreground hover:underline"
                                                                                 onClick={(e) => e.stopPropagation()}
                                                                             >
@@ -358,7 +363,7 @@ export function ComponentsList({
                                                                                 {usage.qtyPerOrder}x
                                                                             </span>
                                                                             <Link
-                                                                                href={`/dashboard/${restaurantId}/menus/${usage.menuId}`}
+                                                                                href={buildDashboardMenuDetailPath(usage.menuId, restaurantId)}
                                                                                 className="text-foreground hover:underline"
                                                                                 onClick={(e) => e.stopPropagation()}
                                                                             >

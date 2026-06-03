@@ -17,6 +17,7 @@ import { parseFractionalQuantity, decimalToFraction } from '@/lib/utils/fraction
 import { createClient } from '@/lib/supabase/client';
 import { fetchComponentById, fetchIngredients } from '@/lib/queries/kitchen';
 import { subscribeToKitchenScope } from '@/lib/realtime/kitchen';
+import { buildDashboardComponentsPath } from '@/lib/constants/routes';
 import {
     type ComponentIngredientDraft,
     mergeComponentIngredientRows,
@@ -341,7 +342,7 @@ export function ComponentForm({
             }
 
             toast.success(initialData ? t('components.form.updated') : t('components.form.created'));
-            router.push(`/dashboard/${restaurantId}/components`);
+            router.push(buildDashboardComponentsPath(restaurantId));
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : t('components.form.saveFailed');
             toast.error(message);
@@ -587,7 +588,7 @@ export function ComponentForm({
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => router.push(`/dashboard/${restaurantId}/components`)}
+                        onClick={() => router.push(buildDashboardComponentsPath(restaurantId))}
                     >
                         {t('common.cancel')}
                     </Button>

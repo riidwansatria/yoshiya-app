@@ -107,10 +107,10 @@ export async function addStaff(data: { name: string, username: string, password:
             name: data.name,
             email,
             role: 'staff', // Hardcoded for simplified version
-            // restaurant_id: 'banquet', // If column exists? Not in `create_users.sql` snippet...
+            // restaurant_id: 'enkaijou', // If column exists? Not in `create_users.sql` snippet...
             // Wait, snippet didn't show restaurant_id. 
             // "Note: ... Add these fields ... when multi-restaurant support is needed."
-            // But implementation spec says "restaurant_id = 'banquet' (hardcoded for now)".
+            // But implementation spec says "restaurant_id = 'enkaijou' (hardcoded for now)".
             // I should check if `restaurant_id` exists in `users`.
             // Snippet 1708 didn't show it.
             // So I should validly NOT insert it if it doesn't exist.

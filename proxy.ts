@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+    const pathname = request.nextUrl.pathname
     let response = NextResponse.next({
         request: {
             headers: request.headers,
@@ -37,23 +38,23 @@ export async function proxy(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!user && (
-        request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/print')
-    )) {
+    const isProtectedAppPath =
+        pathname.startsWith('/reservations') ||
+        pathname.startsWith('/kitchen') ||
+        pathname.startsWith('/procurement') ||
+        pathname.startsWith('/customers') ||
+        pathname.startsWith('/print')
+
+    if (!user && isProtectedAppPath) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    if (user && request.nextUrl.pathname === '/login') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+    if (user && pathname === '/login') {
+        return NextResponse.redirect(new URL('/', request.url))
     }
 
-    if (request.nextUrl.pathname === '/') {
-        if (user) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
-        } else {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
+    if (!user && pathname === '/') {
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
     return response
@@ -61,7 +62,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/dashboard/:path*',
+        '/reservations/:path*',
+        '/kitchen/:path*',
+        '/procurement/:path*',
+        '/customers',
         '/print/:path*',
         '/api/:path*',
         '/login',
