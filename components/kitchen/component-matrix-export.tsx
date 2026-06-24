@@ -4,58 +4,57 @@ import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RecipeComponent } from '@/lib/queries/components';
+import type { Ingredient } from '@/lib/queries/ingredients';
 import { applyComponentMatrixChanges } from '@/lib/actions/matrix-merge';
 import { compareMatrixCsv, MatrixCompareResult, MatrixChange } from '@/lib/utils/matrix-csv-compare';
 import { Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { stringifyCsv } from '@/lib/kitchen/import-csv';
+import { buildDashboardKitchenImportPath } from '@/lib/constants/routes';
 
 interface ComponentMatrixExportProps {
     components: RecipeComponent[];
+    ingredients: Ingredient[];
     restaurantId: string;
+    restaurantName: string;
 }
 
-export function ComponentMatrixExport({ components, restaurantId }: ComponentMatrixExportProps) {
+export function ComponentMatrixExport({
+    components,
+    ingredients,
+    restaurantId,
+    restaurantName,
+}: ComponentMatrixExportProps) {
     const router = useRouter();
     const [compareResult, setCompareResult] = useState<MatrixCompareResult | null>(null);
     const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const [isApplying, setIsApplying] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { ingredients, lookup } = useMemo(() => {
-        const ingredientMap = new Map<string, { name: string; unit: string }>();
+    const lookup = useMemo(() => {
         const nextLookup = new Map<string, Map<string, number>>();
 
         for (const component of components) {
             const inner = new Map<string, number>();
             for (const ci of component.component_ingredients ?? []) {
-                inner.set(ci.ingredient_id, ci.qty_per_serving);
-                if (ci.ingredients) {
-                    ingredientMap.set(ci.ingredient_id, {
-                        name: ci.ingredients.name,
-                        unit: ci.ingredients.unit,
-                    });
-                }
+                inner.set(ci.ingredient_id, ci.batch_quantity);
             }
             nextLookup.set(component.id, inner);
         }
-
-        const nextIngredients = Array.from(ingredientMap.entries()).sort((a, b) =>
-            a[1].name.localeCompare(b[1].name)
-        );
-
-        return { ingredients: nextIngredients, lookup: nextLookup };
+        return nextLookup;
     }, [components]);
 
     const ingredientColumnNames = useMemo(
-        () => ingredients.map(([, info]) => `${info.name} (${info.unit})`),
+        () => ingredients.map((ingredient) => `${ingredient.name} (${ingredient.unit})`),
         [ingredients]
     );
 
     const lookupByName = useMemo(() => {
         const ingredientNameById = new Map<string, string>();
-        for (const [ingId, info] of ingredients) {
-            ingredientNameById.set(ingId, `${info.name} (${info.unit})`);
+        for (const ingredient of ingredients) {
+            ingredientNameById.set(ingredient.id, `${ingredient.name} (${ingredient.unit})`);
         }
 
         const next = new Map<string, Map<string, number>>();
@@ -66,7 +65,7 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                 if (!ingredientColumnName) {
                     continue;
                 }
-                row.set(ingredientColumnName, ci.qty_per_serving);
+                row.set(ingredientColumnName, ci.batch_quantity);
             }
             next.set(component.name, row);
         }
@@ -85,33 +84,26 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
 
     const ingredientIdByColumnName = useMemo(() => {
         const next = new Map<string, string>();
-        for (const [ingredientId, info] of ingredients) {
-            next.set(`${info.name} (${info.unit})`, ingredientId);
+        for (const ingredient of ingredients) {
+            next.set(`${ingredient.name} (${ingredient.unit})`, ingredient.id);
         }
 
         return next;
     }, [ingredients]);
 
     const buildCsv = useCallback((): string => {
-        const header = [
-            'Component',
-            ...ingredients.map(([, info]) => `${info.name} (${info.unit})`),
-        ];
+        const header = ['Component', ...ingredientColumnNames];
         const rows = components.map((component) => {
-            const cells = ingredients.map(([ingId]) => {
-                const qty = lookup.get(component.id)?.get(ingId);
-                return qty !== undefined ? String(qty) : '';
-            });
-            return [component.name, ...cells];
+            return Object.fromEntries([
+                ['Component', component.name],
+                ...ingredients.map((ingredient) => [
+                    `${ingredient.name} (${ingredient.unit})`,
+                    lookup.get(component.id)?.get(ingredient.id) ?? '',
+                ]),
+            ]);
         });
-
-        const escape = (val: string) =>
-            val.includes(',') || val.includes('"') || val.includes('\n')
-                ? `"${val.replace(/"/g, '""')}"`
-                : val;
-
-        return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
-    }, [ingredients, lookup, components]);
+        return stringifyCsv(header, rows);
+    }, [ingredientColumnNames, ingredients, lookup, components]);
 
     const downloadCsv = () => {
         const csv = buildCsv();
@@ -199,7 +191,7 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
         }
 
         const confirmed = window.confirm(
-            `Apply ${payload.length} change(s) to Component x Ingredient mappings? This will update database values.`
+            `Apply ${payload.length} change(s) to ${restaurantName}? Blank matched cells remove relationships. All changes apply together.`
         );
         if (!confirmed) {
             return;
@@ -209,16 +201,25 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
         const result = await applyComponentMatrixChanges(restaurantId, payload);
         setIsApplying(false);
 
-        if (result?.error) {
+        if ('error' in result) {
             toast.error(result.error);
             return;
         }
 
-        toast.success(`Applied ${result?.applied ?? payload.length} changes.`);
+        toast.success(`Applied ${result.applied ?? payload.length} changes.`);
         setCompareResult(null);
         setUploadedFileName(null);
         router.refresh();
     };
+
+    const hasBlockingErrors = Boolean(
+        compareResult &&
+        (
+            compareResult.issues.some((issue) => issue.severity === 'error') ||
+            compareResult.unknownRows.length > 0 ||
+            compareResult.unknownColumns.length > 0
+        )
+    );
 
     return (
         <div className="space-y-4">
@@ -227,6 +228,9 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                     {components.length} components × {ingredients.length} ingredients
                 </p>
                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={buildDashboardKitchenImportPath(restaurantId)}>AI import</Link>
+                    </Button>
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -244,6 +248,10 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                     </Button>
                 </div>
             </div>
+            <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+                Spreadsheet editing for {restaurantName}. A blank matched cell removes that relationship.
+                Unknown rows or columns block Apply; omitted rows and columns are warnings only.
+            </p>
 
             {compareResult && (
                 <div className="rounded-md border p-3 space-y-3">
@@ -255,7 +263,7 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                             variant="default"
                             size="sm"
                             onClick={applyChanges}
-                            disabled={compareResult.changes.length === 0 || isApplying}
+                            disabled={compareResult.changes.length === 0 || isApplying || hasBlockingErrors}
                         >
                             {isApplying ? 'Applying...' : 'Apply Changes'}
                         </Button>
@@ -263,10 +271,10 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                             <Badge variant="destructive">{compareResult.issues.length} issues</Badge>
                         )}
                         {compareResult.unknownRows.length > 0 && (
-                            <Badge variant="outline">{compareResult.unknownRows.length} CSV-only component rows</Badge>
+                            <Badge variant="destructive">{compareResult.unknownRows.length} CSV-only component rows</Badge>
                         )}
                         {compareResult.unknownColumns.length > 0 && (
-                            <Badge variant="outline">{compareResult.unknownColumns.length} CSV-only ingredient columns</Badge>
+                            <Badge variant="destructive">{compareResult.unknownColumns.length} CSV-only ingredient columns</Badge>
                         )}
                         {compareResult.missingRows.length > 0 && (
                             <Badge variant="outline">{compareResult.missingRows.length} app components not in CSV</Badge>
@@ -337,14 +345,14 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                             <th className="px-3 py-2 text-left font-medium text-muted-foreground border-b border-r whitespace-nowrap min-w-[180px]">
                                 Component ↓ / Ingredient →
                             </th>
-                            {ingredients.map(([ingId, info]) => (
+                            {ingredients.map((ingredient) => (
                                 <th
-                                    key={ingId}
+                                    key={ingredient.id}
                                     className="px-3 py-2 text-center font-medium border-b border-r whitespace-nowrap"
                                 >
-                                    <div>{info.name}</div>
+                                    <div>{ingredient.name}</div>
                                     <div className="text-xs font-normal text-muted-foreground">
-                                        {info.unit}
+                                        {ingredient.unit}
                                     </div>
                                 </th>
                             ))}
@@ -366,11 +374,11 @@ export function ComponentMatrixExport({ components, restaurantId }: ComponentMat
                                     <td className="px-3 py-2 font-medium border-r whitespace-nowrap">
                                         {component.name}
                                     </td>
-                                    {ingredients.map(([ingId]) => {
-                                        const qty = lookup.get(component.id)?.get(ingId);
+                                    {ingredients.map((ingredient) => {
+                                        const qty = lookup.get(component.id)?.get(ingredient.id);
                                         return (
                                             <td
-                                                key={ingId}
+                                                key={ingredient.id}
                                                 className={`px-3 py-2 text-center border-r tabular-nums ${qty ? 'font-medium' : 'text-muted-foreground/40'}`}
                                             >
                                                 {qty !== undefined ? qty : '–'}

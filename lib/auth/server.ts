@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 
 import {
     canAccess,
+    isAdminRole,
     isAppModule,
     isAppRole,
     isPermission,
@@ -95,6 +96,25 @@ export async function requirePermission(module: AppModule, permission: Permissio
 export async function requirePagePermission(module: AppModule, permission: Permission) {
     try {
         await requirePermission(module, permission);
+    } catch (error) {
+        if (isAuthorizationError(error)) {
+            notFound();
+        }
+        throw error;
+    }
+}
+
+export async function requireAdminRole() {
+    const access = await getCurrentUserAccess();
+    if (!isAdminRole(access)) {
+        throw new AuthorizationError();
+    }
+    return access;
+}
+
+export async function requireAdminPage() {
+    try {
+        return await requireAdminRole();
     } catch (error) {
         if (isAuthorizationError(error)) {
             notFound();

@@ -4,47 +4,49 @@ import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Menu } from '@/lib/queries/menus';
+import type { ComponentOption } from '@/lib/queries/components';
 import { applyMenuMatrixChanges } from '@/lib/actions/matrix-merge';
 import { compareMatrixCsv, MatrixCompareResult, MatrixChange } from '@/lib/utils/matrix-csv-compare';
 import { Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { stringifyCsv } from '@/lib/kitchen/import-csv';
+import { buildDashboardKitchenImportPath } from '@/lib/constants/routes';
 
 interface MenuMatrixExportProps {
     menus: Menu[];
+    components: ComponentOption[];
     restaurantId: string;
+    restaurantName: string;
 }
 
-export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps) {
+export function MenuMatrixExport({
+    menus,
+    components,
+    restaurantId,
+    restaurantName,
+}: MenuMatrixExportProps) {
     const router = useRouter();
     const [compareResult, setCompareResult] = useState<MatrixCompareResult | null>(null);
     const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const [isApplying, setIsApplying] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { components, lookup } = useMemo(() => {
-        const componentMap = new Map<string, string>();
+    const lookup = useMemo(() => {
         const nextLookup = new Map<string, Map<string, number>>();
 
         for (const menu of menus) {
             const inner = new Map<string, number>();
             for (const mc of menu.menu_components ?? []) {
                 inner.set(mc.component_id, mc.qty_per_order);
-                if (mc.components) {
-                    componentMap.set(mc.components.id, mc.components.name);
-                }
             }
             nextLookup.set(menu.id, inner);
         }
-
-        const nextComponents = Array.from(componentMap.entries()).sort((a, b) =>
-            a[1].localeCompare(b[1])
-        );
-
-        return { components: nextComponents, lookup: nextLookup };
+        return nextLookup;
     }, [menus]);
 
-    const componentNames = useMemo(() => components.map(([, name]) => name), [components]);
+    const componentNames = useMemo(() => components.map((component) => component.name), [components]);
 
     const lookupByName = useMemo(() => {
         const next = new Map<string, Map<string, number>>();
@@ -75,30 +77,26 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
 
     const componentIdByName = useMemo(() => {
         const next = new Map<string, string>();
-        for (const [componentId, componentName] of components) {
-            next.set(componentName, componentId);
+        for (const component of components) {
+            next.set(component.name, component.id);
         }
 
         return next;
     }, [components]);
 
     const buildCsv = useCallback((): string => {
-        const header = ['Menu', ...components.map(([, name]) => name)];
+        const header = ['Menu', ...componentNames];
         const rows = menus.map((menu) => {
-            const cells = components.map(([compId]) => {
-                const qty = lookup.get(menu.id)?.get(compId);
-                return qty !== undefined ? String(qty) : '';
-            });
-            return [menu.name, ...cells];
+            return Object.fromEntries([
+                ['Menu', menu.name],
+                ...components.map((component) => [
+                    component.name,
+                    lookup.get(menu.id)?.get(component.id) ?? '',
+                ]),
+            ]);
         });
-
-        const escape = (val: string) =>
-            val.includes(',') || val.includes('"') || val.includes('\n')
-                ? `"${val.replace(/"/g, '""')}"`
-                : val;
-
-        return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
-    }, [components, lookup, menus]);
+        return stringifyCsv(header, rows);
+    }, [componentNames, components, lookup, menus]);
 
     const downloadCsv = () => {
         const csv = buildCsv();
@@ -186,7 +184,7 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
         }
 
         const confirmed = window.confirm(
-            `Apply ${payload.length} change(s) to Menu x Component mappings? This will update database values.`
+            `Apply ${payload.length} change(s) to ${restaurantName}? Blank matched cells remove relationships. All changes apply together.`
         );
         if (!confirmed) {
             return;
@@ -196,18 +194,26 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
         const result = await applyMenuMatrixChanges(restaurantId, payload);
         setIsApplying(false);
 
-        if (result?.error) {
+        if ('error' in result) {
             toast.error(result.error);
             return;
         }
 
-        toast.success(`Applied ${result?.applied ?? payload.length} changes.`);
+        toast.success(`Applied ${result.applied ?? payload.length} changes.`);
         setCompareResult(null);
         setUploadedFileName(null);
         router.refresh();
     };
 
-    // Preview table
+    const hasBlockingErrors = Boolean(
+        compareResult &&
+        (
+            compareResult.issues.some((issue) => issue.severity === 'error') ||
+            compareResult.unknownRows.length > 0 ||
+            compareResult.unknownColumns.length > 0
+        )
+    );
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -215,6 +221,9 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
                     {menus.length} menus × {components.length} components
                 </p>
                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={buildDashboardKitchenImportPath(restaurantId)}>AI import</Link>
+                    </Button>
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -232,6 +241,10 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
                     </Button>
                 </div>
             </div>
+            <p className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+                Spreadsheet editing for {restaurantName}. A blank matched cell removes that relationship.
+                Unknown rows or columns block Apply; omitted rows and columns are warnings only.
+            </p>
 
             {compareResult && (
                 <div className="rounded-md border p-3 space-y-3">
@@ -243,7 +256,7 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
                             variant="default"
                             size="sm"
                             onClick={applyChanges}
-                            disabled={compareResult.changes.length === 0 || isApplying}
+                            disabled={compareResult.changes.length === 0 || isApplying || hasBlockingErrors}
                         >
                             {isApplying ? 'Applying...' : 'Apply Changes'}
                         </Button>
@@ -251,10 +264,10 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
                             <Badge variant="destructive">{compareResult.issues.length} issues</Badge>
                         )}
                         {compareResult.unknownRows.length > 0 && (
-                            <Badge variant="outline">{compareResult.unknownRows.length} CSV-only menu rows</Badge>
+                            <Badge variant="destructive">{compareResult.unknownRows.length} CSV-only menu rows</Badge>
                         )}
                         {compareResult.unknownColumns.length > 0 && (
-                            <Badge variant="outline">{compareResult.unknownColumns.length} CSV-only component columns</Badge>
+                            <Badge variant="destructive">{compareResult.unknownColumns.length} CSV-only component columns</Badge>
                         )}
                         {compareResult.missingRows.length > 0 && (
                             <Badge variant="outline">{compareResult.missingRows.length} app menus not in CSV</Badge>
@@ -325,12 +338,12 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
                             <th className="px-3 py-2 text-left font-medium text-muted-foreground border-b border-r whitespace-nowrap min-w-[180px]">
                                 Menu ↓ / Component →
                             </th>
-                            {components.map(([compId, compName]) => (
+                            {components.map((component) => (
                                 <th
-                                    key={compId}
+                                    key={component.id}
                                     className="px-3 py-2 text-center font-medium border-b border-r whitespace-nowrap"
                                 >
-                                    {compName}
+                                    {component.name}
                                 </th>
                             ))}
                         </tr>
@@ -359,11 +372,11 @@ export function MenuMatrixExport({ menus, restaurantId }: MenuMatrixExportProps)
                                             {menu.name}
                                         </span>
                                     </td>
-                                    {components.map(([compId]) => {
-                                        const qty = lookup.get(menu.id)?.get(compId);
+                                    {components.map((component) => {
+                                        const qty = lookup.get(menu.id)?.get(component.id);
                                         return (
                                             <td
-                                                key={compId}
+                                                key={component.id}
                                                 className={`px-3 py-2 text-center border-r tabular-nums ${qty ? 'font-medium' : 'text-muted-foreground/40'}`}
                                             >
                                                 {qty ?? '–'}

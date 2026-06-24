@@ -327,6 +327,7 @@
             "newMenu": "New Menu",
             "editMenu": "Edit Menu",
             "matrixExport": "Matrix Export",
+            "csvImport": "CSV Import",
             "newComponentButton": "New Component",
             "newMenuButton": "New Menu"
         },
@@ -564,8 +565,8 @@
                 "addRow": "Add Row",
                 "empty": "No ingredients added yet.",
                 "ingredient": "Ingredient",
-                "qtyPerServing": "Qty / Serving ({unit})",
-                "qtyPerServingLabel": "Qty per serving",
+                "batchQuantity": "Batch quantity ({unit})",
+                "batchQuantityLabel": "Batch quantity",
                 "save": "Save Component",
                 "created": "Component created",
                 "updated": "Component updated",

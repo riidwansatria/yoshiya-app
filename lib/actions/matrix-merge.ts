@@ -9,7 +9,9 @@ import {
     buildDashboardMenusPath,
     REVALIDATE_PATHS,
 } from '@/lib/constants/routes';
-import { requirePermission } from '@/lib/auth/server';
+import { requireAdminRole } from '@/lib/auth/server';
+import { createAndApplyKitchenImport } from '@/lib/actions/kitchen-import';
+import type { KitchenImportPayload } from '@/lib/kitchen/import-types';
 
 interface MenuMatrixChangeInput {
     menu_id: string;
@@ -27,41 +29,59 @@ export async function applyMenuMatrixChanges(
     restaurantId: string,
     changes: MenuMatrixChangeInput[]
 ) {
-    await requirePermission('menus', 'menus.update');
+    await requireAdminRole();
     const supabase = await createClient();
-
-    const deletes = changes.filter((change) => change.uploadedValue === null);
-    const upserts = changes
-        .filter((change) => change.uploadedValue !== null)
-        .map((change) => ({
-            menu_id: change.menu_id,
-            component_id: change.component_id,
-            qty_per_order: change.uploadedValue as number,
-        }));
-
-    for (const row of deletes) {
-        const { error } = await supabase
+    const menuIds = [...new Set(changes.map((change) => change.menu_id))];
+    const componentIds = [...new Set(changes.map((change) => change.component_id))];
+    const [{ data: menus }, { data: components }, { data: relationships }] = await Promise.all([
+        supabase.from('menus').select('id').eq('restaurant_id', restaurantId).in('id', menuIds),
+        supabase.from('components').select('id').eq('restaurant_id', restaurantId).in('id', componentIds),
+        supabase
             .from('menu_components')
-            .delete()
-            .eq('menu_id', row.menu_id)
-            .eq('component_id', row.component_id);
-
-        if (error) {
-            console.error('Error deleting menu component mapping:', error);
-            return { error: 'Failed to apply CSV changes.' };
-        }
+            .select('menu_id, component_id, qty_per_order, updated_at')
+            .in('menu_id', menuIds)
+            .in('component_id', componentIds),
+    ]);
+    if ((menus ?? []).length !== menuIds.length || (components ?? []).length !== componentIds.length) {
+        return { error: 'CSV contains records outside the selected restaurant.' };
     }
-
-    if (upserts.length > 0) {
-        const { error } = await supabase
-            .from('menu_components')
-            .upsert(upserts, { onConflict: 'menu_id,component_id' });
-
-        if (error) {
-            console.error('Error upserting menu component mappings:', error);
-            return { error: 'Failed to apply CSV changes.' };
-        }
-    }
+    const currentByKey = new Map(
+        (relationships ?? []).map((row) => [`${row.menu_id}:${row.component_id}`, row])
+    );
+    const payload: KitchenImportPayload = {
+        ingredients: [],
+        components: [],
+        menus: [],
+        component_ingredients: [],
+        menu_components: changes.map((change) => {
+            const current = currentByKey.get(`${change.menu_id}:${change.component_id}`);
+            return {
+                action: change.uploadedValue === null ? 'remove' : 'set',
+                menu_ref: change.menu_id,
+                component_ref: change.component_id,
+                quantity_per_menu_order: change.uploadedValue === null ? '' : String(change.uploadedValue),
+                relationship_version: current?.updated_at ?? null,
+            };
+        }),
+    };
+    const result = await createAndApplyKitchenImport({
+        restaurantId,
+        payload,
+        operationCounts: { menu_components: changes.length },
+        beforeSnapshot: Object.fromEntries(
+            changes.map((change) => [
+                `${change.menu_id}:${change.component_id}`,
+                currentByKey.get(`${change.menu_id}:${change.component_id}`) ?? null,
+            ])
+        ),
+        afterSnapshot: Object.fromEntries(
+            changes.map((change) => [
+                `${change.menu_id}:${change.component_id}`,
+                change.uploadedValue,
+            ])
+        ),
+    });
+    if ('error' in result) return result;
 
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_PAGE, 'page');
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_MENUS_MATRIX_PAGE, 'page');
@@ -71,8 +91,8 @@ export async function applyMenuMatrixChanges(
     return {
         success: true,
         applied: changes.length,
-        removed: deletes.length,
-        upserted: upserts.length,
+        removed: changes.filter((change) => change.uploadedValue === null).length,
+        upserted: changes.filter((change) => change.uploadedValue !== null).length,
     };
 }
 
@@ -80,41 +100,59 @@ export async function applyComponentMatrixChanges(
     restaurantId: string,
     changes: ComponentMatrixChangeInput[]
 ) {
-    await requirePermission('kitchen', 'kitchen.update');
+    await requireAdminRole();
     const supabase = await createClient();
-
-    const deletes = changes.filter((change) => change.uploadedValue === null);
-    const upserts = changes
-        .filter((change) => change.uploadedValue !== null)
-        .map((change) => ({
-            component_id: change.component_id,
-            ingredient_id: change.ingredient_id,
-            qty_per_serving: change.uploadedValue as number,
-        }));
-
-    for (const row of deletes) {
-        const { error } = await supabase
+    const componentIds = [...new Set(changes.map((change) => change.component_id))];
+    const ingredientIds = [...new Set(changes.map((change) => change.ingredient_id))];
+    const [{ data: components }, { data: ingredients }, { data: relationships }] = await Promise.all([
+        supabase.from('components').select('id').eq('restaurant_id', restaurantId).in('id', componentIds),
+        supabase.from('ingredients').select('id').in('id', ingredientIds),
+        supabase
             .from('component_ingredients')
-            .delete()
-            .eq('component_id', row.component_id)
-            .eq('ingredient_id', row.ingredient_id);
-
-        if (error) {
-            console.error('Error deleting component ingredient mapping:', error);
-            return { error: 'Failed to apply CSV changes.' };
-        }
+            .select('component_id, ingredient_id, batch_quantity, updated_at')
+            .in('component_id', componentIds)
+            .in('ingredient_id', ingredientIds),
+    ]);
+    if ((components ?? []).length !== componentIds.length || (ingredients ?? []).length !== ingredientIds.length) {
+        return { error: 'CSV contains invalid component or ingredient records.' };
     }
-
-    if (upserts.length > 0) {
-        const { error } = await supabase
-            .from('component_ingredients')
-            .upsert(upserts, { onConflict: 'component_id,ingredient_id' });
-
-        if (error) {
-            console.error('Error upserting component ingredient mappings:', error);
-            return { error: 'Failed to apply CSV changes.' };
-        }
-    }
+    const currentByKey = new Map(
+        (relationships ?? []).map((row) => [`${row.component_id}:${row.ingredient_id}`, row])
+    );
+    const payload: KitchenImportPayload = {
+        ingredients: [],
+        components: [],
+        menus: [],
+        component_ingredients: changes.map((change) => {
+            const current = currentByKey.get(`${change.component_id}:${change.ingredient_id}`);
+            return {
+                action: change.uploadedValue === null ? 'remove' : 'set',
+                component_ref: change.component_id,
+                ingredient_ref: change.ingredient_id,
+                batch_quantity: change.uploadedValue === null ? '' : String(change.uploadedValue),
+                relationship_version: current?.updated_at ?? null,
+            };
+        }),
+        menu_components: [],
+    };
+    const result = await createAndApplyKitchenImport({
+        restaurantId,
+        payload,
+        operationCounts: { component_ingredients: changes.length },
+        beforeSnapshot: Object.fromEntries(
+            changes.map((change) => [
+                `${change.component_id}:${change.ingredient_id}`,
+                currentByKey.get(`${change.component_id}:${change.ingredient_id}`) ?? null,
+            ])
+        ),
+        afterSnapshot: Object.fromEntries(
+            changes.map((change) => [
+                `${change.component_id}:${change.ingredient_id}`,
+                change.uploadedValue,
+            ])
+        ),
+    });
+    if ('error' in result) return result;
 
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_PAGE, 'page');
     revalidatePath(REVALIDATE_PATHS.DASHBOARD_COMPONENTS_MATRIX_PAGE, 'page');
@@ -124,7 +162,7 @@ export async function applyComponentMatrixChanges(
     return {
         success: true,
         applied: changes.length,
-        removed: deletes.length,
-        upserted: upserts.length,
+        removed: changes.filter((change) => change.uploadedValue === null).length,
+        upserted: changes.filter((change) => change.uploadedValue !== null).length,
     };
 }

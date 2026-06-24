@@ -40,7 +40,7 @@ import { RealtimeSyncBanner } from './realtime-sync-banner';
 
 const ingredientSchema = z.object({
     ingredient_id: z.string().min(1, 'Please select an ingredient'),
-    qty_per_serving: z.string().min(1, 'Quantity is required'),
+    batch_quantity: z.string().min(1, 'Quantity is required'),
 });
 
 const componentSchema = z.object({
@@ -58,7 +58,7 @@ type ComponentConflictField = ComponentSyncField | 'ingredients';
 function toComponentIngredientRows(component: RecipeComponent | null): ComponentIngredientDraft[] {
     return (component?.component_ingredients ?? []).map((componentIngredient) => ({
         ingredient_id: componentIngredient.ingredient_id,
-        qty_per_serving: decimalToFraction(componentIngredient.qty_per_serving),
+        batch_quantity: decimalToFraction(componentIngredient.batch_quantity),
     }));
 }
 
@@ -266,7 +266,7 @@ export function ComponentForm({
     const safeAppend = useCallback(() => {
         if (appendGuard.current) return;
         appendGuard.current = true;
-        append({ ingredient_id: '', qty_per_serving: '1' });
+        append({ ingredient_id: '', batch_quantity: '1' });
         setTimeout(() => {
             appendGuard.current = false;
         }, 100);
@@ -274,7 +274,7 @@ export function ComponentForm({
 
     const handleQuantityCommit = useCallback(
         (index: number, _parsed: number | null, error: string | null) => {
-            const path = `ingredients.${index}.qty_per_serving` as const;
+            const path = `ingredients.${index}.batch_quantity` as const;
             if (error) {
                 form.setError(path, { type: 'manual', message: error });
                 return;
@@ -313,18 +313,18 @@ export function ComponentForm({
             }
 
             const parsedIngredients = data.ingredients.map((ingredient, index) => {
-                const parsed = parseFractionalQuantity(ingredient.qty_per_serving);
+                const parsed = parseFractionalQuantity(ingredient.batch_quantity);
                 if (!parsed.ok) {
-                    form.setError(`ingredients.${index}.qty_per_serving`, {
+                    form.setError(`ingredients.${index}.batch_quantity`, {
                         type: 'manual',
                         message: parsed.error,
                     });
                     return null;
                 }
-                form.clearErrors(`ingredients.${index}.qty_per_serving`);
+                form.clearErrors(`ingredients.${index}.batch_quantity`);
                 return {
                     ingredient_id: ingredient.ingredient_id,
-                    qty_per_serving: parsed.value,
+                    batch_quantity: parsed.value,
                 };
             });
 
@@ -336,7 +336,7 @@ export function ComponentForm({
             if (componentId) {
                 const mappingRes = await updateComponentIngredients(
                     componentId,
-                    parsedIngredients as { ingredient_id: string; qty_per_serving: number }[]
+                    parsedIngredients as { ingredient_id: string; batch_quantity: number }[]
                 );
                 if (mappingRes.error) throw new Error(mappingRes.error);
             }
@@ -403,7 +403,7 @@ export function ComponentForm({
                                                 <li key={componentIngredient.ingredient_id}>
                                                     {componentIngredient.ingredients?.name || t('components.unknownIngredient')}:
                                                     {' '}
-                                                    {decimalToFraction(componentIngredient.qty_per_serving)}
+                                                    {decimalToFraction(componentIngredient.batch_quantity)}
                                                 </li>
                                             ))}
                                         </ul>
@@ -527,10 +527,10 @@ export function ComponentForm({
 
                                         <FormField
                                             control={form.control}
-                                            name={`ingredients.${index}.qty_per_serving`}
+                                            name={`ingredients.${index}.batch_quantity`}
                                             render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel className="text-xs">{t('components.form.qtyPerServing', { unit: unitLabel })}</FormLabel>
+                                                    <FormLabel className="text-xs">{t('components.form.batchQuantity', { unit: unitLabel })}</FormLabel>
                                                     <FormControl>
                                                         <FractionalQuantityInput
                                                             value={field.value || ''}
@@ -538,7 +538,7 @@ export function ComponentForm({
                                                             onCommit={(parsed, error) =>
                                                                 handleQuantityCommit(index, parsed, error)
                                                             }
-                                                            label={t('components.form.qtyPerServingLabel')}
+                                                            label={t('components.form.batchQuantityLabel')}
                                                         />
                                                     </FormControl>
                                                     <FormMessage />

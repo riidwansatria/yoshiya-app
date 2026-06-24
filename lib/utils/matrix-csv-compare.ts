@@ -1,3 +1,5 @@
+import Papa from 'papaparse';
+
 export type MatrixChangeType = 'added' | 'removed' | 'changed';
 
 export interface MatrixChange {
@@ -9,7 +11,8 @@ export interface MatrixChange {
 }
 
 export interface MatrixCompareIssue {
-    kind: 'missing-header' | 'duplicate-column' | 'duplicate-row' | 'invalid-number';
+    kind: 'missing-header' | 'duplicate-column' | 'duplicate-row' | 'invalid-number' | 'csv-parse';
+    severity: 'error' | 'warning';
     message: string;
 }
 
@@ -29,42 +32,10 @@ interface CompareMatrixCsvInput {
     getCurrentValue: (rowName: string, columnName: string) => number | undefined;
 }
 
-function parseCsvLine(line: string): string[] {
-    const cells: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i += 1) {
-        const char = line[i];
-
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-                current += '"';
-                i += 1;
-            } else {
-                inQuotes = !inQuotes;
-            }
-            continue;
-        }
-
-        if (char === ',' && !inQuotes) {
-            cells.push(current);
-            current = '';
-            continue;
-        }
-
-        current += char;
-    }
-
-    cells.push(current);
-    return cells;
-}
-
-function parseCsvRows(csvText: string): string[][] {
-    return csvText
-        .replace(/^\uFEFF/, '')
-        .split(/\r?\n/)
-        .map((line) => parseCsvLine(line));
+function parseCsvRows(csvText: string) {
+    return Papa.parse<string[]>(csvText.replace(/^\uFEFF/, ''), {
+        skipEmptyLines: 'greedy',
+    });
 }
 
 function normalizeCell(value: string | undefined): string {
@@ -93,7 +64,13 @@ export function compareMatrixCsv({
     currentColumns,
     getCurrentValue,
 }: CompareMatrixCsvInput): MatrixCompareResult {
-    const parsedRows = parseCsvRows(csvText).filter((row) => row.some((cell) => cell.trim() !== ''));
+    const parsed = parseCsvRows(csvText);
+    const parsedRows = parsed.data.filter((row) => row.some((cell) => cell.trim() !== ''));
+    const parseIssues: MatrixCompareIssue[] = parsed.errors.map((error) => ({
+        kind: 'csv-parse',
+        severity: 'error',
+        message: error.message,
+    }));
 
     if (parsedRows.length === 0) {
         return {
@@ -102,11 +79,11 @@ export function compareMatrixCsv({
             unknownColumns: [],
             missingRows: currentRows,
             missingColumns: currentColumns,
-            issues: [{ kind: 'missing-header', message: 'CSV is empty.' }],
+            issues: [...parseIssues, { kind: 'missing-header', severity: 'error', message: 'CSV is empty.' }],
         };
     }
 
-    const issues: MatrixCompareIssue[] = [];
+    const issues: MatrixCompareIssue[] = [...parseIssues];
     const header = parsedRows[0];
 
     if (header.length === 0) {
@@ -116,9 +93,19 @@ export function compareMatrixCsv({
             unknownColumns: [],
             missingRows: currentRows,
             missingColumns: currentColumns,
-            issues: [{ kind: 'missing-header', message: 'Header row is missing.' }],
+            issues: [...parseIssues, { kind: 'missing-header', severity: 'error', message: 'Header row is missing.' }],
         };
     }
+
+    parsedRows.slice(1).forEach((row, index) => {
+        if (row.length !== header.length) {
+            issues.push({
+                kind: 'csv-parse',
+                severity: 'error',
+                message: `Row ${index + 2} has ${row.length} cells; expected ${header.length}.`,
+            });
+        }
+    });
 
     const csvColumns = header.slice(1).map(normalizeCell);
 
@@ -132,6 +119,7 @@ export function compareMatrixCsv({
         if (currentRowsByKey.has(key)) {
             issues.push({
                 kind: 'duplicate-row',
+                severity: 'error',
                 message: `App has multiple component/menu rows that normalize to the same name: "${currentRowsByKey.get(key)}" and "${rowName}".`,
             });
             continue;
@@ -150,6 +138,7 @@ export function compareMatrixCsv({
         if (currentColumnsByKey.has(key)) {
             issues.push({
                 kind: 'duplicate-column',
+                severity: 'error',
                 message: `App has multiple columns that normalize to the same name: "${currentColumnsByKey.get(key)}" and "${columnName}".`,
             });
             continue;
@@ -167,6 +156,7 @@ export function compareMatrixCsv({
         if (csvColumnSet.has(key)) {
             issues.push({
                 kind: 'duplicate-column',
+                severity: 'error',
                 message: `Duplicate column in CSV header after normalization: "${col}".`,
             });
         }
@@ -194,6 +184,7 @@ export function compareMatrixCsv({
         if (csvRowSet.has(rowKey)) {
             issues.push({
                 kind: 'duplicate-row',
+                severity: 'error',
                 message: `Duplicate row in CSV body after normalization: "${rowName}".`,
             });
             continue;
@@ -233,7 +224,16 @@ export function compareMatrixCsv({
             if (cell && uploaded === null) {
                 issues.push({
                     kind: 'invalid-number',
+                    severity: 'error',
                     message: `Invalid number at row "${csvRowName}", column "${columnName}": "${cell}".`,
+                });
+                continue;
+            }
+            if (uploaded !== null && uploaded <= 0) {
+                issues.push({
+                    kind: 'invalid-number',
+                    severity: 'error',
+                    message: `Quantity must be greater than zero at row "${csvRowName}", column "${columnName}".`,
                 });
                 continue;
             }

@@ -327,7 +327,7 @@ export function ComponentsList({
                                                                 {component.component_ingredients.map(ci => (
                                                                     <li key={ci.ingredient_id} className="text-sm flex items-center gap-3">
                                                                         <span className="inline-block w-[3em] text-right font-medium text-foreground tabular-nums">
-                                                                            {decimalToFraction(ci.qty_per_serving)}
+                                                                            {decimalToFraction(ci.batch_quantity)}
                                                                         </span>
                                                                         <span className="text-muted-foreground text-xs">
                                                                             {ci.ingredients?.unit || ''}

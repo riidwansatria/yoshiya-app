@@ -1,13 +1,19 @@
-import { getMenus } from '@/lib/queries/menus';
-import { getComponentOptions } from '@/lib/queries/components';
-import { MenuMatrixExport } from '@/components/kitchen/menu-matrix-export';
-import { Page, PageContent, PageDescription, PageHeader, PageHeaderHeading, PageTitle } from '@/components/layout/page';
+import { AiImportWorkbench } from '@/components/kitchen/ai-import-workbench';
+import {
+    Page,
+    PageContent,
+    PageDescription,
+    PageHeader,
+    PageHeaderHeading,
+    PageTitle,
+} from '@/components/layout/page';
 import { RestaurantRequiredState } from '@/components/layout/restaurant-context-select';
 import { requireAdminPage } from '@/lib/auth/server';
+import { getKitchenImportOverview } from '@/lib/queries/kitchen-import';
 import { getRestaurants } from '@/lib/queries/restaurants';
 import { resolveRestaurantContext } from '@/lib/utils/restaurant-context';
 
-export default async function MenuMatrixPage({
+export default async function KitchenImportPage({
     searchParams,
 }: {
     searchParams: Promise<{ restaurant?: string | string[] }>;
@@ -24,10 +30,8 @@ export default async function MenuMatrixPage({
             <Page>
                 <PageHeader>
                     <PageHeaderHeading>
-                        <PageTitle>Menu Component Matrix — Spreadsheet Editing</PageTitle>
-                        <PageDescription>
-                            Manual spreadsheet workflow for editing menu and component relationships.
-                        </PageDescription>
+                        <PageTitle>CSV Import</PageTitle>
+                        <PageDescription>Choose a restaurant before exporting or importing kitchen data.</PageDescription>
                     </PageHeaderHeading>
                 </PageHeader>
                 <PageContent>
@@ -37,31 +41,25 @@ export default async function MenuMatrixPage({
         );
     }
 
-    const restaurant = selectedRestaurant.id;
-    const [menus, components] = await Promise.all([
-        getMenus(restaurant, {
-            includeMenuComponents: true,
-            includeComponentDetails: true,
-        }),
-        getComponentOptions(restaurant),
-    ]);
+    const overview = await getKitchenImportOverview(selectedRestaurant.id);
+    if (!overview) {
+        return null;
+    }
 
     return (
         <Page>
             <PageHeader>
                 <PageHeaderHeading>
-                    <PageTitle>Menu Component Matrix — Spreadsheet Editing</PageTitle>
+                    <PageTitle>CSV Import</PageTitle>
                     <PageDescription>
-                        Manual spreadsheet workflow for editing menu and component relationships.
+                        Export, edit, validate, review, and apply kitchen data as one transaction.
                     </PageDescription>
                 </PageHeaderHeading>
             </PageHeader>
             <PageContent>
-                <MenuMatrixExport
-                    menus={menus}
-                    components={components}
-                    restaurantId={restaurant}
-                    restaurantName={selectedRestaurant.name}
+                <AiImportWorkbench
+                    overview={overview}
+                    applyEnabled={process.env.KITCHEN_IMPORT_APPLY_ENABLED !== 'false'}
                 />
             </PageContent>
         </Page>

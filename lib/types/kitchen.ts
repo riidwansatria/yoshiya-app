@@ -8,6 +8,7 @@ export interface Ingredient {
     package_size: number | null;
     package_label: string | null;
     created_at: string;
+    updated_at: string;
 }
 
 export interface ComponentOption {
@@ -18,7 +19,8 @@ export interface ComponentOption {
 export interface ComponentIngredient {
     component_id: string;
     ingredient_id: string;
-    qty_per_serving: number;
+    batch_quantity: number;
+    updated_at: string;
     ingredients?: Ingredient;
 }
 
@@ -29,6 +31,7 @@ export interface RecipeComponent {
     description: string | null;
     yield_servings: number;
     created_at: string;
+    updated_at: string;
     component_ingredients?: ComponentIngredient[];
 }
 
@@ -52,6 +55,7 @@ export interface MenuComponent {
     menu_id: string;
     component_id: string;
     qty_per_order: number;
+    updated_at: string;
     components?: MenuComponentReference | null;
 }
 
@@ -67,6 +71,7 @@ export interface Menu {
     image_url: string | null;
     tax_rate: number;
     is_public: boolean;
+    updated_at: string;
     menu_components?: MenuComponent[];
     tags?: MenuTag[];
 }

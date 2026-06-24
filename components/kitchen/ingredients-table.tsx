@@ -143,7 +143,7 @@ export function IngredientsTable({
     }, [restaurantId, scheduleRefetch, supabase]);
 
     const componentUsageByIngredientId = useMemo(() => {
-        const usage = new Map<string, { componentId: string; componentName: string; qtyPerServing: number; unit: string }[]>();
+        const usage = new Map<string, { componentId: string; componentName: string; batchQuantity: number; unit: string }[]>();
 
         for (const component of componentsState) {
             for (const componentIngredient of component.component_ingredients ?? []) {
@@ -151,7 +151,7 @@ export function IngredientsTable({
                 current.push({
                     componentId: component.id,
                     componentName: component.name,
-                    qtyPerServing: componentIngredient.qty_per_serving,
+                    batchQuantity: componentIngredient.batch_quantity,
                     unit: componentIngredient.ingredients?.unit ?? '',
                 });
                 usage.set(componentIngredient.ingredient_id, current);
@@ -175,7 +175,7 @@ export function IngredientsTable({
                 usage.componentName.toLowerCase().includes(q)
             )
         );
-    }, [componentUsageByIngredientId, ingredients, search]);
+    }, [componentUsageByIngredientId, ingredients, search, vendors]);
 
     const allFilteredExpanded = useMemo(
         () => filtered.length > 0 && filtered.every((ingredient) => expandedRows.has(ingredient.id)),
@@ -364,7 +364,7 @@ export function IngredientsTable({
                                                                     {componentUsage.map((usage) => (
                                                                         <li key={`${ingredient.id}-${usage.componentId}`} className="text-sm flex items-center gap-3">
                                                                             <span className="inline-block min-w-[5em] text-right font-medium text-foreground tabular-nums">
-                                                                                {decimalToFraction(usage.qtyPerServing)} {usage.unit}
+                                                                                {decimalToFraction(usage.batchQuantity)} {usage.unit}
                                                                             </span>
                                                                             <Link
                                                                                 href={buildDashboardComponentDetailPath(usage.componentId, restaurantId)}

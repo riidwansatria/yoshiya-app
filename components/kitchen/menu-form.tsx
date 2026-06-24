@@ -29,6 +29,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 
 import { ComponentCombobox } from './component-combobox';
+import { FractionalQuantityInput } from './fractional-quantity-input';
 import { MenuTagSelector } from './menu-tag-selector';
 import { useMenuFormContext } from './menu-form-context';
 
@@ -40,6 +41,7 @@ import { uploadMenuImage, deleteMenuImage, validateMenuImageFile } from '@/lib/s
 import { updateMenuComponents } from '@/lib/actions/menu-components';
 import { updateMenuTags } from '@/lib/actions/menu-tags';
 import { buildDashboardMenusPath } from '@/lib/constants/routes';
+import { parseFractionalQuantity } from '@/lib/utils/fraction-quantity';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -70,13 +72,16 @@ import {
 
 const menuComponentSchema = z.object({
     component_id: z.string().min(1, 'Please select a component'),
-    qty_per_order: z.string().min(1, 'Quantity is required'),
+    qty_per_order: z.string().refine(
+        (value) => parseFractionalQuantity(value).ok,
+        'Enter a positive decimal, fraction, or mixed number'
+    ),
 });
 
 const menuSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     name_en: z.string().optional(),
-    price: z.number().nullable(),
+    price: z.number().min(0, 'Price must be zero or greater').nullable(),
     description: z.string().optional(),
     staff_memo: z.string().optional(),
     color: z.string().optional(),
@@ -142,6 +147,24 @@ const MenuComponentRow = memo(function MenuComponentRow({
                                 restaurantId={restaurantId}
                                 usedIds={usedIds}
                                 onNewComponent={onNewComponent}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={control}
+                name={`components.${index}.qty_per_order`}
+                render={({ field }) => (
+                    <FormItem className="w-28 shrink-0">
+                        <FormControl>
+                            <FractionalQuantityInput
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                onCommit={() => undefined}
+                                label="Quantity per menu order"
                             />
                         </FormControl>
                         <FormMessage />
@@ -353,10 +376,16 @@ export function MenuForm({
                 menuId = res.data.id;
             }
 
-            const parsedComponents = data.components.map((component) => ({
-                component_id: component.component_id,
-                qty_per_order: 1,
-            }));
+            const parsedComponents = data.components.map((component) => {
+                const parsedQuantity = parseFractionalQuantity(component.qty_per_order);
+                if (!parsedQuantity.ok) {
+                    throw new Error(parsedQuantity.error);
+                }
+                return {
+                    component_id: component.component_id,
+                    qty_per_order: parsedQuantity.value,
+                };
+            });
 
             // Update mapping
             if (menuId) {

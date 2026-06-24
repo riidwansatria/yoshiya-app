@@ -45,7 +45,7 @@ export async function getIngredientsSummary(
           id,
           yield_servings,
           component_ingredients (
-            qty_per_serving,
+            batch_quantity,
             ingredients (
               id,
               name,
@@ -77,7 +77,7 @@ export async function getIngredientsSummary(
     }
 
     interface RawComponentIngredientObj {
-        qty_per_serving: number;
+        batch_quantity: number;
         ingredients: RawIngredientObj | null;
     }
 
@@ -113,13 +113,9 @@ export async function getIngredientsSummary(
                 const ingredient = ci.ingredients as unknown as RawIngredientObj;
                 if (!ingredient) continue;
 
-                // Rule: qty_per_serving in `component_ingredients` represents the amount 
-                // needed to produce ONE serving based on `yield_servings`.
-                // This formula assumes `compQtyPerOrder` is expressed in the same "servings/units"
-                // metric as `yield_servings`.
-                // Amount per comp unit = ci.qty_per_serving / compYield
-                // Or simpler: The total amount = (ci.qty_per_serving / compYield) * totalComponentNeeded
-                const ingredientAmount = (ci.qty_per_serving / compYield) * totalComponentNeeded;
+                // batch_quantity is the ingredient amount for the component's whole batch.
+                // Divide by yield_servings to get one component unit, then scale by menu demand.
+                const ingredientAmount = (ci.batch_quantity / compYield) * totalComponentNeeded;
 
                 if (aggregatedMap.has(ingredient.id)) {
                     aggregatedMap.get(ingredient.id)!.total_quantity += ingredientAmount;

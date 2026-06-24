@@ -104,7 +104,7 @@ export async function deleteComponent(id: string) {
 
 export async function updateComponentIngredients(
     componentId: string,
-    ingredients: { ingredient_id: string; qty_per_serving: number }[]
+    ingredients: { ingredient_id: string; batch_quantity: number }[]
 ) {
     await requirePermission('kitchen', 'kitchen.update');
     const supabase = await createClient();
@@ -125,7 +125,7 @@ export async function updateComponentIngredients(
         const insertData = ingredients.map((ing) => ({
             component_id: componentId,
             ingredient_id: ing.ingredient_id,
-            qty_per_serving: ing.qty_per_serving,
+            batch_quantity: ing.batch_quantity,
         }));
 
         const { error: insertError } = await supabase

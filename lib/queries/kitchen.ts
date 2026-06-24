@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { Ingredient, Menu, MenuTag, RecipeComponent } from '@/lib/types/kitchen';
+import { compareMenuNames } from '@/lib/utils/menu-number';
 
 export type KitchenClient = SupabaseClient;
 
@@ -9,7 +10,8 @@ const COMPONENTS_SELECT = `
   component_ingredients (
     component_id,
     ingredient_id,
-    qty_per_serving,
+    batch_quantity,
+    updated_at,
     ingredients (*)
   )
 `;
@@ -25,12 +27,12 @@ export function buildMenusSelect({
     includeComponentDetails = false,
     includeTags = false,
 }: FetchMenusOptions = {}) {
-    const baseSelect = 'id, restaurant_id, name, name_en, price, description, staff_memo, color, image_url, tax_rate, is_public';
+    const baseSelect = 'id, restaurant_id, name, name_en, price, description, staff_memo, color, image_url, tax_rate, is_public, updated_at';
     const parts = [baseSelect];
 
     if (includeMenuComponents) {
         const componentSelect = includeComponentDetails ? ', components (id, name)' : '';
-        parts.push(`menu_components (menu_id, component_id, qty_per_order${componentSelect})`);
+        parts.push(`menu_components (menu_id, component_id, qty_per_order, updated_at${componentSelect})`);
     }
 
     if (includeTags) {
@@ -167,18 +169,6 @@ export async function fetchComponentOptions(
     return (data ?? []) as Array<{ id: string; name: string }>;
 }
 
-// Circled numbers ①–⑳ (U+2460–U+2473), ㉑–㉟ (U+3251–U+325F), ㊱–㊿ (U+32B1–U+32BF)
-const CIRCLED_NUMBERS = [
-    ...Array.from({ length: 20 }, (_, i) => String.fromCodePoint(0x2460 + i)),
-    ...Array.from({ length: 15 }, (_, i) => String.fromCodePoint(0x3251 + i)),
-    ...Array.from({ length: 15 }, (_, i) => String.fromCodePoint(0x32B1 + i)),
-]
-
-function circledNumberIndex(name: string): number {
-    const idx = CIRCLED_NUMBERS.findIndex(c => name.startsWith(c))
-    return idx === -1 ? Infinity : idx
-}
-
 export async function fetchMenus(
     client: KitchenClient,
     restaurantId: string,
@@ -196,9 +186,7 @@ export async function fetchMenus(
 
     const menus = ((data ?? []) as unknown) as MenuWithNestedTags[];
 
-    const sorted = [...menus].sort(
-        (a, b) => circledNumberIndex(a.name) - circledNumberIndex(b.name)
-    )
+    const sorted = [...menus].sort(compareMenuNames)
 
     if (!options?.includeTags) {
         return sorted;

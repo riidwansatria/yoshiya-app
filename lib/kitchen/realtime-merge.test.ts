@@ -37,16 +37,16 @@ test('mergeUntouchedFields applies untouched scalar fields and preserves dirty f
 
 test('mergeComponentIngredientRows replaces pristine arrays with remote rows', () => {
     const syncedRows = [
-        { ingredient_id: 'a', qty_per_serving: '1' },
-        { ingredient_id: 'b', qty_per_serving: '2' },
+        { ingredient_id: 'a', batch_quantity: '1' },
+        { ingredient_id: 'b', batch_quantity: '2' },
     ];
 
     const result = mergeComponentIngredientRows({
         currentRows: syncedRows,
         syncedRows,
         remoteRows: [
-            { ingredient_id: 'a', qty_per_serving: '1 1/2' },
-            { ingredient_id: 'b', qty_per_serving: '2' },
+            { ingredient_id: 'a', batch_quantity: '1 1/2' },
+            { ingredient_id: 'b', batch_quantity: '2' },
         ],
     });
 
@@ -54,16 +54,16 @@ test('mergeComponentIngredientRows replaces pristine arrays with remote rows', (
     assert.deepEqual(result.applied_fields, ['ingredients']);
     assert.deepEqual(result.conflicting_fields, []);
     assert.deepEqual(result.nextRows, [
-        { ingredient_id: 'a', qty_per_serving: '1 1/2' },
-        { ingredient_id: 'b', qty_per_serving: '2' },
+        { ingredient_id: 'a', batch_quantity: '1 1/2' },
+        { ingredient_id: 'b', batch_quantity: '2' },
     ]);
 });
 
 test('mergeComponentIngredientRows reports conflicts for local qty edits', () => {
     const result = mergeComponentIngredientRows({
-        currentRows: [{ ingredient_id: 'a', qty_per_serving: '3' }],
-        syncedRows: [{ ingredient_id: 'a', qty_per_serving: '1' }],
-        remoteRows: [{ ingredient_id: 'a', qty_per_serving: '2' }],
+        currentRows: [{ ingredient_id: 'a', batch_quantity: '3' }],
+        syncedRows: [{ ingredient_id: 'a', batch_quantity: '1' }],
+        remoteRows: [{ ingredient_id: 'a', batch_quantity: '2' }],
     });
 
     assert.equal(result.remote_changed, true);
@@ -74,28 +74,28 @@ test('mergeComponentIngredientRows reports conflicts for local qty edits', () =>
 
 test('mergeComponentIngredientRows reports conflicts for add remove and reorder changes', () => {
     const syncedRows = [
-        { ingredient_id: 'a', qty_per_serving: '1' },
-        { ingredient_id: 'b', qty_per_serving: '2' },
+        { ingredient_id: 'a', batch_quantity: '1' },
+        { ingredient_id: 'b', batch_quantity: '2' },
     ];
 
     const addConflict = mergeComponentIngredientRows({
-        currentRows: [...syncedRows, { ingredient_id: 'c', qty_per_serving: '1' }],
+        currentRows: [...syncedRows, { ingredient_id: 'c', batch_quantity: '1' }],
         syncedRows,
-        remoteRows: [...syncedRows, { ingredient_id: 'd', qty_per_serving: '3' }],
+        remoteRows: [...syncedRows, { ingredient_id: 'd', batch_quantity: '3' }],
     });
     assert.deepEqual(addConflict.conflicting_fields, ['ingredients']);
 
     const removeConflict = mergeComponentIngredientRows({
-        currentRows: [{ ingredient_id: 'a', qty_per_serving: '1' }],
+        currentRows: [{ ingredient_id: 'a', batch_quantity: '1' }],
         syncedRows,
-        remoteRows: [{ ingredient_id: 'a', qty_per_serving: '1' }, { ingredient_id: 'b', qty_per_serving: '3' }],
+        remoteRows: [{ ingredient_id: 'a', batch_quantity: '1' }, { ingredient_id: 'b', batch_quantity: '3' }],
     });
     assert.deepEqual(removeConflict.conflicting_fields, ['ingredients']);
 
     const reorderConflict = mergeComponentIngredientRows({
         currentRows: [syncedRows[1], syncedRows[0]],
         syncedRows,
-        remoteRows: [{ ingredient_id: 'a', qty_per_serving: '1' }],
+        remoteRows: [{ ingredient_id: 'a', batch_quantity: '1' }],
     });
     assert.deepEqual(reorderConflict.conflicting_fields, ['ingredients']);
 });
@@ -103,16 +103,16 @@ test('mergeComponentIngredientRows reports conflicts for add remove and reorder 
 test('areIngredientDraftRowsEqual compares row order and values', () => {
     assert.equal(
         areIngredientDraftRowsEqual(
-            [{ ingredient_id: 'a', qty_per_serving: '1' }],
-            [{ ingredient_id: 'a', qty_per_serving: '1' }]
+            [{ ingredient_id: 'a', batch_quantity: '1' }],
+            [{ ingredient_id: 'a', batch_quantity: '1' }]
         ),
         true
     );
 
     assert.equal(
         areIngredientDraftRowsEqual(
-            [{ ingredient_id: 'a', qty_per_serving: '1' }],
-            [{ ingredient_id: 'a', qty_per_serving: '2' }]
+            [{ ingredient_id: 'a', batch_quantity: '1' }],
+            [{ ingredient_id: 'a', batch_quantity: '2' }]
         ),
         false
     );

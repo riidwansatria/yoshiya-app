@@ -63,6 +63,10 @@ export function isPermission(value: string | null | undefined): value is Permiss
     return Boolean(value && PERMISSION_SET.has(value));
 }
 
+export function isAdminRole(access: Pick<UserAccess, 'role'> | null | undefined) {
+    return access?.role === 'admin';
+}
+
 export function canAccess(
     access: UserAccess | null | undefined,
     module: AppModule,

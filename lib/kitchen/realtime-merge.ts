@@ -52,7 +52,7 @@ export function mergeUntouchedFields<
 
 export interface ComponentIngredientDraft {
     ingredient_id: string;
-    qty_per_serving: string;
+    batch_quantity: string;
 }
 
 export function areIngredientDraftRowsEqual(
@@ -65,7 +65,7 @@ export function areIngredientDraftRowsEqual(
 
     return left.every((row, index) => {
         const other = right[index];
-        return row.ingredient_id === other?.ingredient_id && row.qty_per_serving === other?.qty_per_serving;
+        return row.ingredient_id === other?.ingredient_id && row.batch_quantity === other?.batch_quantity;
     });
 }
 

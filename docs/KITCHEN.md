@@ -10,7 +10,7 @@ components                          → belongs to a restaurant
   id, restaurant_id, name, description, yield_servings
 
 component_ingredients               junction: component ↔ ingredient
-  component_id, ingredient_id, qty_per_serving
+  component_id, ingredient_id, batch_quantity
 
 menus                               → belongs to a restaurant
   id, restaurant_id, name, season, price, description, color
@@ -23,6 +23,25 @@ menu_tag_assignments                junction: menu ↔ tag
 ```
 
 `ingredients` is global (no `restaurant_id`). `components` and `menus` are restaurant-scoped.
+`batch_quantity` is the total ingredient amount for the component batch; procurement divides it by
+`yield_servings` before scaling by each menu's `qty_per_order`.
+
+## CSV import
+
+`/kitchen/import?restaurant=<id>` exports a versioned ZIP containing master records and long-format
+relationship CSVs. Existing records use UUID refs; records created in the same pack use `new:*`
+temporary refs. Uploads are reparsed and validated on the server, stored as a 30-minute preview,
+shown as an explicit diff, and applied through one `SECURITY INVOKER` PostgreSQL function.
+
+Important invariants:
+
+- blank actions and missing rows mean no change;
+- master records are never deleted by v1 imports;
+- relationship removal requires an explicit `remove` action;
+- vendors and menu tags must already exist;
+- every apply is atomic and checks exported `updated_at` versions again;
+- the wide matrix pages remain available for human spreadsheet editing and use the same atomic
+  transaction engine.
 
 ## Shared query layer
 

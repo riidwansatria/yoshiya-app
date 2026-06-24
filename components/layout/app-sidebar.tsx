@@ -13,7 +13,8 @@ import {
     ClipboardPen,
     FilePieChart,
     FileText,
-    Globe2
+    Globe2,
+    WandSparkles,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -41,11 +42,12 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { NavUser } from "@/components/layout/app-sidebar-nav-user"
-import { canAccess, type UserAccess } from "@/lib/auth/access-control"
+import { canAccess, isAdminRole, type UserAccess } from "@/lib/auth/access-control"
 import {
     buildDashboardComponentsPath,
     buildDashboardIngredientsPath,
     buildDashboardKitchenOrdersPath,
+    buildDashboardKitchenImportPath,
     buildDashboardKitchenSummaryPath,
     buildDashboardMenusPath,
     buildDashboardPurchaseOrdersPath,
@@ -184,6 +186,16 @@ export function AppSidebar({
             module: "menus" as const,
             permission: "menus.read" as const,
         },
+        ...(isAdminRole(access)
+            ? [{
+                title: tKitchen('pages.csvImport'),
+                url: buildDashboardKitchenImportPath(contextRestaurantId),
+                icon: WandSparkles,
+                active: pathname.startsWith('/kitchen/import'),
+                module: "kitchen" as const,
+                permission: "kitchen.read" as const,
+            }]
+            : []),
         {
             title: tNav('dailyOrders'),
             url: buildDashboardKitchenOrdersPath(contextRestaurantId),

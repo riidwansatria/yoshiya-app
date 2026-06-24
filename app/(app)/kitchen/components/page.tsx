@@ -2,7 +2,7 @@ import { getComponents } from '@/lib/queries/components';
 import { getMenus } from '@/lib/queries/menus';
 import { ComponentsList } from '@/components/kitchen/components-list';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, LayoutList } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page';
@@ -12,7 +12,6 @@ import { getRestaurants } from '@/lib/queries/restaurants';
 import { resolveRestaurantContext } from '@/lib/utils/restaurant-context';
 import {
     buildDashboardComponentDetailPath,
-    buildDashboardComponentsMatrixPath,
 } from '@/lib/constants/routes';
 
 export default async function ComponentsPage({
@@ -56,12 +55,6 @@ export default async function ComponentsPage({
                     <PageTitle>{t('pages.components')}</PageTitle>
                 </PageHeaderHeading>
                 <PageActions>
-                    <Button variant="outline" asChild>
-                        <Link href={buildDashboardComponentsMatrixPath(restaurant)}>
-                            <LayoutList className="mr-2 h-4 w-4" />
-                            {t('pages.matrixExport')}
-                        </Link>
-                    </Button>
                     <Button asChild>
                         <Link href={buildDashboardComponentDetailPath('new', restaurant)}>
                             <PlusCircle className="mr-2 h-4 w-4" />

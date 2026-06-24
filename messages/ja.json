@@ -327,6 +327,7 @@
             "newMenu": "メニューを新規作成",
             "editMenu": "メニューを編集",
             "matrixExport": "マトリクス出力",
+            "csvImport": "CSV取込",
             "newComponentButton": "新規内容",
             "newMenuButton": "新規メニュー"
         },
@@ -564,8 +565,8 @@
                 "addRow": "食材を追加",
                 "empty": "食材がまだ追加されていません。",
                 "ingredient": "食材",
-                "qtyPerServing": "1人前あたり数量（{unit}）",
-                "qtyPerServingLabel": "1人前あたり数量",
+                "batchQuantity": "仕込み全量（{unit}）",
+                "batchQuantityLabel": "仕込み全量",
                 "save": "内容を保存",
                 "created": "内容を作成しました",
                 "updated": "内容を更新しました",

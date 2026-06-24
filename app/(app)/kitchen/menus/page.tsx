@@ -4,7 +4,6 @@ import { MenusList } from '@/components/kitchen/menus-list';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import { LayoutList } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Page, PageHeader, PageHeaderHeading, PageTitle, PageActions, PageContent } from '@/components/layout/page';
 import { RestaurantRequiredState } from '@/components/layout/restaurant-context-select';
@@ -13,7 +12,6 @@ import { getRestaurants } from '@/lib/queries/restaurants';
 import { resolveRestaurantContext } from '@/lib/utils/restaurant-context';
 import {
     buildDashboardMenuDetailPath,
-    buildDashboardMenusMatrixPath,
 } from '@/lib/constants/routes';
 
 export default async function MenusPage({
@@ -61,12 +59,6 @@ export default async function MenusPage({
                     <PageTitle>{t('pages.menus')}</PageTitle>
                 </PageHeaderHeading>
                 <PageActions>
-                    <Button variant="outline" asChild>
-                        <Link href={buildDashboardMenusMatrixPath(restaurant)}>
-                            <LayoutList className="mr-2 h-4 w-4" />
-                            {t('pages.matrixExport')}
-                        </Link>
-                    </Button>
                     <Button asChild>
                         <Link href={buildDashboardMenuDetailPath('new', restaurant)}>
                             <PlusCircle className="mr-2 h-4 w-4" />

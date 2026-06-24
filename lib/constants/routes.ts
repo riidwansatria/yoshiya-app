@@ -9,6 +9,7 @@ export const REVALIDATE_PATHS = {
     DASHBOARD_MENUS_PAGE: '/[lang]/kitchen/menus',
     DASHBOARD_MENU_DETAIL_PAGE: '/[lang]/kitchen/menus/[id]',
     DASHBOARD_MENUS_MATRIX_PAGE: '/[lang]/kitchen/menus/matrix',
+    DASHBOARD_KITCHEN_IMPORT_PAGE: '/[lang]/kitchen/import',
     DASHBOARD_KITCHEN_ORDERS_PAGE: '/[lang]/kitchen/orders',
     DASHBOARD_KITCHEN_SUMMARY_PAGE: '/[lang]/kitchen/summary',
     DASHBOARD_KITCHEN_PURCHASE_ORDERS_PAGE: '/[lang]/procurement/purchase-orders',
@@ -52,6 +53,9 @@ export const buildDashboardComponentDetailPath = (id: string, restaurantId?: str
 
 export const buildDashboardIngredientsPath = (restaurantId?: string | null) =>
     withRestaurantParam('/kitchen/ingredients', restaurantId)
+
+export const buildDashboardKitchenImportPath = (restaurantId?: string | null) =>
+    withRestaurantParam('/kitchen/import', restaurantId)
 
 export const buildDashboardIngredientDetailPath = (id: string, restaurantId?: string | null) =>
     withRestaurantParam(`/kitchen/ingredients/${id}`, restaurantId)

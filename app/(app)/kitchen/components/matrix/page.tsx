@@ -1,8 +1,9 @@
 import { getComponents } from '@/lib/queries/components';
+import { getIngredients } from '@/lib/queries/ingredients';
 import { ComponentMatrixExport } from '@/components/kitchen/component-matrix-export';
 import { Page, PageContent, PageDescription, PageHeader, PageHeaderHeading, PageTitle } from '@/components/layout/page';
 import { RestaurantRequiredState } from '@/components/layout/restaurant-context-select';
-import { requirePagePermission } from '@/lib/auth/server';
+import { requireAdminPage } from '@/lib/auth/server';
 import { getRestaurants } from '@/lib/queries/restaurants';
 import { resolveRestaurantContext } from '@/lib/utils/restaurant-context';
 
@@ -11,7 +12,7 @@ export default async function ComponentMatrixPage({
 }: {
     searchParams: Promise<{ restaurant?: string | string[] }>;
 }) {
-    await requirePagePermission('kitchen', 'kitchen.read');
+    await requireAdminPage();
     const [resolvedSearchParams, restaurants] = await Promise.all([
         searchParams,
         getRestaurants(),
@@ -23,9 +24,9 @@ export default async function ComponentMatrixPage({
             <Page>
                 <PageHeader>
                     <PageHeaderHeading>
-                        <PageTitle>Component Matrix</PageTitle>
+                        <PageTitle>Component Ingredient Matrix — Spreadsheet Editing</PageTitle>
                         <PageDescription>
-                            Ingredients × Components mapping. Download as CSV to open in Excel.
+                            Manual spreadsheet workflow for editing component recipes.
                         </PageDescription>
                     </PageHeaderHeading>
                 </PageHeader>
@@ -37,20 +38,28 @@ export default async function ComponentMatrixPage({
     }
 
     const restaurant = selectedRestaurant.id;
-    const components = await getComponents(restaurant);
+    const [components, ingredients] = await Promise.all([
+        getComponents(restaurant),
+        getIngredients(),
+    ]);
 
     return (
         <Page>
             <PageHeader>
                 <PageHeaderHeading>
-                    <PageTitle>Component Matrix</PageTitle>
+                    <PageTitle>Component Ingredient Matrix — Spreadsheet Editing</PageTitle>
                     <PageDescription>
-                        Ingredients × Components mapping. Download as CSV to open in Excel.
+                        Manual spreadsheet workflow for editing component recipes.
                     </PageDescription>
                 </PageHeaderHeading>
             </PageHeader>
             <PageContent>
-                <ComponentMatrixExport components={components} restaurantId={restaurant} />
+                <ComponentMatrixExport
+                    components={components}
+                    ingredients={ingredients}
+                    restaurantId={restaurant}
+                    restaurantName={selectedRestaurant.name}
+                />
             </PageContent>
         </Page>
     );
