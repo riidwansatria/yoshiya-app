@@ -30,7 +30,7 @@ export function partitionTagsByKind(tags: MenuTag[]): { dietary: MenuTag[]; ingr
     const ingredient: MenuTag[] = [];
     for (const tag of tags) {
         if (tag.kind === 'dietary') dietary.push(tag);
-        else ingredient.push(tag);
+        if (tag.kind === 'ingredient') ingredient.push(tag);
     }
     return { dietary, ingredient };
 }

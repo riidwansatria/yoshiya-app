@@ -12,7 +12,7 @@ import {
 
 const makeTag = (overrides: Partial<{
     id: string; label: string; label_en: string | null;
-    kind: 'dietary' | 'ingredient'; created_at: string | null; updated_at: string | null;
+    kind: 'dietary' | 'ingredient' | 'season'; created_at: string | null; updated_at: string | null;
 }> = {}) => ({
     id: 'tag-1',
     label: 'ヴィーガン',
@@ -41,7 +41,8 @@ test('getLocalizedTagLabel returns label for non-en locale regardless of label_e
 test('partitionTagsByKind splits into dietary and ingredient buckets', () => {
     const dietary = makeTag({ id: 'd1', kind: 'dietary' });
     const ingredient = makeTag({ id: 'i1', kind: 'ingredient' });
-    const { dietary: d, ingredient: i } = partitionTagsByKind([dietary, ingredient]);
+    const season = makeTag({ id: 's1', label: '春', kind: 'season' });
+    const { dietary: d, ingredient: i } = partitionTagsByKind([dietary, ingredient, season]);
     assert.deepEqual(d, [dietary]);
     assert.deepEqual(i, [ingredient]);
 });
