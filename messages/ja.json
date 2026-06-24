@@ -143,6 +143,39 @@
         "requiredTitle": "店舗を選択してください",
         "requiredDescription": "調理場は共通ワークスペースですが、このページではメニュー・内容・発注データを読み込むために店舗の選択が必要です。"
     },
+    "today": {
+        "title": "本日",
+        "print": "印刷",
+        "reservations": "予約",
+        "guests": "人数",
+        "menus": "メニュー数",
+        "attentionItems": "要確認",
+        "nextService": "次の予約",
+        "noNextService": "この後の予約はありません",
+        "timeline": "本日の流れ",
+        "menuSummary": "メニュー集計",
+        "venueLoad": "会場別",
+        "attention": "確認事項",
+        "emptyTitle": "本日の予約はありません",
+        "emptyDescription": "この店舗には本日予定されている予約がありません。",
+        "unknownCustomer": "顧客未設定",
+        "unknownVenue": "会場未設定",
+        "pax": "{count}名",
+        "reservationsCount": "{count}件",
+        "noMenus": "メニュー未設定",
+        "noNotes": "メモなし",
+        "reservationNote": "予約メモ",
+        "menuNote": "メニューメモ",
+        "noAttention": "確認事項はありません。",
+        "missingMenu": "メニュー未設定",
+        "status": {
+            "pending": "未確定",
+            "confirmed": "確定",
+            "deposit_paid": "内金済",
+            "completed": "完了",
+            "cancelled": "キャンセル"
+        }
+    },
     "booking": {
         "newBooking": "新規予約",
         "partySize": "人数",
@@ -257,7 +290,9 @@
         "other": "他",
         "today": "本日",
         "staffOn": "担当表示中",
-        "staffOff": "担当非表示"
+        "staffOff": "担当非表示",
+        "unassignedVenue": "会場未設定",
+        "untitledReservation": "予約"
     },
     "menuFinder": {
         "heading": "メニュー一覧",

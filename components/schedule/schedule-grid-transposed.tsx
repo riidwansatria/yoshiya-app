@@ -19,11 +19,37 @@ import { Separator } from "@/components/ui/separator"
 import { fetchScheduleReservations } from "@/lib/actions/schedule"
 import { buildDashboardReservationsSchedulePath } from "@/lib/constants/routes"
 
+type VenueRow = {
+    id: string
+    name: string
+    capacity: number
+    concurrent_groups?: number | null
+    rowIndex?: number
+}
+
+type ScheduleReservationStaff = {
+    role: string | null
+    temp_name: string | null
+    users: { name: string | null } | null
+}
+
+type ScheduleReservation = {
+    id: string
+    venue_id: string | null
+    start_time: string | null
+    end_time: string | null
+    party_size: number | null
+    status: string | null
+    group_name?: string | null
+    customers?: { name: string | null } | null
+    reservation_staff?: ScheduleReservationStaff[] | null
+}
+
 interface ScheduleGridTransposedProps {
     restaurantId: string
     dateStr: string
-    initialVenues: any[]
-    initialReservations: any[]
+    initialVenues: VenueRow[]
+    initialReservations: ScheduleReservation[]
     initialStaff: { id: string; name: string; role: string }[]
 }
 
@@ -34,6 +60,7 @@ const HEADER_HEIGHT = 30
 const ROOM_ROW_HEIGHT = 56
 const DISPLAY_START_HOUR = 10 // 10 AM
 const DISPLAY_END_HOUR = 20  // 8 PM
+const UNASSIGNED_VENUE_ID = "__unassigned__"
 
 export function ScheduleGridTransposed({
     restaurantId,
@@ -44,14 +71,9 @@ export function ScheduleGridTransposed({
 }: ScheduleGridTransposedProps) {
     const t = useTranslations('schedule')
     const [currentDateStr, setCurrentDateStr] = React.useState(dateStr)
-    const date = new Date(currentDateStr + 'T00:00:00')
+    const date = React.useMemo(() => new Date(currentDateStr + 'T00:00:00'), [currentDateStr])
 
-    const cacheRef = React.useRef<Map<string, any[]>>(new Map([[dateStr, initialReservations]]))
-
-    const restaurantHalls = initialVenues
-
-    const startHour = 0
-    const endHour = 24
+    const cacheRef = React.useRef<Map<string, ScheduleReservation[]>>(new Map([[dateStr, initialReservations]]))
     
     // Hours to display (10 AM - 8 PM)
     const displayHours = Array.from({ length: DISPLAY_END_HOUR - DISPLAY_START_HOUR }, (_, i) => DISPLAY_START_HOUR + i)
@@ -67,6 +89,19 @@ export function ScheduleGridTransposed({
     const [reservations, setReservations] = React.useState(initialReservations)
     const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null)
     const [showStaffDetails, setShowStaffDetails] = React.useState(true)
+    const hasUnassignedReservations = reservations.some((reservation) => !reservation.venue_id)
+    const restaurantHalls = React.useMemo(() => {
+        if (!hasUnassignedReservations) return initialVenues
+        return [
+            ...initialVenues,
+            {
+                id: UNASSIGNED_VENUE_ID,
+                name: t("unassignedVenue"),
+                capacity: 0,
+                rowIndex: 0,
+            },
+        ]
+    }, [hasUnassignedReservations, initialVenues, t])
 
     React.useEffect(() => {
         cacheRef.current.set(dateStr, initialReservations)
@@ -81,7 +116,7 @@ export function ScheduleGridTransposed({
             if (data) cacheRef.current.set(adjacent, data)
         }
         for (const offset of [-3, -2, -1, 1, 2, 3]) prefetch(offset)
-    }, [currentDateStr, restaurantId])
+    }, [date, restaurantId])
 
     React.useEffect(() => {
         const onPopState = () => {
@@ -108,7 +143,7 @@ export function ScheduleGridTransposed({
             return next
         })
         setSelectedBookingId(prev => (prev === bookingId ? null : prev))
-    }, [currentDateStr])
+    }, [currentDateStr, setSelectedBookingId])
 
     const handleDateChange = (newDate: Date | undefined) => {
         if (!newDate) return
@@ -127,6 +162,22 @@ export function ScheduleGridTransposed({
     }
 
     const dailyReservations = reservations
+
+    const getHallBookings = React.useCallback((hall: VenueRow) => {
+        if (hall.id === UNASSIGNED_VENUE_ID) {
+            return dailyReservations.filter((reservation) => !reservation.venue_id)
+        }
+        return dailyReservations.filter((reservation) => reservation.venue_id === hall.id)
+    }, [dailyReservations])
+
+    const getVenueSlotIndex = React.useCallback((hall: VenueRow, hallRow: number) => {
+        if (typeof hall.rowIndex === "number") return hall.rowIndex
+        return restaurantHalls.slice(0, hallRow).filter((venue) => venue.id === hall.id).length
+    }, [restaurantHalls])
+
+    const getReservationLabel = React.useCallback((reservation: ScheduleReservation) => {
+        return reservation.group_name || reservation.customers?.name || t("untitledReservation")
+    }, [t])
 
     // Check for bookings outside display hours or with no time
     const offHourBookings = dailyReservations.filter(r => {
@@ -259,11 +310,12 @@ export function ScheduleGridTransposed({
                             const isFirstRowOfVenue = hallRow === 0 || restaurantHalls[hallRow - 1]?.id !== hall.id
                             const isLastRowOfVenue = hallRow === restaurantHalls.length - 1 || restaurantHalls[hallRow + 1]?.id !== hall.id
                             const venueRows = restaurantHalls.filter(v => v.id === hall.id)
-                            const hallBookings = dailyReservations.filter(r => r.venue_id === hall.id)
+                            const venueSlotIndex = getVenueSlotIndex(hall, hallRow)
+                            const hallBookings = getHallBookings(hall)
                             
                             // Get bookings for this slot
                             const bookingsForThisSlot = hallBookings.filter((_, idx) => 
-                                idx % venueRows.length === hallRow
+                                idx % venueRows.length === venueSlotIndex
                             )
                             
                             // Get off-hour and display-hour bookings separately
@@ -272,12 +324,6 @@ export function ScheduleGridTransposed({
                                 const hour = parseInt(r.start_time.split(':')[0])
                                 return hour < DISPLAY_START_HOUR || hour >= DISPLAY_END_HOUR
                             })
-                            const displayHourSlotBookings = bookingsForThisSlot.filter(r => {
-                                if (!r.start_time) return false
-                                const hour = parseInt(r.start_time.split(':')[0])
-                                return hour >= DISPLAY_START_HOUR && hour < DISPLAY_END_HOUR
-                            })
-                            
                             return (
                             <React.Fragment key={`${hall.id}-${hallRow}`}>
                                 <div
@@ -297,9 +343,11 @@ export function ScheduleGridTransposed({
                                             <span className="truncate text-base font-medium" title={hall.name}>
                                                 {hall.name}
                                             </span>
-                                            <span className="truncate text-muted-foreground">
-                                                {hall.capacity}名
-                                            </span>
+                                            {hall.id !== UNASSIGNED_VENUE_ID && (
+                                                <span className="truncate text-muted-foreground">
+                                                    {hall.capacity}名
+                                                </span>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -335,7 +383,7 @@ export function ScheduleGridTransposed({
                                                         statusConfig.border,
                                                         "group-hover:brightness-95 transition-all h-full"
                                                     )}>
-                                                        <div className="font-medium truncate">{r.group_name}</div>
+                                                        <div className="font-medium truncate">{getReservationLabel(r)}</div>
                                                         {r.start_time && (
                                                             <div className="text-[9px] opacity-70 truncate">{r.start_time?.substring(0,5)}</div>
                                                         )}
@@ -346,23 +394,16 @@ export function ScheduleGridTransposed({
                                     </div>
                                 )}
                                 
-                                {displayHours.map(hour => {
-                                    const hourBookings = displayHourSlotBookings.filter(r => {
-                                        if (!r.start_time) return false
-                                        const h = parseInt(r.start_time.split(':')[0])
-                                        return h === hour
-                                    })
-                                    return (
-                                        <div 
-                                            key={`${hall.id}-${hallRow}-${hour}`} 
-                                            className="border-b border-r border-border/50"
-                                            style={{ 
-                                                gridColumn: hasOffHourBookings ? hour - DISPLAY_START_HOUR + 3 : hour - DISPLAY_START_HOUR + 2, 
-                                                gridRow: hallRow + 2 
-                                            }}
-                                        />
-                                    )
-                                })}
+                                {displayHours.map(hour => (
+                                    <div
+                                        key={`${hall.id}-${hallRow}-${hour}`}
+                                        className="border-b border-r border-border/50"
+                                        style={{
+                                            gridColumn: hasOffHourBookings ? hour - DISPLAY_START_HOUR + 3 : hour - DISPLAY_START_HOUR + 2,
+                                            gridRow: hallRow + 2
+                                        }}
+                                    />
+                                ))}
                             </React.Fragment>
                         )})}
                     </div>
@@ -382,10 +423,11 @@ export function ScheduleGridTransposed({
 
                     {restaurantHalls.map((hall, hallRow) => {
                         const venueRows = restaurantHalls.filter(v => v.id === hall.id)
-                        const hallBookings = dailyReservations.filter(r => r.venue_id === hall.id)
+                        const venueSlotIndex = getVenueSlotIndex(hall, hallRow)
+                        const hallBookings = getHallBookings(hall)
                         
                         const bookingsForThisSlot = hallBookings.filter((_, idx) => 
-                            idx % venueRows.length === hallRow
+                            idx % venueRows.length === venueSlotIndex
                         )
                         
                         // Only display-hour bookings in the overlay
@@ -429,8 +471,8 @@ export function ScheduleGridTransposed({
                                         { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' } :
                                         { bg: 'bg-muted', text: 'text-foreground', border: 'border-border' }
 
-                                    const serviceStaff = r.reservation_staff?.filter((s: any) => s.role === 'service') || []
-                                    const serviceStaffNames = serviceStaff.map((s: any) => s.users?.name || s.temp_name).filter(Boolean).join(', ')
+                                    const serviceStaff = r.reservation_staff?.filter((staff) => staff.role === 'service') || []
+                                    const serviceStaffNames = serviceStaff.map((staff) => staff.users?.name || staff.temp_name).filter(Boolean).join(', ')
 
                                     return (
                                         <div 
@@ -446,7 +488,7 @@ export function ScheduleGridTransposed({
                                                 statusConfig.border,
                                                 "group-hover:brightness-95 transition-all"
                                             )}>
-                                                <div className="font-medium truncate">{r.group_name}</div>
+                                                <div className="font-medium truncate">{getReservationLabel(r)}</div>
                                                 {width > 60 && (
                                                     <div className="text-[10px] opacity-70 truncate">
                                                         {r.start_time?.substring(0,5)} • {r.party_size}名

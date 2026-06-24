@@ -212,10 +212,10 @@ export function AppSidebar({
 
     return (
         <Sidebar collapsible="icon" variant="inset" {...props}>
-            <SidebarHeader className="gap-2 p-2 bg-sidebar-accent rounded-xl border ">
+            <SidebarHeader className="gap-2 p-2 bg-background rounded-xl border ">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild className="my-2">
+                        <SidebarMenuButton size="lg" asChild className="py-2">
                             <Link href="/">
                                 <Image 
                                     src="/yoshiya-logo.png" 
@@ -234,7 +234,7 @@ export function AppSidebar({
                 <div className="h-10 group-data-[collapsible=icon]:hidden">
                     {isRestaurantScopedPage && restaurantOptions.length > 1 ? (
                         <Select value={selectedRestaurantId ?? ""} onValueChange={handleRestaurantChange}>
-                            <SelectTrigger className="h-10 w-full bg-sidebar-accent/50">
+                            <SelectTrigger className="h-10 w-full">
                                 <SelectValue placeholder={tRestaurant("placeholder")} />
                             </SelectTrigger>
                             <SelectContent className="shadow-none">

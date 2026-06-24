@@ -143,6 +143,39 @@
         "requiredTitle": "Select a restaurant",
         "requiredDescription": "Kitchen data is managed centrally, but this page needs a restaurant context before it can load scoped menus, components, or orders."
     },
+    "today": {
+        "title": "Today",
+        "print": "Print",
+        "reservations": "Reservations",
+        "guests": "Guests",
+        "menus": "Menu items",
+        "attentionItems": "Needs attention",
+        "nextService": "Next service",
+        "noNextService": "No upcoming service",
+        "timeline": "Service timeline",
+        "menuSummary": "Menu prep totals",
+        "venueLoad": "Room load",
+        "attention": "Attention",
+        "emptyTitle": "No reservations today",
+        "emptyDescription": "This restaurant has no bookings scheduled for today.",
+        "unknownCustomer": "Unknown customer",
+        "unknownVenue": "No venue",
+        "pax": "{count} pax",
+        "reservationsCount": "{count} reservations",
+        "noMenus": "No menus assigned",
+        "noNotes": "No notes",
+        "reservationNote": "Reservation note",
+        "menuNote": "Menu note",
+        "noAttention": "Nothing needs attention.",
+        "missingMenu": "Missing menu",
+        "status": {
+            "pending": "Pending",
+            "confirmed": "Confirmed",
+            "deposit_paid": "Deposit paid",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        }
+    },
     "booking": {
         "newBooking": "New Booking",
         "partySize": "Party Size",
@@ -257,7 +290,9 @@
         "other": "Other",
         "today": "Today",
         "staffOn": "Staff Shown",
-        "staffOff": "Staff Hidden"
+        "staffOff": "Staff Hidden",
+        "unassignedVenue": "Unassigned",
+        "untitledReservation": "Reservation"
     },
     "menuFinder": {
         "heading": "Menu Finder",
