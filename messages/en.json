@@ -601,6 +601,9 @@
             "noResults": "No menus found.",
             "noResultsMatching": "No menus matching \"{query}\".",
             "noResultsMatchingFilters": "No menus match the current search or tag filters.",
+            "columns": {
+                "status": "Publication status"
+            },
             "priceEmpty": "Price was left blank.",
             "deleteTitle": "Delete Menu",
             "deleteDescription": "Are you sure you want to delete {name}? This will remove the mapped components from this menu, but it will not delete the components themselves. This action cannot be undone.",

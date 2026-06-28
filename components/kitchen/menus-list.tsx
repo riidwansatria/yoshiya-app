@@ -14,6 +14,7 @@ import {
     type SortingState,
     type ExpandedState,
     type ColumnFiltersState,
+    type ColumnOrderState,
     type VisibilityState,
     type FilterFn,
 } from '@tanstack/react-table';
@@ -83,6 +84,22 @@ const menuTagsExcludeFilterFn: FilterFn<Menu> = (row, _columnId, filterValue: st
 };
 menuTagsExcludeFilterFn.autoRemove = (val: string[]) => !val?.length;
 
+function MenuTagsCell({ tags, emptyLabel }: { tags: MenuTag[]; emptyLabel: string }) {
+    if (tags.length === 0) {
+        return <span className="text-muted-foreground">{emptyLabel}</span>;
+    }
+
+    return (
+        <div className="flex min-w-36 flex-wrap gap-1">
+            {tags.map((tag) => (
+                <Badge key={tag.id} variant="outline" className="whitespace-nowrap font-normal">
+                    {tag.label}
+                </Badge>
+            ))}
+        </div>
+    );
+}
+
 export function MenusList({
     initialData,
     availableTags,
@@ -99,10 +116,15 @@ export function MenusList({
     const [sorting, setSorting] = useState<SortingState>([]);
     const [expanded, setExpanded] = useState<ExpandedState>({});
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+        name_en: false,
+        is_public: false,
+        staff_memo: false,
         dietaryTags: false,
         ingredientTags: false,
         seasonTags: false,
+        menuComponents: false,
     });
 
     const dietaryTags = useMemo(
@@ -202,6 +224,45 @@ export function MenusList({
                         : t('common.none'),
             },
             {
+                accessorKey: 'name_en',
+                enableColumnFilter: false,
+                meta: {
+                    label: t('menus.form.nameEn'),
+                },
+                header: ({ column }) => (
+                    <DataTableColumnHeader column={column} label={t('menus.form.nameEn')} />
+                ),
+                cell: ({ row }) => (
+                    <span className="text-muted-foreground">
+                        {row.original.name_en || t('common.none')}
+                    </span>
+                ),
+            },
+            {
+                accessorKey: 'is_public',
+                enableColumnFilter: false,
+                meta: {
+                    label: t('menus.columns.status'),
+                },
+                header: ({ column }) => (
+                    <DataTableColumnHeader column={column} label={t('menus.columns.status')} />
+                ),
+                cell: ({ row }) => (
+                    <Badge
+                        variant="outline"
+                        className={
+                            row.original.is_public
+                                ? 'border-emerald-200 bg-emerald-50 font-normal text-emerald-700'
+                                : 'font-normal text-muted-foreground'
+                        }
+                    >
+                        {row.original.is_public
+                            ? t('menus.form.statusPublic')
+                            : t('menus.form.statusPrivate')}
+                    </Badge>
+                ),
+            },
+            {
                 accessorKey: 'description',
                 enableSorting: false,
                 enableColumnFilter: false,
@@ -216,10 +277,28 @@ export function MenusList({
                 ),
             },
             {
+                accessorKey: 'staff_memo',
+                enableColumnFilter: false,
+                meta: {
+                    label: t('menus.form.staffMemo'),
+                },
+                header: ({ column }) => (
+                    <DataTableColumnHeader column={column} label={t('menus.form.staffMemo')} />
+                ),
+                cell: ({ row }) => (
+                    <span className="block max-w-75 truncate text-muted-foreground">
+                        {row.original.staff_memo || t('common.none')}
+                    </span>
+                ),
+            },
+            {
                 id: 'dietaryTags',
-                accessorFn: (row) => (row.tags ?? []).filter((t) => t.kind === 'dietary').map((t) => t.id),
-                enableSorting: false,
-                enableHiding: false,
+                accessorFn: (row) =>
+                    (row.tags ?? [])
+                        .filter((tag) => tag.kind === 'dietary')
+                        .map((tag) => tag.label)
+                        .sort((a, b) => a.localeCompare(b, 'ja'))
+                        .join(' '),
                 enableColumnFilter: true,
                 filterFn: menuTagsFilterFn,
                 meta: {
@@ -227,12 +306,27 @@ export function MenusList({
                     variant: 'multiSelect',
                     options: dietaryTags.map((tag) => ({ label: tag.label, value: tag.id })),
                 },
+                header: ({ column }) => (
+                    <DataTableColumnHeader
+                        column={column}
+                        label={t('menus.tags.kindLabels.dietary')}
+                    />
+                ),
+                cell: ({ row }) => (
+                    <MenuTagsCell
+                        tags={(row.original.tags ?? []).filter((tag) => tag.kind === 'dietary')}
+                        emptyLabel={t('common.none')}
+                    />
+                ),
             },
             {
                 id: 'ingredientTags',
-                accessorFn: (row) => (row.tags ?? []).filter((t) => t.kind === 'ingredient').map((t) => t.id),
-                enableSorting: false,
-                enableHiding: false,
+                accessorFn: (row) =>
+                    (row.tags ?? [])
+                        .filter((tag) => tag.kind === 'ingredient')
+                        .map((tag) => tag.label)
+                        .sort((a, b) => a.localeCompare(b, 'ja'))
+                        .join(' '),
                 enableColumnFilter: true,
                 filterFn: menuTagsExcludeFilterFn,
                 meta: {
@@ -241,18 +335,84 @@ export function MenusList({
                     options: ingredientTags.map((tag) => ({ label: tag.label, value: tag.id })),
                     exclude: true,
                 },
+                header: ({ column }) => (
+                    <DataTableColumnHeader
+                        column={column}
+                        label={t('menus.tags.kindLabels.ingredient')}
+                    />
+                ),
+                cell: ({ row }) => (
+                    <MenuTagsCell
+                        tags={(row.original.tags ?? []).filter((tag) => tag.kind === 'ingredient')}
+                        emptyLabel={t('common.none')}
+                    />
+                ),
             },
             {
                 id: 'seasonTags',
-                accessorFn: (row) => (row.tags ?? []).filter((t) => t.kind === 'season').map((t) => t.id),
-                enableSorting: false,
-                enableHiding: false,
+                accessorFn: (row) =>
+                    (row.tags ?? [])
+                        .filter((tag) => tag.kind === 'season')
+                        .map((tag) => tag.label)
+                        .sort((a, b) => a.localeCompare(b, 'ja'))
+                        .join(' '),
                 enableColumnFilter: true,
                 filterFn: menuTagsFilterFn,
                 meta: {
                     label: t('menus.tags.kindLabels.season'),
                     variant: 'multiSelect',
                     options: seasonTags.map((tag) => ({ label: tag.label, value: tag.id })),
+                },
+                header: ({ column }) => (
+                    <DataTableColumnHeader
+                        column={column}
+                        label={t('menus.tags.kindLabels.season')}
+                    />
+                ),
+                cell: ({ row }) => (
+                    <MenuTagsCell
+                        tags={(row.original.tags ?? []).filter((tag) => tag.kind === 'season')}
+                        emptyLabel={t('common.none')}
+                    />
+                ),
+            },
+            {
+                id: 'menuComponents',
+                accessorFn: (row) =>
+                    (row.menu_components ?? [])
+                        .map((item) => item.components?.name ?? '')
+                        .join(' '),
+                enableColumnFilter: false,
+                meta: {
+                    label: t('menus.form.mappedComponents'),
+                },
+                header: ({ column }) => (
+                    <DataTableColumnHeader
+                        column={column}
+                        label={t('menus.form.mappedComponents')}
+                    />
+                ),
+                cell: ({ row }) => {
+                    const components = row.original.menu_components ?? [];
+
+                    if (components.length === 0) {
+                        return <span className="text-muted-foreground">{t('common.none')}</span>;
+                    }
+
+                    return (
+                        <div className="flex min-w-44 flex-wrap gap-1">
+                            {components.map((item) => (
+                                <Badge
+                                    key={item.component_id}
+                                    variant="secondary"
+                                    className="whitespace-nowrap font-normal"
+                                >
+                                    {item.qty_per_order}×{' '}
+                                    {item.components?.name ?? t('components.unknownComponent')}
+                                </Badge>
+                            ))}
+                        </div>
+                    );
                 },
             },
             {
@@ -324,11 +484,12 @@ export function MenusList({
     const table = useReactTable({
         data: initialData,
         columns,
-        state: { sorting, expanded, columnFilters, columnVisibility },
+        state: { sorting, expanded, columnFilters, columnVisibility, columnOrder },
         onSortingChange: setSorting,
         onExpandedChange: setExpanded,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
+        onColumnOrderChange: setColumnOrder,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
@@ -339,11 +500,15 @@ export function MenusList({
 
     return (
         <div className="flex flex-col h-full space-y-4 min-h-0">
-            <DataTableToolbar table={table} className="shrink-0 p-0">
+            <DataTableToolbar
+                table={table}
+                enableColumnOrdering
+                className="shrink-0 p-0"
+            >
                 <DataTableSortList table={table} />
             </DataTableToolbar>
 
-            <div className="rounded-md border flex-1 overflow-y-auto min-h-0">
+            <div className="min-h-0 flex-1 overflow-auto rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((hg) => (
@@ -365,7 +530,7 @@ export function MenusList({
                         {table.getRowModel().rows.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={columns.length}
+                                    colSpan={table.getVisibleLeafColumns().length}
                                     className="h-24 text-center"
                                 >
                                     {hasActiveFilters
@@ -392,19 +557,10 @@ export function MenusList({
                                     {row.getIsExpanded() && (
                                         <TableRow className="bg-muted/30 hover:bg-muted/30">
                                             <TableCell
-                                                colSpan={columns.length}
+                                                colSpan={table.getVisibleLeafColumns().length}
                                                 className="p-0 border-b"
                                             >
                                                 <div className="p-4 pl-14">
-                                                    {(row.original.tags ?? []).length > 0 && (
-                                                        <div className="mb-4 flex flex-wrap gap-2">
-                                                            {(row.original.tags ?? []).map((tag) => (
-                                                                <Badge key={tag.id} variant="secondary">
-                                                                    {tag.label}
-                                                                </Badge>
-                                                            ))}
-                                                        </div>
-                                                    )}
                                                     {!row.original.menu_components ||
                                                     row.original.menu_components.length === 0 ? (
                                                         <p className="text-sm text-muted-foreground italic">

@@ -16,12 +16,14 @@ import { cn } from "@/lib/utils";
 
 interface DataTableToolbarProps<TData> extends React.ComponentProps<"div"> {
   table: Table<TData>;
+  enableColumnOrdering?: boolean;
 }
 
 export function DataTableToolbar<TData>({
   table,
   children,
   className,
+  enableColumnOrdering = false,
   ...props
 }: DataTableToolbarProps<TData>) {
   const i18n = getDataTableI18n(useLocale());
@@ -65,7 +67,11 @@ export function DataTableToolbar<TData>({
       </div>
       <div className="flex items-center gap-2">
         {children}
-        <DataTableViewOptions table={table} align="end" />
+        <DataTableViewOptions
+          table={table}
+          align="end"
+          enableColumnOrdering={enableColumnOrdering}
+        />
       </div>
     </div>
   );

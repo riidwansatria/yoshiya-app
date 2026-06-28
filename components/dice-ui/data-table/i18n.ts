@@ -22,6 +22,8 @@ const translations = {
         toggleColumns: 'Toggle columns',
         searchColumns: 'Search columns...',
         noColumnsFound: 'No columns found.',
+        moveColumnLeft: (label: string) => `Move ${label} left`,
+        moveColumnRight: (label: string) => `Move ${label} right`,
         // DataTableFacetedFilter
         noResultsFound: 'No results found.',
         clearFilters: 'Clear filters',
@@ -46,6 +48,8 @@ const translations = {
         toggleColumns: '列の表示切替',
         searchColumns: '列を検索...',
         noColumnsFound: '列が見つかりません。',
+        moveColumnLeft: (label: string) => `${label}を左へ移動`,
+        moveColumnRight: (label: string) => `${label}を右へ移動`,
         noResultsFound: '結果が見つかりません。',
         clearFilters: 'フィルターをクリア',
         selected: (count: number) => `${count}件選択`,

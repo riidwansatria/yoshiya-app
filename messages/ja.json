@@ -601,6 +601,9 @@
             "noResults": "メニューがありません。",
             "noResultsMatching": "「{query}」に一致するメニューはありません。",
             "noResultsMatchingFilters": "現在の検索条件またはタグ条件に一致するメニューがありません。",
+            "columns": {
+                "status": "公開状態"
+            },
             "priceEmpty": "価格は未入力のまま保存しました。",
             "deleteTitle": "メニューを削除",
             "deleteDescription": "{name} を削除してもよろしいですか？このメニューに紐づく内容の割り当ては解除されますが、内容自体は削除されません。この操作は元に戻せません。",
