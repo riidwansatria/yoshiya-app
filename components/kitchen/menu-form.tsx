@@ -158,7 +158,7 @@ const MenuComponentRow = memo(function MenuComponentRow({
                 control={control}
                 name={`components.${index}.qty_per_order`}
                 render={({ field }) => (
-                    <FormItem className="w-28 shrink-0">
+                    <FormItem className="w-12 shrink-0">
                         <FormControl>
                             <FractionalQuantityInput
                                 value={field.value}
