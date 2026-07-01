@@ -70,28 +70,33 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 
-const menuComponentSchema = z.object({
-    component_id: z.string().min(1, 'Please select a component'),
-    qty_per_order: z.string().refine(
-        (value) => parseFractionalQuantity(value).ok,
-        'Enter a positive decimal, fraction, or mixed number'
-    ),
-});
+function createMenuSchema(messages: {
+    componentRequired: string;
+    quantityInvalid: string;
+    nameRequired: string;
+    priceInvalid: string;
+}) {
+    return z.object({
+        name: z.string().min(1, messages.nameRequired),
+        name_en: z.string().optional(),
+        price: z.number().min(0, messages.priceInvalid).nullable(),
+        description: z.string().optional(),
+        staff_memo: z.string().optional(),
+        color: z.string().optional(),
+        image_url: z.url().nullable().optional(),
+        is_public: z.boolean(),
+        tag_ids: z.array(z.string()),
+        components: z.array(z.object({
+            component_id: z.string().min(1, messages.componentRequired),
+            qty_per_order: z.string().refine(
+                (value) => parseFractionalQuantity(value).ok,
+                messages.quantityInvalid
+            ),
+        })),
+    });
+}
 
-const menuSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    name_en: z.string().optional(),
-    price: z.number().min(0, 'Price must be zero or greater').nullable(),
-    description: z.string().optional(),
-    staff_memo: z.string().optional(),
-    color: z.string().optional(),
-    image_url: z.url().nullable().optional(),
-    is_public: z.boolean(),
-    tag_ids: z.array(z.string()),
-    components: z.array(menuComponentSchema),
-});
-
-type FormValues = z.infer<typeof menuSchema>;
+type FormValues = z.infer<ReturnType<typeof createMenuSchema>>;
 
 type MenuComponentRowProps = {
     id: string;
@@ -102,6 +107,7 @@ type MenuComponentRowProps = {
     usedIds: Set<string>;
     onNewComponent: (component: ComponentOption) => void;
     onRemove: (index: number) => void;
+    quantityLabel: string;
 };
 
 const MenuComponentRow = memo(function MenuComponentRow({
@@ -113,6 +119,7 @@ const MenuComponentRow = memo(function MenuComponentRow({
     usedIds,
     onNewComponent,
     onRemove,
+    quantityLabel,
 }: MenuComponentRowProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
@@ -164,7 +171,7 @@ const MenuComponentRow = memo(function MenuComponentRow({
                                 value={field.value}
                                 onValueChange={field.onChange}
                                 onCommit={() => undefined}
-                                label="Quantity per menu order"
+                                label={quantityLabel}
                             />
                         </FormControl>
                         <FormMessage />
@@ -219,6 +226,12 @@ export function MenuForm({
         () => [...availableTags].sort((a, b) => a.label.localeCompare(b.label)),
         [availableTags]
     );
+    const menuSchema = useMemo(() => createMenuSchema({
+        componentRequired: t('menus.form.validation.componentRequired'),
+        quantityInvalid: t('menus.form.validation.quantityInvalid'),
+        nameRequired: t('menus.form.validation.nameRequired'),
+        priceInvalid: t('menus.form.validation.priceInvalid'),
+    }), [t]);
 
     // Map initial components if editing
     const initialComponents = initialData?.menu_components?.map((mc) => ({
@@ -358,7 +371,9 @@ export function MenuForm({
                     image_url: finalImageUrl,
                     is_public: data.is_public,
                 });
-                if (res.error) throw new Error(res.error);
+                if (res.error) {
+                    throw new Error(t(`menus.form.errors.${res.errorCode}`));
+                }
             } else {
                 // Create new menu
                 const res = await createMenu({
@@ -372,7 +387,13 @@ export function MenuForm({
                     image_url: finalImageUrl,
                     is_public: data.is_public,
                 });
-                if (res.error || !res.data) throw new Error(res.error || 'Failed to create menu');
+                if (res.error || !res.data) {
+                    throw new Error(
+                        res.error && res.errorCode
+                            ? t(`menus.form.errors.${res.errorCode}`)
+                            : t('menus.form.errors.createFailed')
+                    );
+                }
                 menuId = res.data.id;
             }
 
@@ -542,7 +563,7 @@ export function MenuForm({
                                             {isUploadingImage ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}
                                             {t('menus.form.addImage')}
                                         </Button>
-                                        <p className="text-xs text-muted-foreground/50">JPG · PNG · WebP · 最大5MB</p>
+                                        <p className="text-xs text-muted-foreground/50">{t('menus.form.imageHint')}</p>
                                     </>
                                 )}
                             </div>
@@ -762,8 +783,9 @@ export function MenuForm({
                                                         componentOptions={sortedComponentOptions}
                                                         restaurantId={restaurantId}
                                                         usedIds={usedIds}
-                                                        onNewComponent={handleNewComponent}
-                                                        onRemove={handleRemove}
+                                                onNewComponent={handleNewComponent}
+                                                onRemove={handleRemove}
+                                                quantityLabel={t('menus.form.quantityLabel')}
                                                     />
                                                 );
                                             })}

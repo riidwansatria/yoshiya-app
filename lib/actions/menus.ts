@@ -43,7 +43,7 @@ export async function createMenu(data: MenuCreatePayload) {
     };
 
     if (!payload.name) {
-        return { error: 'Menu name is required' };
+        return { error: 'Menu name is required', errorCode: 'nameRequired' as const };
     }
 
     const { data: newMenu, error } = await supabase
@@ -55,9 +55,9 @@ export async function createMenu(data: MenuCreatePayload) {
     if (error) {
         console.error('Error creating menu:', error);
         if (error.code === '23505') {
-            return { error: 'A menu with this name already exists' };
+            return { error: 'A menu with this name already exists', errorCode: 'nameAlreadyExists' as const };
         }
-        return { error: 'Failed to create menu' };
+        return { error: 'Failed to create menu', errorCode: 'createFailed' as const };
     }
 
     updateTag(CACHE_TAGS.MENUS);
@@ -74,7 +74,7 @@ export async function updateMenu(
     const updatePayload = normalizeMenuFields(data);
 
     if (!updatePayload.name) {
-        return { error: 'Menu name is required' };
+        return { error: 'Menu name is required', errorCode: 'nameRequired' as const };
     }
 
     const { error } = await supabase.from('menus').update(updatePayload).eq('id', id);
@@ -82,9 +82,9 @@ export async function updateMenu(
     if (error) {
         console.error('Error updating menu:', error);
         if (error.code === '23505') {
-            return { error: 'A menu with this name already exists' };
+            return { error: 'A menu with this name already exists', errorCode: 'nameAlreadyExists' as const };
         }
-        return { error: 'Failed to update menu' };
+        return { error: 'Failed to update menu', errorCode: 'updateFailed' as const };
     }
 
     updateTag(CACHE_TAGS.MENUS);

@@ -673,7 +673,21 @@
                 "updated": "Menu updated",
                 "saveFailed": "Failed to save menu",
                 "fixQuantityErrors": "Please fix quantity errors before saving.",
-                "totalItems": "Total items"
+                "totalItems": "Total items",
+                "quantityLabel": "Quantity per menu order",
+                "imageHint": "JPG · PNG · WebP · Maximum 5 MB",
+                "validation": {
+                    "nameRequired": "Menu name is required",
+                    "componentRequired": "Please select a component",
+                    "quantityInvalid": "Enter a positive decimal, fraction, or mixed number",
+                    "priceInvalid": "Price must be zero or greater"
+                },
+                "errors": {
+                    "nameRequired": "Menu name is required",
+                    "nameAlreadyExists": "A menu with this name already exists",
+                    "createFailed": "Failed to create menu",
+                    "updateFailed": "Failed to update menu"
+                }
             },
             "placeholders": {
                 "name": "e.g. Spring Kaiseki",

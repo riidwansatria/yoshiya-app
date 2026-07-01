@@ -673,7 +673,21 @@
                 "updated": "メニューを更新しました",
                 "saveFailed": "メニューの保存に失敗しました",
                 "fixQuantityErrors": "保存前に数量エラーを修正してください。",
-                "totalItems": "合計アイテム数"
+                "totalItems": "合計アイテム数",
+                "quantityLabel": "1注文あたりの数量",
+                "imageHint": "JPG・PNG・WebP（最大5MB）",
+                "validation": {
+                    "nameRequired": "メニュー名を入力してください",
+                    "componentRequired": "内容を選択してください",
+                    "quantityInvalid": "正の小数、分数、または帯分数を入力してください",
+                    "priceInvalid": "価格は0以上で入力してください"
+                },
+                "errors": {
+                    "nameRequired": "メニュー名を入力してください",
+                    "nameAlreadyExists": "同じ名前のメニューがすでに存在します",
+                    "createFailed": "メニューの作成に失敗しました",
+                    "updateFailed": "メニューの更新に失敗しました"
+                }
             },
             "placeholders": {
                 "name": "例: 春の会席",
